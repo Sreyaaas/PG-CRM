@@ -23,6 +23,11 @@ export interface AuthStateGetter {
   getOrgId: () => string | null
 }
 
+export interface ApiEventHandlers {
+  onUnauthorized?: () => void
+  onForbidden?: (message: string) => void
+}
+
 const TOKEN_STORAGE_KEY = 'pgcrm_access_token'
 const ORG_STORAGE_KEY = 'pgcrm_org_id'
 
@@ -33,8 +38,14 @@ let authStateGetter: AuthStateGetter = {
     typeof window !== 'undefined' ? window.localStorage.getItem(ORG_STORAGE_KEY) : null,
 }
 
+let apiEventHandlers: ApiEventHandlers = {}
+
 export function configureAuthGetter(getter: AuthStateGetter): void {
   authStateGetter = getter
+}
+
+export function configureApiHandlers(handlers: ApiEventHandlers): void {
+  apiEventHandlers = handlers
 }
 
 export interface CreateApiClientOptions {
@@ -42,6 +53,8 @@ export interface CreateApiClientOptions {
   fetch?: typeof globalThis.fetch
   getToken?: () => string | null
   getOrgId?: () => string | null
+  onUnauthorized?: () => void
+  onForbidden?: (message: string) => void
 }
 
 interface ErrorEnvelope {
@@ -78,7 +91,7 @@ export function createApiClient(options: CreateApiClientOptions = {}) {
 
       return req
     },
-    async onResponse({ response }) {
+    async onResponse({ request, response }) {
       if (!response.ok) {
         let code = 'http_error'
         let message = response.statusText || `Request failed with status ${response.status}`
@@ -95,6 +108,17 @@ export function createApiClient(options: CreateApiClientOptions = {}) {
           }
         } catch {
           // Non-JSON error body; keep fallback code and message
+        }
+
+        const isPublicAuthCall =
+          request.url.includes('/auth/login') || request.url.includes('/auth/signup')
+
+        if (response.status === 401 && !isPublicAuthCall) {
+          const handler = options.onUnauthorized ?? apiEventHandlers.onUnauthorized
+          handler?.()
+        } else if (response.status === 403) {
+          const handler = options.onForbidden ?? apiEventHandlers.onForbidden
+          handler?.("You don't have access to this")
         }
 
         throw new ApiError(response.status, code, message)
