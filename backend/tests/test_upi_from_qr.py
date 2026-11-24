@@ -3,14 +3,12 @@
 import json
 
 import pytest
-from conftest import as_user, rand_phone
-from fastapi.testclient import TestClient
+from conftest import api_client, as_user, rand_phone
 
-from app.main import app
 from app.security import hash_password
 from app.upi import UpiQrError, parse_upi_qr
 
-client = TestClient(app)
+client = api_client()
 PASSWORD = "s3cret-pass"
 
 SIGN = "MEUCIQDv3x9rTqL0aZ8bNk2Yw7Hc1PfE4sUoJgVmXy5nRzKdQwIgS2tB8uFhLc6vWp+eA/9jN0qGxYiO3mZr7Dk1sTbHn4U="

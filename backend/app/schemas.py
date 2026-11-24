@@ -38,11 +38,27 @@ class Me(BaseModel):
     memberships: list[Membership]
 
 
+Password = Annotated[str, StringConstraints(min_length=8, max_length=128)]
+
+
 class TokenResponse(BaseModel):
-    access_token: str
+    access_token: str = Field(description="Short-lived (15 min). Send as `Authorization: Bearer <token>`")
     token_type: Literal["bearer"] = "bearer"
-    expires_in: int
+    expires_in: int = Field(description="Seconds until access_token expires")
+    refresh_token: str = Field(
+        description="Long-lived (30 days), single use: POST /auth/refresh returns a new one. Store it securely"
+    )
+    refresh_expires_in: int
     me: Me
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: Annotated[str, StringConstraints(min_length=1, max_length=256)]
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: Annotated[str, StringConstraints(min_length=1, max_length=128)]
+    new_password: Password
 
 
 PropertyName = Annotated[str, StringConstraints(min_length=1, strip_whitespace=True)]

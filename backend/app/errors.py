@@ -11,6 +11,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from psycopg import errors as pg
 
+from app.logs import logger
+from app.ratelimit import RateLimited
+
 # sqlstate -> (http status, machine code)
 _SQLSTATE_MAP: dict[str, tuple[int, str]] = {
     "PC001": (409, "append_only"),
@@ -49,6 +52,7 @@ def _db_error(_: Request, exc: pg.Error) -> JSONResponse:
     diag = exc.diag
     message = _CONSTRAINT_MESSAGES.get(diag.constraint_name or "") or diag.message_primary or "Database error"
     if status == 500:
+        logger.error("database error %s", state, exc_info=exc)
         message = "Internal error"
     elif state == "42501":
         message = "You do not have access to do this."
@@ -56,7 +60,9 @@ def _db_error(_: Request, exc: pg.Error) -> JSONResponse:
 
 
 def _http_error(_: Request, exc: HTTPException) -> JSONResponse:
-    code = {401: "unauthenticated", 403: "forbidden", 404: "not_found"}.get(exc.status_code, "error")
+    code = {401: "unauthenticated", 403: "forbidden", 404: "not_found", 405: "method_not_allowed"}.get(
+        exc.status_code, "error"
+    )
     return JSONResponse(status_code=exc.status_code, content=error_body(code, str(exc.detail)), headers=exc.headers)
 
 
@@ -66,7 +72,25 @@ def _validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:
     return JSONResponse(status_code=422, content=body)
 
 
+def _rate_limited(_: Request, exc: RateLimited) -> JSONResponse:
+    minutes = max(1, round(exc.retry_after / 60))
+    return JSONResponse(
+        status_code=429,
+        content=error_body(
+            "rate_limited", f"Too many attempts. Try again in {minutes} minute{'s' if minutes > 1 else ''}."
+        ),
+        headers={"Retry-After": str(exc.retry_after)},
+    )
+
+
+def _unhandled(_: Request, exc: Exception) -> JSONResponse:
+    logger.error("unhandled error", exc_info=exc)  # redacted by the JSON formatter
+    return JSONResponse(status_code=500, content=error_body("internal", "Internal error"))
+
+
 def install(app: FastAPI) -> None:
     app.add_exception_handler(pg.Error, _db_error)  # type: ignore[arg-type]
     app.add_exception_handler(HTTPException, _http_error)  # type: ignore[arg-type]
     app.add_exception_handler(RequestValidationError, _validation_error)  # type: ignore[arg-type]
+    app.add_exception_handler(RateLimited, _rate_limited)  # type: ignore[arg-type]
+    app.add_exception_handler(Exception, _unhandled)

@@ -1,12 +1,9 @@
 """BE-13: staff management (add caretakers, assign buildings, deactivate)."""
 
 import pytest
-from conftest import as_user, rand_phone
-from fastapi.testclient import TestClient
+from conftest import api_client, as_user, rand_phone
 
-from app.main import app
-
-client = TestClient(app)
+client = api_client()
 PASSWORD = "s3cret-pass"
 
 

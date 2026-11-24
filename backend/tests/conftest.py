@@ -31,6 +31,20 @@ def rand_phone() -> str:
     return "9" + "".join(random.choices("0123456789", k=9))
 
 
+def rand_ip() -> str:
+    return "10." + ".".join(str(random.randint(0, 255)) for _ in range(3))
+
+
+def api_client():
+    """A TestClient with its own random client IP, so per-IP rate limits (BE-51) never build up across test
+    modules or repeated runs (every plain TestClient is "testclient")."""
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    return TestClient(app, client=(rand_ip(), 50000))
+
+
 def rand_utr() -> str:
     return "".join(random.choices("0123456789", k=12))
 

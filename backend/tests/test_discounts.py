@@ -9,14 +9,12 @@ import json
 
 import psycopg
 import pytest
-from conftest import BASE_RENT, World, as_user, raises_sqlstate
-from fastapi.testclient import TestClient
+from conftest import BASE_RENT, World, api_client, as_user, raises_sqlstate
 
 from app.errors import _db_error
-from app.main import app
 from app.security import create_access_token
 
-client = TestClient(app)
+client = api_client()
 DISCOUNTED = 9_000_00
 
 

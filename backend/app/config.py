@@ -17,13 +17,24 @@ class Settings(BaseSettings):
     db_pool_max: int = 10
 
     jwt_secret: str = DEV_JWT_SECRET
-    jwt_ttl_minutes: int = 12 * 60  # one caretaker shift
+    # Short-lived access token; the app keeps the session alive with the refresh token (POST /auth/refresh).
+    jwt_ttl_minutes: int = 15
+    refresh_ttl_days: int = 30
     cors_origins: list[str] = ["http://localhost:5173"]
 
+    # Error + performance monitoring. Off when no DSN is set (dev, tests).
+    sentry_dsn: str | None = None
+    sentry_traces_sample_rate: float = 0.1
+    log_level: str = "INFO"
+
     @model_validator(mode="after")
-    def _no_dev_secret_in_prod(self) -> "Settings":
-        if self.environment == "prod" and self.jwt_secret == DEV_JWT_SECRET:
-            raise ValueError("PGCRM_JWT_SECRET must be set in production")
+    def _prod_safety(self) -> "Settings":
+        if self.environment == "prod":
+            if self.jwt_secret == DEV_JWT_SECRET:
+                raise ValueError("PGCRM_JWT_SECRET must be set in production")
+            bad = [o for o in self.cors_origins if o == "*" or not o.startswith("https://") or "localhost" in o]
+            if not self.cors_origins or bad:
+                raise ValueError(f"PGCRM_CORS_ORIGINS must list only the real https frontend origin(s), got {bad}")
         return self
 
 

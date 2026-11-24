@@ -1,9 +1,6 @@
-from conftest import rand_phone
-from fastapi.testclient import TestClient
+from conftest import api_client, rand_phone
 
-from app.main import app
-
-client = TestClient(app)
+client = api_client()
 
 
 def _signup() -> tuple[str, dict]:
