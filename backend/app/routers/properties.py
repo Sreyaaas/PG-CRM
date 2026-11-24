@@ -1,10 +1,13 @@
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from psycopg import sql
 
 from app.deps import Org
-from app.schemas import Property, PropertyCreate, PropertyUpdate
+from app.errors import error_body
+from app.schemas import Property, PropertyCreate, PropertyUpdate, UpiFromQrRequest, UpiPayeeDetails
+from app.upi import NOT_MERCHANT_WARNING, UpiQrError, parse_upi_qr
 
 router = APIRouter(tags=["properties"])
 
@@ -79,3 +82,28 @@ def update_property(property_id: UUID, body: PropertyUpdate, ctx: Org) -> Proper
     if row is None:
         raise HTTPException(404, "Property not found")
     return Property(**row)
+
+
+@router.post(
+    "/properties/{property_id}/upi-from-qr",
+    response_model=UpiPayeeDetails,
+    responses={404: {"description": "Not found"}},
+)
+def upi_from_qr(property_id: UUID, body: UpiFromQrRequest, ctx: Org) -> UpiPayeeDetails | JSONResponse:
+    """Owner only. Saves the payee details (`pa`, `pn`, `mc`) from the owner's scanned Soundbox QR.
+    Everything else in the QR (`sign`, `am`, `tr`, `tn`, ...) is dropped; the raw text is never stored."""
+    with ctx.tx() as cur:
+        _require_owner(cur)
+        try:
+            payee = parse_upi_qr(body.qr_text)
+        except UpiQrError as e:
+            return JSONResponse(status_code=422, content=error_body("invalid", str(e)))
+        cur.execute(
+            """UPDATE properties SET upi_vpa = %s, upi_payee_name = %s, upi_mcc = %s
+               WHERE id = %s RETURNING upi_vpa, upi_payee_name, upi_mcc""",
+            (payee.vpa, payee.payee_name, payee.mcc, property_id),
+        )
+        row = cur.fetchone()
+    if row is None:
+        raise HTTPException(404, "Property not found")
+    return UpiPayeeDetails(**row, warning=None if payee.mcc else NOT_MERCHANT_WARNING)

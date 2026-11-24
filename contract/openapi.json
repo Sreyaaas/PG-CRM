@@ -649,6 +649,110 @@
         }
       }
     },
+    "/api/v1/properties/{property_id}/upi-from-qr": {
+      "post": {
+        "tags": [
+          "properties"
+        ],
+        "summary": "Upi From Qr",
+        "description": "Owner only. Saves the payee details (`pa`, `pn`, `mc`) from the owner's scanned Soundbox QR.\nEverything else in the QR (`sign`, `am`, `tr`, `tn`, ...) is dropped; the raw text is never stored.",
+        "operationId": "upi_from_qr_api_v1_properties__property_id__upi_from_qr_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Property Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpiFromQrRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpiPayeeDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/public/join/{qr_slug}": {
       "get": {
         "tags": [
@@ -1437,6 +1541,71 @@
           "me"
         ],
         "title": "TokenResponse"
+      },
+      "UpiFromQrRequest": {
+        "properties": {
+          "qr_text": {
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Qr Text",
+            "description": "The text of the owner's Soundbox QR, e.g. upi://pay?pa=...&pn=...&mc=..."
+          }
+        },
+        "type": "object",
+        "required": [
+          "qr_text"
+        ],
+        "title": "UpiFromQrRequest"
+      },
+      "UpiPayeeDetails": {
+        "properties": {
+          "upi_vpa": {
+            "type": "string",
+            "title": "Upi Vpa"
+          },
+          "upi_payee_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upi Payee Name"
+          },
+          "upi_mcc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upi Mcc"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning",
+            "description": "\"Not a merchant QR\" when the QR has no merchant code (personal QRs have lower limits)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "upi_vpa",
+          "upi_payee_name",
+          "upi_mcc"
+        ],
+        "title": "UpiPayeeDetails"
       }
     },
     "securitySchemes": {

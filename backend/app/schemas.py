@@ -130,6 +130,22 @@ class Property(BaseModel):
     updated_at: datetime
 
 
+class UpiFromQrRequest(BaseModel):
+    qr_text: Annotated[str, StringConstraints(min_length=1, max_length=4096)] = Field(
+        description="The text of the owner's Soundbox QR, e.g. upi://pay?pa=...&pn=...&mc=..."
+    )
+
+
+class UpiPayeeDetails(BaseModel):
+    upi_vpa: str
+    upi_payee_name: str | None
+    upi_mcc: str | None
+    warning: str | None = Field(
+        default=None,
+        description='"Not a merchant QR" when the QR has no merchant code (personal QRs have lower limits)',
+    )
+
+
 class JoinInfo(BaseModel):
     property_name: str
     locality: str | None
