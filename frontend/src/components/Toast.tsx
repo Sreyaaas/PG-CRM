@@ -28,7 +28,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback(
     (message: string, variant: ToastVariant = 'default') => {
       const id = nextToastId++
-      setToasts((prev) => [...prev, { id, message, variant }])
+      // Several requests can fail at once (e.g. every query on a page gets a 401); show each message once.
+      setToasts((prev) =>
+        prev.some((t) => t.message === message && t.variant === variant) ? prev : [...prev, { id, message, variant }],
+      )
       window.setTimeout(() => {
         dismiss(id)
       }, 5000)
