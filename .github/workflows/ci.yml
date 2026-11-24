@@ -37,9 +37,12 @@ jobs:
       PGCRM_DATABASE_URL: postgresql://pgcrm:pgcrm@localhost:5432/pgcrm
       PGCRM_ENVIRONMENT: test
       GH_TOKEN: ${{ github.token }}
-      HAS_FRONTEND: ${{ hashFiles('frontend/package.json') != '' }}
     steps:
       - uses: actions/checkout@v4
+
+      # hashFiles() isn't allowed in job-level env, so detect the frontend in a step.
+      - name: Detect frontend
+        run: echo "HAS_FRONTEND=$([ -f frontend/package.json ] && echo true || echo false)" >> "$GITHUB_ENV"
 
       - name: Which ticket?
         id: ticket
