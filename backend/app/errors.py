@@ -21,6 +21,7 @@ _SQLSTATE_MAP: dict[str, tuple[int, str]] = {
     "23503": (422, "invalid_reference"),
     "23502": (422, "missing_field"),
     "22P02": (422, "invalid"),
+    "22003": (422, "invalid"),  # number out of range for its column (e.g. smallint floor)
     "42501": (403, "forbidden"),  # privilege / RLS WITH CHECK violation
 }
 
@@ -31,6 +32,8 @@ _CONSTRAINT_MESSAGES = {
     "uq_stays_open_resident": "This resident already has an active stay.",
     "uq_invoices_rent_period": "Rent for this period has already been invoiced.",
     "users_phone_key": "An account with this phone number already exists.",
+    "rooms_property_id_label_key": "A room with this label already exists in this property.",
+    "beds_room_id_label_key": "A bed with this label already exists in this room.",
 }
 
 

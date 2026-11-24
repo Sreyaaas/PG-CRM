@@ -1,7 +1,7 @@
 """Request/response models. These generate contract/openapi.json, which the
 frontend turns into TypeScript types. Money is always integer paise."""
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -144,6 +144,132 @@ class UpiPayeeDetails(BaseModel):
         default=None,
         description='"Not a merchant QR" when the QR has no merchant code (personal QRs have lower limits)',
     )
+
+
+Label = Annotated[str, StringConstraints(min_length=1, strip_whitespace=True)]
+Rent = Annotated[int, Field(gt=0, description="Amount in paise (₹1 = 100)")]
+Floor = Annotated[int, Field(ge=-32768, le=32767)]
+AreaSqft = Annotated[int, Field(gt=0, le=2_147_483_647)]
+BedStatus = Literal["vacant", "reserved", "occupied", "on_notice"]
+AREA_WARNING = "Below 70 sq ft per resident (GBA rule)"
+
+
+class RoomCreate(BaseModel):
+    """Creates the room and `sharing` beds labelled `{label}-A`, `{label}-B`, ... at `base_rent_paise` each."""
+
+    model_config = {"extra": "forbid"}
+
+    label: Label
+    floor: Floor | None = None
+    sharing: Annotated[int, Field(ge=1, le=8)]
+    is_ac: bool
+    area_sqft: AreaSqft | None = None
+    base_rent_paise: Rent = Field(description="Floor price of each bed, in paise")
+
+
+class RoomUpdate(BaseModel):
+    """Partial update: only the fields sent are changed."""
+
+    model_config = {"extra": "forbid"}
+
+    label: Label = _optional()
+    floor: Floor | None = None
+    is_ac: bool = _optional()
+    area_sqft: AreaSqft | None = None
+
+    @model_validator(mode="after")
+    def _not_null(self):
+        for name in ("label", "is_ac"):
+            if name in self.model_fields_set and getattr(self, name) is None:
+                raise ValueError(f"{name} may not be null")
+        return self
+
+
+class BedCreate(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    label: Label
+    base_rent_paise: Rent = Field(description="Floor price, in paise")
+
+
+class BedUpdate(BaseModel):
+    """Partial update. `status` is not accepted: it is derived from stays."""
+
+    model_config = {"extra": "forbid"}
+
+    label: Label = _optional()
+    base_rent_paise: Rent = _optional(description="Floor price, in paise. Doesn't change existing stays' rent")
+    is_active: bool = _optional(description="false = take the bed out of use (only when it has no open stay)")
+
+    @model_validator(mode="after")
+    def _not_null(self):
+        for name in ("label", "base_rent_paise", "is_active"):
+            if name in self.model_fields_set and getattr(self, name) is None:
+                raise ValueError(f"{name} may not be null")
+        return self
+
+
+class Bed(BaseModel):
+    id: UUID
+    room_id: UUID
+    property_id: UUID
+    label: str
+    base_rent_paise: Paise
+    status: BedStatus
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class Room(BaseModel):
+    id: UUID
+    property_id: UUID
+    label: str
+    floor: int | None
+    sharing: int
+    is_ac: bool
+    area_sqft: int | None
+    created_at: datetime
+    updated_at: datetime
+    beds: list[Bed]
+    warning: str | None = Field(default=None, description=f'"{AREA_WARNING}" when area_sqft / sharing < 70')
+
+
+class BoardResident(BaseModel):
+    id: UUID
+    full_name: str
+
+
+class BoardStay(BaseModel):
+    id: UUID
+    stay_type: Literal["monthly", "short_term"]
+    status: Literal["reserved", "active", "on_notice"]
+    rent_paise: Paise
+    check_in_date: date
+    expected_vacate_date: date | None
+    resident: BoardResident
+
+
+class BoardBed(BaseModel):
+    id: UUID
+    label: str
+    status: BedStatus
+    base_rent_paise: Paise
+    is_active: bool
+    stay: BoardStay | None = Field(description="The bed's open stay (not vacated), if any")
+
+
+class BoardRoom(BaseModel):
+    id: UUID
+    label: str
+    floor: int | None
+    sharing: int
+    is_ac: bool
+    beds: list[BoardBed]
+
+
+class BedBoard(BaseModel):
+    rooms: list[BoardRoom]
 
 
 class JoinInfo(BaseModel):

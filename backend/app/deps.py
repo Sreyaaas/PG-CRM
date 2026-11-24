@@ -54,5 +54,13 @@ def org_context(
     return OrgContext(user_id=user_id, org_id=x_org_id)
 
 
+def require_owner(cur: Cursor[DictRow], message: str = "Only the owner can do this.") -> None:
+    """A clear 403 for caretakers. Only a friendlier message: RLS (`app.is_owner()` in the insert/update
+    policies) is the real guard, and an RLS-filtered UPDATE would otherwise just match zero rows."""
+    cur.execute("SELECT app.is_owner() AS ok")
+    if not cur.fetchone()["ok"]:
+        raise HTTPException(403, message)
+
+
 UserId = Annotated[UUID, Depends(current_user_id)]
 Org = Annotated[OrgContext, Depends(org_context)]

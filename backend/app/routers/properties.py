@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from psycopg import sql
 
-from app.deps import Org
+from app.deps import Org, require_owner
 from app.errors import error_body
 from app.schemas import Property, PropertyCreate, PropertyUpdate, UpiFromQrRequest, UpiPayeeDetails
 from app.upi import NOT_MERCHANT_WARNING, UpiQrError, parse_upi_qr
@@ -19,10 +19,7 @@ _COLUMNS = """
 
 
 def _require_owner(cur) -> None:
-    """Friendlier message only: RLS (properties_insert/update need app.is_owner()) is the real guard."""
-    cur.execute("SELECT app.is_owner() AS ok")
-    if not cur.fetchone()["ok"]:
-        raise HTTPException(403, "Only the owner can change property settings.")
+    require_owner(cur, "Only the owner can change property settings.")
 
 
 @router.get("/properties", response_model=list[Property])
