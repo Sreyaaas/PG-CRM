@@ -33,9 +33,21 @@ jobs:
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U pgcrm" --health-interval 2s --health-timeout 3s --health-retries 30
+      # Private S3-compatible storage (BE-20). RustFS: no account needed, starts without a custom command.
+      s3:
+        image: rustfs/rustfs:latest
+        env:
+          RUSTFS_ACCESS_KEY: pgcrm
+          RUSTFS_SECRET_KEY: pgcrm-dev-secret
+        ports: ["9000:9000"]
     env:
       PGCRM_DATABASE_URL: postgresql://pgcrm:pgcrm@localhost:5432/pgcrm
       PGCRM_ENVIRONMENT: test
+      PGCRM_S3_ENDPOINT: http://localhost:9000
+      PGCRM_S3_BUCKET: pgcrm-private
+      PGCRM_S3_ACCESS_KEY: pgcrm
+      PGCRM_S3_SECRET_KEY: pgcrm-dev-secret
+      PGCRM_S3_REGION: us-east-1
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
@@ -57,6 +69,9 @@ jobs:
             exit 1
           fi
           echo "id=$T" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for object storage
+        run: for i in $(seq 1 60); do curl -s -o /dev/null localhost:9000 && exit 0; sleep 1; done; exit 1
 
       - uses: astral-sh/setup-uv@v6
       - name: Backend setup + migrations

@@ -44,7 +44,7 @@ Each issue has numbered acceptance criteria (`**AC1**`, `**AC2**`, …).
 
 ## Commands
 ```bash
-# backend (needs Postgres: docker compose up -d db minio)
+# backend (needs Postgres: docker compose up -d db s3)
 cd backend && uv sync && uv run python scripts/migrate.py && uv run pytest && uv run ruff check .
 uv run python scripts/export_openapi.py     # after any API change
 

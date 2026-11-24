@@ -13,7 +13,7 @@ UPI (0% fees), CSV reconciliation, and caretaker anti-theft controls enforced by
 | Frontend | React + TypeScript + Vite, installable PWA | frontend dev → [frontend/](frontend/README.md) |
 | API | Python, FastAPI, psycopg 3 (plain SQL); may move to Rust later | backend dev → [backend/](backend/README.md) |
 | Database | PostgreSQL 17: RLS, triggers, plain-SQL migrations | backend dev → [db/](db/README.md) |
-| Files | S3-compatible private bucket (MinIO locally) | backend dev |
+| Files | S3-compatible private bucket (RustFS locally) | backend dev |
 | Contract | [contract/openapi.json](contract/openapi.json), generated from the API, consumed by the frontend | both |
 
 ```
@@ -34,7 +34,7 @@ docs/        product context, MVP tickets
 ## Quick start (backend)
 
 ```bash
-docker compose up -d db minio
+docker compose up -d db s3
 cd backend && cp .env.example .env && uv sync
 uv run python scripts/migrate.py
 uv run python scripts/seed_dev.py

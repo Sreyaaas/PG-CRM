@@ -1,13 +1,11 @@
 """BE-10: properties create / read / update, billing settings migration, public join info."""
 
 import pytest
-from conftest import as_user, raises_sqlstate, rand_phone
-from fastapi.testclient import TestClient
+from conftest import api_client, as_user, raises_sqlstate, rand_phone
 
-from app.main import app
 from app.security import hash_password
 
-client = TestClient(app)
+client = api_client()
 PASSWORD = "s3cret-pass"
 
 FULL = {

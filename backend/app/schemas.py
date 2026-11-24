@@ -38,11 +38,27 @@ class Me(BaseModel):
     memberships: list[Membership]
 
 
+Password = Annotated[str, StringConstraints(min_length=8, max_length=128)]
+
+
 class TokenResponse(BaseModel):
-    access_token: str
+    access_token: str = Field(description="Short-lived (15 min). Send as `Authorization: Bearer <token>`")
     token_type: Literal["bearer"] = "bearer"
-    expires_in: int
+    expires_in: int = Field(description="Seconds until access_token expires")
+    refresh_token: str = Field(
+        description="Long-lived (30 days), single use: POST /auth/refresh returns a new one. Store it securely"
+    )
+    refresh_expires_in: int
     me: Me
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: Annotated[str, StringConstraints(min_length=1, max_length=256)]
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: Annotated[str, StringConstraints(min_length=1, max_length=128)]
+    new_password: Password
 
 
 PropertyName = Annotated[str, StringConstraints(min_length=1, strip_whitespace=True)]
@@ -357,6 +373,45 @@ class DiscountRequest(BaseModel):
     decided_by: UUID | None
     decided_at: datetime | None
     decision_note: str | None
+
+
+ContentType = Literal["image/jpeg", "image/png", "image/webp", "application/pdf"]
+SizeBytes = Annotated[int, Field(ge=1, le=5 * 1024 * 1024, description="Exact file size in bytes, max 5 MB")]
+
+
+class _UploadFields(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    content_type: ContentType = Field(description="Must match the upload's Content-Type. PDF only for kyc_id")
+    size_bytes: SizeBytes
+
+    @model_validator(mode="after")
+    def _type_allowed_for_kind(self):
+        if self.content_type == "application/pdf" and self.kind != "kyc_id":
+            raise ValueError("PDF is only allowed for kyc_id")
+        return self
+
+
+class PublicUploadRequest(_UploadFields):
+    kind: Literal["kyc_id", "selfie"]
+
+
+class UploadRequest(_UploadFields):
+    kind: Literal["expense_proof", "kyc_id", "selfie"]
+    property_id: UUID
+
+
+class UploadTicket(BaseModel):
+    object_key: str = Field(description="Store this on the record (e.g. id_doc_path) after the upload succeeds")
+    upload_url: str = Field(
+        description="PUT the file here within expires_in seconds, with exactly the same Content-Type and size"
+    )
+    expires_in: int
+
+
+class FileUrl(BaseModel):
+    url: str = Field(description="Short-lived signed GET URL")
+    expires_in: int
 
 
 class JoinInfo(BaseModel):
