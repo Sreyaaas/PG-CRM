@@ -362,6 +362,291 @@
             "description": "Unprocessable Entity"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "properties"
+        ],
+        "summary": "Create Property",
+        "description": "Owner only. Fields left out get the database defaults.",
+        "operationId": "create_property_api_v1_properties_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Property"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/api/v1/properties/{property_id}": {
+      "get": {
+        "tags": [
+          "properties"
+        ],
+        "summary": "Get Property",
+        "description": "Owner, or a caretaker assigned to this property (RLS hides the rest: 404).",
+        "operationId": "get_property_api_v1_properties__property_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Property Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Property"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "properties"
+        ],
+        "summary": "Update Property",
+        "description": "Owner only. Changes only the fields sent.",
+        "operationId": "update_property_api_v1_properties__property_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Property Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Property"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
       }
     },
     "/api/v1/public/join/{qr_slug}": {
@@ -541,6 +826,26 @@
               }
             ],
             "title": "Upi Payee Name"
+          },
+          "rent_due_day": {
+            "type": "integer",
+            "title": "Rent Due Day"
+          },
+          "security_deposit_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Security Deposit Paise",
+            "description": "Amount in paise (\u20b91 = 100)"
+          },
+          "maintenance_charge_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Maintenance Charge Paise",
+            "description": "Amount in paise (\u20b91 = 100)"
+          },
+          "notice_deadline_day": {
+            "type": "integer",
+            "title": "Notice Deadline Day"
           }
         },
         "type": "object",
@@ -552,7 +857,11 @@
           "exit_deduction_paise",
           "short_term_daily_rate_paise",
           "upi_vpa",
-          "upi_payee_name"
+          "upi_payee_name",
+          "rent_due_day",
+          "security_deposit_paise",
+          "maintenance_charge_paise",
+          "notice_deadline_day"
         ],
         "title": "JoinInfo"
       },
@@ -705,6 +1014,39 @@
             ],
             "title": "Upi Payee Name"
           },
+          "upi_mcc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upi Mcc"
+          },
+          "fallback_upi_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Upi Id"
+          },
+          "bank_details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Details"
+          },
           "short_term_daily_rate_paise": {
             "anyOf": [
               {
@@ -724,6 +1066,37 @@
             "title": "Exit Deduction Paise",
             "description": "Amount in paise (\u20b91 = 100)"
           },
+          "house_rules": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "House Rules"
+          },
+          "rent_due_day": {
+            "type": "integer",
+            "title": "Rent Due Day"
+          },
+          "security_deposit_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Security Deposit Paise",
+            "description": "Amount in paise (\u20b91 = 100)"
+          },
+          "maintenance_charge_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Maintenance Charge Paise",
+            "description": "Amount in paise (\u20b91 = 100)"
+          },
+          "notice_deadline_day": {
+            "type": "integer",
+            "title": "Notice Deadline Day"
+          },
           "is_active": {
             "type": "boolean",
             "title": "Is Active"
@@ -732,6 +1105,11 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
           }
         },
         "type": "object",
@@ -743,12 +1121,259 @@
           "qr_slug",
           "upi_vpa",
           "upi_payee_name",
+          "upi_mcc",
+          "fallback_upi_id",
+          "bank_details",
           "short_term_daily_rate_paise",
           "exit_deduction_paise",
+          "house_rules",
+          "rent_due_day",
+          "security_deposit_paise",
+          "maintenance_charge_paise",
+          "notice_deadline_day",
           "is_active",
-          "created_at"
+          "created_at",
+          "updated_at"
         ],
         "title": "Property"
+      },
+      "PropertyCreate": {
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "locality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locality"
+          },
+          "short_term_daily_rate_paise": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0,
+                "description": "Amount in paise (\u20b91 = 100)"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Term Daily Rate Paise"
+          },
+          "exit_deduction_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Exit Deduction Paise",
+            "description": "Default 0"
+          },
+          "house_rules": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "House Rules"
+          },
+          "fallback_upi_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Upi Id"
+          },
+          "bank_details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Details"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "Default true. Removing a property = setting this to false"
+          },
+          "rent_due_day": {
+            "type": "integer",
+            "maximum": 28.0,
+            "minimum": 1.0,
+            "title": "Rent Due Day",
+            "description": "Rent is due by this day of each month. Default 5"
+          },
+          "security_deposit_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Security Deposit Paise",
+            "description": "Refundable deposit paid at joining. Default 0"
+          },
+          "maintenance_charge_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Maintenance Charge Paise",
+            "description": "One-time, non-refundable, paid at joining. Default 0"
+          },
+          "notice_deadline_day": {
+            "type": "integer",
+            "maximum": 28.0,
+            "minimum": 1.0,
+            "title": "Notice Deadline Day",
+            "description": "Notice on/before this day makes the current month the last one. Default 5"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "PropertyCreate"
+      },
+      "PropertyUpdate": {
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "locality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locality"
+          },
+          "short_term_daily_rate_paise": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0,
+                "description": "Amount in paise (\u20b91 = 100)"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Term Daily Rate Paise"
+          },
+          "exit_deduction_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Exit Deduction Paise",
+            "description": "Default 0"
+          },
+          "house_rules": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "House Rules"
+          },
+          "fallback_upi_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Upi Id"
+          },
+          "bank_details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Details"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "Default true. Removing a property = setting this to false"
+          },
+          "rent_due_day": {
+            "type": "integer",
+            "maximum": 28.0,
+            "minimum": 1.0,
+            "title": "Rent Due Day",
+            "description": "Rent is due by this day of each month. Default 5"
+          },
+          "security_deposit_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Security Deposit Paise",
+            "description": "Refundable deposit paid at joining. Default 0"
+          },
+          "maintenance_charge_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Maintenance Charge Paise",
+            "description": "One-time, non-refundable, paid at joining. Default 0"
+          },
+          "notice_deadline_day": {
+            "type": "integer",
+            "maximum": 28.0,
+            "minimum": 1.0,
+            "title": "Notice Deadline Day",
+            "description": "Notice on/before this day makes the current month the last one. Default 5"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PropertyUpdate",
+        "description": "Partial update: only the fields sent are changed."
       },
       "SignupRequest": {
         "properties": {
