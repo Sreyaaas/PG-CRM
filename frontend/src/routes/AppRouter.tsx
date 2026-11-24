@@ -5,6 +5,8 @@ import { ApprovalsPage } from '@/features/approvals/ApprovalsPage'
 import { LoginPage } from './LoginPage'
 import { OrgPickerPage } from './OrgPickerPage'
 import { OwnerDashboardPage } from './OwnerDashboardPage'
+import { OwnerMorePage } from './OwnerMorePage'
+import { StaffPage } from '@/features/staff/StaffPage'
 import { CaretakerLayoutRoute, OwnerLayoutRoute, RoleRedirect } from './ProtectedRoutes'
 import { SignupPage } from './SignupPage'
 
@@ -22,7 +24,8 @@ export function AppRouter() {
         <Route path="approvals" element={<ApprovalsPage />} />
         <Route path="properties" element={<OwnerDashboardPage section="Properties" />} />
         <Route path="money" element={<OwnerDashboardPage section="Money" />} />
-        <Route path="more" element={<OwnerDashboardPage section="More" />} />
+        <Route path="more" element={<OwnerMorePage />} />
+        <Route path="staff" element={<StaffPage />} />
       </Route>
 
       <Route path="/caretaker" element={<CaretakerLayoutRoute />}>
