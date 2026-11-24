@@ -1,14 +1,18 @@
 import { Route, Routes } from 'react-router-dom'
 import { CaretakerHomePage } from './CaretakerHomePage'
 import { DevUiPage } from './DevUiPage'
+import { ApprovalsPage } from '@/features/approvals/ApprovalsPage'
 import { LoginPage } from './LoginPage'
 import { OrgPickerPage } from './OrgPickerPage'
 import { OwnerDashboardPage } from './OwnerDashboardPage'
+import { OwnerMorePage } from './OwnerMorePage'
+import { StaffPage } from '@/features/staff/StaffPage'
 import { CaretakerLayoutRoute, OwnerLayoutRoute, RoleRedirect } from './ProtectedRoutes'
 import { PropertiesListPage } from '@/features/properties/PropertiesListPage'
 import { PropertyDetailPage } from '@/features/properties/PropertyDetailPage'
 import { PropertyCreatePage, PropertyEditPage } from '@/features/properties/PropertyFormPage'
 import { RoomsPage } from '@/features/rooms/RoomsPage'
+import { PosterPage } from '@/features/poster/PosterPage'
 import { SignupPage } from './SignupPage'
 
 export function AppRouter() {
@@ -22,14 +26,16 @@ export function AppRouter() {
 
       <Route path="/owner" element={<OwnerLayoutRoute />}>
         <Route index element={<OwnerDashboardPage section="Dashboard" />} />
-        <Route path="approvals" element={<OwnerDashboardPage section="Approvals" />} />
+        <Route path="approvals" element={<ApprovalsPage />} />
         <Route path="properties" element={<PropertiesListPage />} />
         <Route path="properties/new" element={<PropertyCreatePage />} />
         <Route path="properties/:propertyId" element={<PropertyDetailPage />} />
         <Route path="properties/:propertyId/edit" element={<PropertyEditPage />} />
         <Route path="properties/:propertyId/rooms" element={<RoomsPage />} />
+        <Route path="properties/:propertyId/poster" element={<PosterPage />} />
         <Route path="money" element={<OwnerDashboardPage section="Money" />} />
-        <Route path="more" element={<OwnerDashboardPage section="More" />} />
+        <Route path="more" element={<OwnerMorePage />} />
+        <Route path="staff" element={<StaffPage />} />
       </Route>
 
       <Route path="/caretaker" element={<CaretakerLayoutRoute />}>
