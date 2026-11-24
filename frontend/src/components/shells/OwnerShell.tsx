@@ -32,7 +32,7 @@ export function OwnerShell({
       {/* Desktop sidebar (>= 1024px) */}
       <aside
         aria-label="Owner sidebar"
-        className="hidden lg:flex lg:w-60 lg:flex-col lg:fixed lg:inset-y-0 lg:border-r lg:border-slate-200 lg:bg-slate-50/50"
+        className="print:!hidden hidden lg:flex lg:w-60 lg:flex-col lg:fixed lg:inset-y-0 lg:border-r lg:border-slate-200 lg:bg-slate-50/50"
       >
         <div className="flex h-14 items-center justify-between border-b border-slate-200 px-4">
           <div className="min-w-0">
@@ -69,8 +69,8 @@ export function OwnerShell({
       </aside>
 
       {/* Main area */}
-      <div className="flex min-h-screen flex-1 flex-col lg:pl-60">
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-6">
+      <div className="flex min-h-screen flex-1 flex-col lg:pl-60 print:pl-0">
+        <header className="print:hidden sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-6">
           <div className="min-w-0 lg:hidden">
             <div className="truncate text-sm font-semibold text-slate-950">{orgName}</div>
             {userName && <div className="truncate text-xs text-slate-500">{userName}</div>}
@@ -84,7 +84,7 @@ export function OwnerShell({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-5 pb-24 lg:px-6 lg:pb-8">
+        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-5 pb-24 lg:px-6 lg:pb-8 print:max-w-none print:p-0">
           {children}
         </main>
       </div>
@@ -92,7 +92,7 @@ export function OwnerShell({
       {/* Mobile bottom nav (< 1024px) */}
       <nav
         aria-label="Owner bottom navigation"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white lg:hidden"
+        className="print:hidden fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white lg:hidden"
       >
         <div className="mx-auto grid h-16 max-w-lg grid-cols-5">
           {OWNER_NAV.map((item) => (
