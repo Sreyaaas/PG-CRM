@@ -421,6 +421,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/onboarding-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Requests
+         * @description Requests in the buildings the caller can access (RLS), newest first. `?status=pending` for the queue.
+         */
+        get: operations["list_requests_api_v1_onboarding_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/onboarding-requests/{request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Request
+         * @description Every submitted field, signed photo URLs (5 minutes) and `suggested` defaults for the approve form.
+         */
+        get: operations["get_request_api_v1_onboarding_requests__request_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/onboarding-requests/{request_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve Request
+         * @description Creates the resident, the stay (`active`, or `reserved` for a future check-in) and the joining invoices,
+         *     all due on the check-in date: deposit, maintenance charge, and the pro-rata first month (monthly) or
+         *     nights × daily rate (short-term). All or nothing.
+         */
+        post: operations["approve_request_api_v1_onboarding_requests__request_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/onboarding-requests/{request_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject Request
+         * @description Once only: reviewing the same request again -> 409.
+         */
+        post: operations["reject_request_api_v1_onboarding_requests__request_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/uploads": {
         parameters: {
             query?: never;
@@ -867,6 +949,194 @@ export interface components {
             /** Assigned Property Ids */
             assigned_property_ids: string[];
         };
+        /** OnboardingApprove */
+        OnboardingApprove: {
+            /**
+             * Bed Id
+             * Format: uuid
+             */
+            bed_id: string;
+            /**
+             * Stay Type
+             * @enum {string}
+             */
+            stay_type: "monthly" | "short_term";
+            /**
+             * Rent Paise
+             * @description Monthly rent, or the daily rate for short_term, in paise
+             */
+            rent_paise: number;
+            /**
+             * Deposit Paise
+             * @description Refundable security deposit
+             */
+            deposit_paise: number;
+            /**
+             * Maintenance Charge Paise
+             * @description One-time, non-refundable
+             */
+            maintenance_charge_paise: number;
+            /**
+             * Check In Date
+             * Format: date
+             */
+            check_in_date: string;
+            /**
+             * Expected Vacate Date
+             * @description Check-out date; required for short_term
+             */
+            expected_vacate_date?: string | null;
+            /** Discount Request Id */
+            discount_request_id?: string | null;
+        };
+        /** OnboardingApproved */
+        OnboardingApproved: {
+            /**
+             * Resident Id
+             * Format: uuid
+             */
+            resident_id: string;
+            /**
+             * Stay Id
+             * Format: uuid
+             */
+            stay_id: string;
+            /**
+             * Invoice Ids
+             * @description Joining invoices: deposit, maintenance_charge, first rent
+             */
+            invoice_ids: string[];
+        };
+        /** OnboardingReject */
+        OnboardingReject: {
+            /** Note */
+            note: string;
+        };
+        /** OnboardingRequestDetail */
+        OnboardingRequestDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /** Property Name */
+            property_name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected";
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone: string;
+            /** Email */
+            email: string | null;
+            /** Date Of Birth */
+            date_of_birth: string | null;
+            /** Permanent Address */
+            permanent_address: string;
+            /**
+             * Occupation
+             * @enum {string}
+             */
+            occupation: "working" | "student" | "other";
+            /** Employer Or College */
+            employer_or_college: string | null;
+            /** Emergency Contact Name */
+            emergency_contact_name: string;
+            /** Emergency Contact Phone */
+            emergency_contact_phone: string;
+            /**
+             * Id Doc Type
+             * @enum {string}
+             */
+            id_doc_type: "aadhaar" | "pan" | "driving_licence" | "voter_id" | "passport";
+            /** Id Doc Number */
+            id_doc_number: string;
+            /** Id Doc Path */
+            id_doc_path: string;
+            /** Selfie Path */
+            selfie_path: string;
+            /**
+             * Id Doc Url
+             * @description Short-lived signed GET URL of the ID photo
+             */
+            id_doc_url: string;
+            /**
+             * Selfie Url
+             * @description Short-lived signed GET URL of the selfie
+             */
+            selfie_url: string;
+            /**
+             * Url Expires In
+             * @description Seconds the signed URLs stay valid
+             */
+            url_expires_in: number;
+            /** Is Foreign National */
+            is_foreign_national: boolean;
+            /** Passport Number */
+            passport_number: string | null;
+            /** Visa Number */
+            visa_number: string | null;
+            /** Visa Expiry */
+            visa_expiry: string | null;
+            /** Accepted Rules */
+            accepted_rules: boolean;
+            /**
+             * Accepted Exit Deduction Paise
+             * @description Amount in paise (₹1 = 100)
+             */
+            accepted_exit_deduction_paise: number;
+            /**
+             * Accepted At
+             * Format: date-time
+             */
+            accepted_at: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Reviewed By */
+            reviewed_by: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Review Note */
+            review_note: string | null;
+            suggested: components["schemas"]["OnboardingSuggested"];
+        };
+        /** OnboardingRequestSummary */
+        OnboardingRequestSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone: string;
+            /**
+             * Occupation
+             * @enum {string}
+             */
+            occupation: "working" | "student" | "other";
+            /** Employer Or College */
+            employer_or_college: string | null;
+            /** Is Foreign National */
+            is_foreign_national: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /**
          * OnboardingSubmit
          * @description The Reception QR form. Photos are object keys from POST /public/join/{qr_slug}/uploads.
@@ -948,6 +1218,32 @@ export interface components {
              * Format: uuid
              */
             request_id: string;
+        };
+        /**
+         * OnboardingSuggested
+         * @description Defaults for the approve form. Caretakers may raise, never lower, rent, deposit and maintenance charge.
+         */
+        OnboardingSuggested: {
+            /**
+             * Rent Paise
+             * @description Monthly: the bed's floor price (needs ?bed_id=). Short-term: the property's daily rate
+             */
+            rent_paise: number | null;
+            /**
+             * Deposit Paise
+             * @description The property's security_deposit_paise
+             */
+            deposit_paise: number;
+            /**
+             * Maintenance Charge Paise
+             * @description The property's maintenance_charge_paise
+             */
+            maintenance_charge_paise: number;
+            /**
+             * First Month Rent Paise
+             * @description Monthly only: pro-rata first month for a check-in today at rent_paise
+             */
+            first_month_rent_paise: number | null;
         };
         /** Property */
         Property: {
@@ -3106,6 +3402,320 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DiscountRequest"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_requests_api_v1_onboarding_requests_get: {
+        parameters: {
+            query?: {
+                status?: ("pending" | "approved" | "rejected") | null;
+                property_id?: string | null;
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingRequestSummary"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_request_api_v1_onboarding_requests__request_id__get: {
+        parameters: {
+            query?: {
+                /** @description Bed being considered: fills suggested.rent_paise */
+                bed_id?: string | null;
+                stay_type?: "monthly" | "short_term";
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingRequestDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    approve_request_api_v1_onboarding_requests__request_id__approve_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OnboardingApprove"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingApproved"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    reject_request_api_v1_onboarding_requests__request_id__reject_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OnboardingReject"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingRequestDetail"];
                 };
             };
             /** @description Unauthorized */

@@ -475,6 +475,104 @@ class OnboardingSubmitted(BaseModel):
     request_id: UUID
 
 
+OnboardingStatus = Literal["pending", "approved", "rejected"]
+StayType = Literal["monthly", "short_term"]
+
+
+class OnboardingRequestSummary(BaseModel):
+    id: UUID
+    full_name: str
+    phone: str
+    occupation: Occupation
+    employer_or_college: str | None
+    is_foreign_national: bool
+    created_at: datetime
+
+
+class OnboardingSuggested(BaseModel):
+    """Defaults for the approve form. Caretakers may raise, never lower, rent, deposit and maintenance charge."""
+
+    rent_paise: Paise | None = Field(
+        description="Monthly: the bed's floor price (needs ?bed_id=). Short-term: the property's daily rate"
+    )
+    deposit_paise: Paise = Field(description="The property's security_deposit_paise")
+    maintenance_charge_paise: Paise = Field(description="The property's maintenance_charge_paise")
+    first_month_rent_paise: Paise | None = Field(
+        description="Monthly only: pro-rata first month for a check-in today at rent_paise"
+    )
+
+
+class OnboardingRequestDetail(BaseModel):
+    id: UUID
+    property_id: UUID
+    property_name: str
+    status: OnboardingStatus
+    full_name: str
+    phone: str
+    email: str | None
+    date_of_birth: date | None
+    permanent_address: str
+    occupation: Occupation
+    employer_or_college: str | None
+    emergency_contact_name: str
+    emergency_contact_phone: str
+    id_doc_type: IdDocType
+    id_doc_number: str
+    id_doc_path: str
+    selfie_path: str
+    id_doc_url: str = Field(description="Short-lived signed GET URL of the ID photo")
+    selfie_url: str = Field(description="Short-lived signed GET URL of the selfie")
+    url_expires_in: int = Field(description="Seconds the signed URLs stay valid")
+    is_foreign_national: bool
+    passport_number: str | None
+    visa_number: str | None
+    visa_expiry: date | None
+    accepted_rules: bool
+    accepted_exit_deduction_paise: Paise
+    accepted_at: datetime
+    created_at: datetime
+    reviewed_by: UUID | None
+    reviewed_at: datetime | None
+    review_note: str | None
+    suggested: OnboardingSuggested
+
+
+class OnboardingApprove(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    bed_id: UUID
+    stay_type: StayType
+    rent_paise: Rent = Field(description="Monthly rent, or the daily rate for short_term, in paise")
+    deposit_paise: Paise = Field(description="Refundable security deposit")
+    maintenance_charge_paise: Paise = Field(description="One-time, non-refundable")
+    check_in_date: date
+    expected_vacate_date: date | None = Field(default=None, description="Check-out date; required for short_term")
+    discount_request_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def _vacate_date(self):
+        if self.stay_type == "short_term":
+            if self.expected_vacate_date is None:
+                raise ValueError("expected_vacate_date is required for a short stay")
+            if self.expected_vacate_date < self.check_in_date:
+                raise ValueError("expected_vacate_date can't be before check_in_date")
+        elif self.expected_vacate_date is not None:
+            raise ValueError("expected_vacate_date is only for short stays; monthly stays end through notice")
+        return self
+
+
+class OnboardingApproved(BaseModel):
+    resident_id: UUID
+    stay_id: UUID
+    invoice_ids: list[UUID] = Field(description="Joining invoices: deposit, maintenance_charge, first rent")
+
+
+class OnboardingReject(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    note: Annotated[str, StringConstraints(min_length=1, max_length=500, strip_whitespace=True)]
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str
