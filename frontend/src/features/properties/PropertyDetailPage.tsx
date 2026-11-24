@@ -80,6 +80,9 @@ export function PropertyDetailPage() {
       </section>
 
       <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
+        <Link to={`/owner/properties/${p.id}/rooms`}>Rooms &amp; beds</Link>
+      </Button>
+      <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
         <Link to={`/owner/properties/${p.id}/poster`}>Reception QR</Link>
       </Button>
 
