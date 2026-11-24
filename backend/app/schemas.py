@@ -272,6 +272,51 @@ class BedBoard(BaseModel):
     rooms: list[BoardRoom]
 
 
+class StaffCreate(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    phone: Phone
+    full_name: Annotated[str, StringConstraints(min_length=1, max_length=120, strip_whitespace=True)]
+    password: Annotated[str, StringConstraints(min_length=8, max_length=128)] = Field(
+        description="Only used for a new account. An existing account keeps its password."
+    )
+    role: Role
+    property_ids: list[UUID] = Field(default_factory=list, description="Buildings a caretaker can see")
+
+
+class StaffUpdate(BaseModel):
+    """Partial update of another member's membership. Owners can't change their own."""
+
+    model_config = {"extra": "forbid"}
+
+    assigned_property_ids: list[UUID] = _optional()
+    is_active: bool = _optional(description="false removes all access to this organization immediately")
+    role: Role = _optional()
+
+    @model_validator(mode="after")
+    def _not_null(self):
+        for name in ("assigned_property_ids", "is_active", "role"):
+            if name in self.model_fields_set and getattr(self, name) is None:
+                raise ValueError(f"{name} may not be null")
+        return self
+
+
+class StaffMember(BaseModel):
+    user_id: UUID
+    full_name: str
+    phone: str
+    role: Role
+    assigned_property_ids: list[UUID]
+    is_active: bool
+
+
+class StaffMemberCreated(StaffMember):
+    existing_account: bool = Field(
+        description="true when the phone already had an account: only a membership was added and the "
+        "person keeps their own name and password"
+    )
+
+
 class JoinInfo(BaseModel):
     property_name: str
     locality: str | None

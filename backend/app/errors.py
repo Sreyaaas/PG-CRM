@@ -34,6 +34,7 @@ _CONSTRAINT_MESSAGES = {
     "users_phone_key": "An account with this phone number already exists.",
     "rooms_property_id_label_key": "A room with this label already exists in this property.",
     "beds_room_id_label_key": "A bed with this label already exists in this room.",
+    "organization_members_org_id_user_id_key": "Already a member of this organization.",
 }
 
 
