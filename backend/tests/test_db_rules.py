@@ -60,8 +60,8 @@ def test_api_role_cannot_read_password_hashes(world: World):
 def _stay(cur, w: World, rent: int, discount_request_id=None, bed=None):
     cur.execute(
         """INSERT INTO stays (org_id, property_id, resident_id, bed_id, stay_type, rent_paise,
-                              deposit_paise, billing_day, check_in_date, discount_request_id)
-           VALUES (%s, %s, %s, %s, 'monthly', %s, 2000000, 5, app.today_ist(), %s) RETURNING id""",
+                              deposit_paise, check_in_date, discount_request_id)
+           VALUES (%s, %s, %s, %s, 'monthly', %s, 2000000, app.today_ist(), %s) RETURNING id""",
         (w.org, w.prop_a, w.resident_a, bed or w.bed_a1, rent, discount_request_id),
     )
     return cur.fetchone()["id"]
@@ -153,8 +153,8 @@ def test_caretaker_cannot_backdate_check_in(world: World):
     with raises_sqlstate("PC002"), as_user(world.caretaker_a, world.org) as cur:
         cur.execute(
             """INSERT INTO stays (org_id, property_id, resident_id, bed_id, stay_type, rent_paise,
-                                  billing_day, check_in_date)
-               VALUES (%s, %s, %s, %s, 'monthly', %s, 1, app.today_ist() - 20)""",
+                                  check_in_date)
+               VALUES (%s, %s, %s, %s, 'monthly', %s, app.today_ist() - 20)""",
             (world.org, world.prop_a, world.resident_a, world.bed_a1, BASE_RENT),
         )
 
