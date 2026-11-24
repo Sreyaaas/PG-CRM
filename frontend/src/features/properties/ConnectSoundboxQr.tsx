@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ApiError, apiClient } from '@/api/client'
 import { useToast } from '@/components/Toast'
+import { ScanLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card, CardHeader } from '@/components/ui/card'
+import { Field } from '@/components/ui/field'
+import { Textarea } from '@/components/ui/input'
+import { Notice } from '@/components/ui/misc'
 import { useOrgId, type UpiPayeeDetails } from './api'
 
 interface BarcodeDetectorLike {
@@ -117,111 +122,101 @@ export function ConnectSoundboxQr({ propertyId }: { propertyId: string }) {
     typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia)
 
   return (
-    <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-slate-900">Connect Soundbox QR</h2>
-
-      {details && !confirmed && (
-        <div className="space-y-3 rounded-md border border-slate-300 p-4" data-testid="upi-confirm">
-          <div className="text-xs text-slate-500">Payee name</div>
-          <div className="text-xl font-semibold text-slate-950">
-            {details.upi_payee_name ?? 'No name in QR'}
-          </div>
-          <div className="text-xs text-slate-500">UPI ID</div>
-          <div className="break-all text-xl font-semibold text-slate-950">{details.upi_vpa}</div>
-          {details.warning && (
-            <div
-              role="alert"
-              className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900"
-            >
-              {details.warning}
+    <Card className="overflow-hidden">
+      <CardHeader title="Connect Soundbox QR" description="Scan the QR on your shop's Soundbox" />
+      <div className="flex flex-col gap-4 p-4 sm:p-5">
+        {details && !confirmed && (
+          <div className="flex flex-col gap-3 rounded-card border border-line-strong bg-surface-2 p-4" data-testid="upi-confirm">
+            <div>
+              <div className="text-[12.5px] text-muted">Payee name</div>
+              <div className="text-[20px] font-bold tracking-[-0.02em] text-ink">
+                {details.upi_payee_name ?? 'No name in QR'}
+              </div>
             </div>
-          )}
-          <p className="text-sm font-medium text-slate-900">
-            Is this your business name and UPI ID?
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              type="button"
-              onClick={() => {
-                setConfirmed(true)
-                showToast('Soundbox QR connected', 'success')
-              }}
-              className="h-11 bg-slate-900 text-sm font-medium text-white hover:bg-slate-800"
-            >
-              Yes, correct
-            </Button>
-            <Button type="button" variant="outline" className="h-11" onClick={() => setDetails(null)}>
-              No, scan again
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {details && confirmed && (
-        <p className="text-sm text-slate-700">
-          Connected to {details.upi_payee_name ?? details.upi_vpa}.{' '}
-          <button
-            type="button"
-            className="underline underline-offset-4"
-            onClick={() => {
-              setDetails(null)
-              setConfirmed(false)
-            }}
-          >
-            Replace QR
-          </button>
-        </p>
-      )}
-
-      {!details && (
-        <div className="space-y-4">
-          {cameraSupported && !scanning && (
-            <Button
-              type="button"
-              onClick={openCamera}
-              className="h-11 w-full bg-slate-900 text-sm font-medium text-white hover:bg-slate-800"
-            >
-              Scan with camera
-            </Button>
-          )}
-          {scanning && (
-            <div className="space-y-2">
-              <video
-                ref={videoRef}
-                playsInline
-                muted
-                className="aspect-square w-full rounded-md bg-slate-900 object-cover"
-              />
-              <Button type="button" variant="outline" className="h-11 w-full" onClick={stopCamera}>
-                Cancel
+            <div>
+              <div className="text-[12.5px] text-muted">UPI ID</div>
+              <div className="break-all text-[20px] font-bold tracking-[-0.02em] text-ink">{details.upi_vpa}</div>
+            </div>
+            {details.warning && (
+              <Notice tone="warning" role="alert">
+                {details.warning}
+              </Notice>
+            )}
+            <p className="text-[14px] font-semibold text-ink">Is this your business name and UPI ID?</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button type="button" variant="secondary" onClick={() => setDetails(null)}>
+                No, scan again
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  setConfirmed(true)
+                  showToast('Soundbox QR connected', 'success')
+                }}
+              >
+                Yes, correct
               </Button>
             </div>
-          )}
+          </div>
+        )}
 
-          <div className="space-y-1.5">
-            <label htmlFor="qr-text" className="block text-sm font-medium text-slate-700">
-              Or paste the QR text
-            </label>
-            <textarea
-              id="qr-text"
-              rows={3}
-              value={pasted}
-              onChange={(e) => setPasted(e.target.value)}
-              placeholder="upi://pay?pa=..."
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
-            />
+        {details && confirmed && (
+          <Notice tone="success">
+            Connected to {details.upi_payee_name ?? details.upi_vpa}.{' '}
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4"
+              onClick={() => {
+                setDetails(null)
+                setConfirmed(false)
+              }}
+            >
+              Replace QR
+            </button>
+          </Notice>
+        )}
+
+        {!details && (
+          <>
+            {cameraSupported && !scanning && (
+              <Button type="button" block onClick={openCamera}>
+                <ScanLine aria-hidden="true" />
+                Scan with camera
+              </Button>
+            )}
+            {scanning && (
+              <div className="flex flex-col gap-2">
+                <video ref={videoRef} playsInline muted className="aspect-square w-full rounded-card bg-black object-cover" />
+                <Button type="button" variant="secondary" block onClick={stopCamera}>
+                  Cancel
+                </Button>
+              </div>
+            )}
+
+            <Field id="qr-text" label="Or paste the QR text">
+              <Textarea
+                id="qr-text"
+                rows={3}
+                value={pasted}
+                onChange={(e) => setPasted(e.target.value)}
+                placeholder="upi://pay?pa=..."
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </Field>
             <Button
               type="button"
-              variant="outline"
-              className="h-11 w-full"
+              variant="secondary"
+              block
               disabled={!pasted.trim() || submitMutation.isPending}
               onClick={() => submitMutation.mutate(pasted.trim())}
             >
               {submitMutation.isPending ? 'Reading…' : 'Read QR text'}
             </Button>
-          </div>
-        </div>
-      )}
-    </section>
+          </>
+        )}
+      </div>
+    </Card>
   )
 }

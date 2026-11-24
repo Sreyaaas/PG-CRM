@@ -40,7 +40,8 @@ test.describe.serial('Staff, end to end', () => {
     await page.getByRole('button', { name: 'Add caretaker' }).click()
     await expect(page.getByText(name)).toBeVisible()
 
-    await page.getByRole('button', { name: 'Log out' }).click()
+    await page.getByRole('button', { name: 'Account menu' }).click()
+    await page.getByRole('menuitem', { name: 'Log out' }).click()
     await login(page, phone, caretakerPassword)
     await expect(page).toHaveURL(/\/caretaker$/)
 

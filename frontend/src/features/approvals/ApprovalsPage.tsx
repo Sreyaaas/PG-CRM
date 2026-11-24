@@ -1,6 +1,9 @@
 import { useRef, useState } from 'react'
 import { useToast } from '@/components/Toast'
+import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { EmptyState, LoadingRows, Notice, PageHeader } from '@/components/ui/misc'
 import { DiscountRequestCard } from './DiscountRequestCard'
 import { useDecideDiscount, usePendingDiscounts } from './useDiscountRequests'
 
@@ -19,7 +22,7 @@ export function ApprovalsPage() {
 
   return (
     <div
-      className="space-y-4"
+      className="flex flex-col gap-5"
       onTouchStart={(e) => {
         touchStartY.current = window.scrollY <= 0 ? e.touches[0].clientY : null
       }}
@@ -31,30 +34,35 @@ export function ApprovalsPage() {
         }
       }}
     >
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-        <h1 className="text-xl font-semibold tracking-tight text-slate-950">Approvals</h1>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-9"
-          disabled={query.isFetching}
-          onClick={() => void query.refetch()}
-        >
-          {query.isFetching ? 'Refreshing…' : 'Refresh'}
-        </Button>
-      </div>
+      <PageHeader
+        title="Approvals"
+        description="Discount requests from your caretakers."
+        actions={
+          <Button type="button" variant="secondary" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}>
+            <RefreshCw aria-hidden="true" className={query.isFetching ? 'animate-spin' : undefined} />
+            {query.isFetching ? 'Refreshing…' : 'Refresh'}
+          </Button>
+        }
+      />
 
-      {query.isLoading && <p className="text-sm text-slate-500">Loading…</p>}
-      {query.isError && (
-        <p role="alert" className="text-sm text-red-700">
-          {query.error instanceof Error ? query.error.message : 'Unable to load approvals.'}
-        </p>
+      {query.isLoading && (
+        <Card>
+          <LoadingRows label="Loading…" />
+        </Card>
       )}
-      {query.data && total === 0 && <p className="text-sm text-slate-500">Nothing to approve.</p>}
+      {query.isError && (
+        <Notice role="alert">
+          {query.error instanceof Error ? query.error.message : 'Unable to load approvals.'}
+        </Notice>
+      )}
+      {query.data && total === 0 && (
+        <Card>
+          <EmptyState>Nothing to approve.</EmptyState>
+        </Card>
+      )}
 
       {discounts.length > 0 && (
-        <ul className="space-y-3" aria-label="Discount requests">
+        <ul className="flex flex-col gap-3" aria-label="Discount requests">
           {discounts.map((r) => (
             <DiscountRequestCard
               key={r.id}

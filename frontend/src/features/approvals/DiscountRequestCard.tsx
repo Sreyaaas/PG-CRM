@@ -3,6 +3,7 @@ import type { components } from '@/api/schema'
 import { DateText } from '@/components/DateText'
 import { Money } from '@/components/Money'
 import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/input'
 
 export type DiscountRequest = components['schemas']['DiscountRequest']
 
@@ -26,61 +27,60 @@ export function DiscountRequestCard({ request: r, busy, onDecide }: Props) {
   const cut = r.difference_paise >= 0
 
   return (
-    <li className="rounded-lg border border-slate-200 bg-white p-4" data-testid="discount-card">
+    <li className="rounded-card border border-line bg-surface p-4 shadow-sm sm:p-5" data-testid="discount-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="truncate text-sm font-semibold text-slate-950">
+          <div className="truncate text-[14px] font-semibold text-ink">
             {r.property_name} · {r.bed_label}
           </div>
-          {r.resident_name && <div className="truncate text-xs text-slate-500">{r.resident_name}</div>}
+          {r.resident_name && <div className="truncate text-[12.5px] text-muted">{r.resident_name}</div>}
         </div>
-        <span className="shrink-0 text-xs text-slate-500">Discount</span>
+        <span className="shrink-0 text-[12.5px] text-muted">Discount</span>
       </div>
 
-      <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+      <dl className="mt-3 grid grid-cols-2 gap-3 text-[14px]">
         <div>
-          <dt className="text-xs text-slate-500">Floor rent</dt>
-          <dd className="font-medium text-slate-950">
+          <dt className="text-[12.5px] text-muted">Floor rent</dt>
+          <dd className="font-medium text-ink">
             <Money paise={r.base_rent_paise} />
           </dd>
         </div>
         <div>
-          <dt className="text-xs text-slate-500">Requested rent</dt>
-          <dd className="font-medium text-slate-950">
+          <dt className="text-[12.5px] text-muted">Requested rent</dt>
+          <dd className="font-medium text-ink">
             <Money paise={r.requested_rent_paise} />
           </dd>
         </div>
       </dl>
-      <div className="mt-2 text-sm font-semibold tabular-nums text-red-700" data-testid="discount-diff">
+      <div className="mt-2 text-[14px] font-semibold tabular-nums font-medium text-danger-ink" data-testid="discount-diff">
         {cut ? '−' : '+'}
         <Money paise={Math.abs(r.difference_paise)} />
         /month
       </div>
 
-      <p className="mt-3 text-sm text-slate-700">{r.reason}</p>
-      <p className="mt-1 text-xs text-slate-500">
+      <p className="mt-3 text-[14px] text-ink">{r.reason}</p>
+      <p className="mt-1 text-[12.5px] text-muted">
         {r.requested_by_name} · <DateText value={r.created_at} />{' '}
         <span className="tabular-nums">{TIME_FORMATTER.format(new Date(r.created_at))}</span>
       </p>
 
       {rejecting ? (
         <div className="mt-4 space-y-2">
-          <label htmlFor={noteId} className="block text-sm font-medium text-slate-700">
+          <label htmlFor={noteId} className="block text-[14px] font-medium text-ink">
             Note (optional)
           </label>
-          <textarea
+          <Textarea
             id={noteId}
             rows={2}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
           />
           <div className="grid grid-cols-2 gap-2">
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               disabled={busy}
-              className="h-11"
+              
               onClick={() => setRejecting(false)}
             >
               Cancel
@@ -88,7 +88,7 @@ export function DiscountRequestCard({ request: r, busy, onDecide }: Props) {
             <Button
               type="button"
               disabled={busy}
-              className="h-11 bg-slate-900 text-white hover:bg-slate-800"
+              
               onClick={() => onDecide('rejected', note)}
             >
               Confirm reject
@@ -99,9 +99,9 @@ export function DiscountRequestCard({ request: r, busy, onDecide }: Props) {
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             disabled={busy}
-            className="h-11"
+            
             onClick={() => setRejecting(true)}
           >
             Reject
@@ -109,7 +109,7 @@ export function DiscountRequestCard({ request: r, busy, onDecide }: Props) {
           <Button
             type="button"
             disabled={busy}
-            className="h-11 bg-slate-900 text-white hover:bg-slate-800"
+            
             onClick={() => onDecide('approved')}
           >
             Approve
