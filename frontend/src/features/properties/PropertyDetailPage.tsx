@@ -79,6 +79,10 @@ export function PropertyDetailPage() {
         </dl>
       </section>
 
+      <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
+        <Link to={`/owner/properties/${p.id}/poster`}>Reception QR</Link>
+      </Button>
+
       <ConnectSoundboxQr propertyId={p.id} />
     </div>
   )

@@ -11,6 +11,7 @@ import { CaretakerLayoutRoute, OwnerLayoutRoute, RoleRedirect } from './Protecte
 import { PropertiesListPage } from '@/features/properties/PropertiesListPage'
 import { PropertyDetailPage } from '@/features/properties/PropertyDetailPage'
 import { PropertyCreatePage, PropertyEditPage } from '@/features/properties/PropertyFormPage'
+import { PosterPage } from '@/features/poster/PosterPage'
 import { SignupPage } from './SignupPage'
 
 export function AppRouter() {
@@ -29,6 +30,7 @@ export function AppRouter() {
         <Route path="properties/new" element={<PropertyCreatePage />} />
         <Route path="properties/:propertyId" element={<PropertyDetailPage />} />
         <Route path="properties/:propertyId/edit" element={<PropertyEditPage />} />
+        <Route path="properties/:propertyId/poster" element={<PosterPage />} />
         <Route path="money" element={<OwnerDashboardPage section="Money" />} />
         <Route path="more" element={<OwnerMorePage />} />
         <Route path="staff" element={<StaffPage />} />
