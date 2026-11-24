@@ -1,13 +1,11 @@
 """BE-12: rooms, beds and the bed board."""
 
 import pytest
-from conftest import BASE_RENT, World, as_user, raises_sqlstate
-from fastapi.testclient import TestClient
+from conftest import BASE_RENT, World, api_client, as_user, raises_sqlstate
 
-from app.main import app
 from app.security import create_access_token
 
-client = TestClient(app)
+client = api_client()
 AREA_WARNING = "Below 70 sq ft per resident (GBA rule)"
 
 

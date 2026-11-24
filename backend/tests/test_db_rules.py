@@ -4,7 +4,7 @@ These tests are the spec for the database. A Rust backend later must pass the
 same behaviour because the rules live in SQL, not in Python.
 """
 
-from conftest import BASE_RENT, World, as_user, raises_sqlstate, rand_phone, rand_utr
+from conftest import BASE_RENT, World, api_client, as_user, raises_sqlstate, rand_phone, rand_utr
 
 # --------------------------------------------------------------------------
 # Multi-tenant isolation
@@ -375,3 +375,50 @@ def test_public_onboarding_intake(world: World):
     with as_user(world.caretaker_b, world.org) as cur:
         cur.execute("SELECT count(*) AS n FROM onboarding_requests")
         assert cur.fetchone()["n"] == 0
+
+
+def _session_user(c) -> dict:
+    """Sign up through the API so a real session (refresh token) exists."""
+    r = c.post(
+        "/api/v1/auth/signup",
+        json={"phone": rand_phone(), "full_name": "Meera", "password": "s3cret-pass", "organization_name": "M PGs"},
+    )
+    assert r.status_code == 201, r.text
+    return {"phone": r.json()["me"]["phone"], **r.json()}
+
+
+# --------------------------------------------------------------------------
+# BE-51: sessions and rate limits
+# --------------------------------------------------------------------------
+
+
+def test_users_only_see_and_change_their_own_sessions(admin):
+    c = api_client()
+    a, b = _session_user(c), _session_user(c)
+    ids = {
+        k: admin.execute("SELECT id FROM users WHERE phone = %s", (u["phone"],)).fetchone()["id"]
+        for k, u in (("a", a), ("b", b))
+    }
+    with as_user(ids["a"]) as cur:
+        cur.execute("SELECT DISTINCT user_id FROM sessions")
+        assert [r["user_id"] for r in cur.fetchall()] == [ids["a"]]
+        cur.execute("UPDATE sessions SET revoked_at = now() WHERE user_id = %s", (ids["b"],))
+        assert cur.rowcount == 0
+    with raises_sqlstate("42501"), as_user(ids["a"]) as cur:
+        cur.execute("UPDATE sessions SET expires_at = now() + interval '10 years' WHERE user_id = %s", (ids["a"],))
+    with raises_sqlstate("42501"), as_user(ids["a"]) as cur:
+        cur.execute("SELECT * FROM rate_limit_events")
+    assert c.post("/api/v1/auth/refresh", json={"refresh_token": b["refresh_token"]}).status_code == 200
+
+
+def test_revoked_session_cannot_be_revived_or_deleted(admin):
+    c = api_client()
+    user = _session_user(c)
+    c.post("/api/v1/auth/logout", json={"refresh_token": user["refresh_token"]})
+    with raises_sqlstate("PC001"):
+        admin.execute(
+            "UPDATE sessions SET revoked_at = NULL WHERE user_id = (SELECT id FROM users WHERE phone = %s)",
+            (user["phone"],),
+        )
+    with raises_sqlstate("PC001"):
+        admin.execute("DELETE FROM sessions WHERE user_id = (SELECT id FROM users WHERE phone = %s)", (user["phone"],))

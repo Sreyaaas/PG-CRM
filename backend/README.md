@@ -8,7 +8,7 @@ the same database, migrations and `contract/openapi.json` unchanged.
 Needs Python 3.11+, [uv](https://docs.astral.sh/uv/), Docker.
 
 ```bash
-docker compose up -d db minio               # from repo root
+docker compose up -d db s3                  # from repo root
 cd backend
 cp .env.example .env
 uv sync
