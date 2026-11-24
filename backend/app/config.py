@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     jwt_ttl_minutes: int = 15
     refresh_ttl_days: int = 30
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:4173"]
+    # true only when the API runs behind our own reverse proxy, which sets X-Forwarded-For. Then the client IP
+    # (rate limits, the IP stored on onboarding requests) is the last address that proxy appended. Never turn it
+    # on when clients reach the API directly: they could send any X-Forwarded-For.
+    trust_forwarded_for: bool = False
 
     # Private file storage: any S3-compatible service (RustFS locally; Supabase Storage / AWS S3 / R2 in prod).
     s3_endpoint: str | None = "http://localhost:9000"  # None = AWS S3 itself

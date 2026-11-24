@@ -10,6 +10,8 @@ from fastapi import Request
 from psycopg import Cursor
 from psycopg.rows import DictRow
 
+from app.config import get_settings
+
 
 @dataclass(frozen=True)
 class Limit:
@@ -34,8 +36,14 @@ class RateLimited(Exception):
 
 
 def client_ip(request: Request) -> str:
-    """The direct peer. Behind a proxy, run uvicorn with --proxy-headers and --forwarded-allow-ips=<proxy> so this
-    is the real client; never trust X-Forwarded-For from anyone else."""
+    """The direct peer, unless `PGCRM_TRUST_FORWARDED_FOR` says we're behind our own proxy: then the last address in
+    X-Forwarded-For (the one our proxy appended; earlier entries come from the client and can be forged).
+    Alternatively run uvicorn with --proxy-headers and --forwarded-allow-ips=<proxy>."""
+    if get_settings().trust_forwarded_for:
+        forwarded = request.headers.get("x-forwarded-for", "")
+        last = forwarded.rsplit(",", 1)[-1].strip()
+        if last:
+            return last
     return request.client.host if request.client else "unknown"
 
 

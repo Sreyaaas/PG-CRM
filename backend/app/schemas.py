@@ -429,6 +429,52 @@ class JoinInfo(BaseModel):
     notice_deadline_day: int
 
 
+Text = Annotated[str, StringConstraints(min_length=1, max_length=500, strip_whitespace=True)]
+OptionalText = Annotated[str, StringConstraints(max_length=500, strip_whitespace=True)] | None
+ContactPhone = Annotated[str, StringConstraints(pattern=r"^[0-9+ ]{10,15}$")]
+Occupation = Literal["working", "student", "other"]
+IdDocType = Literal["aadhaar", "pan", "driving_licence", "voter_id", "passport"]
+
+
+class OnboardingSubmit(BaseModel):
+    """The Reception QR form. Photos are object keys from POST /public/join/{qr_slug}/uploads."""
+
+    model_config = {"extra": "forbid"}
+
+    full_name: Text
+    phone: Phone = Field(description="10 digits, starting 6-9")
+    email: OptionalText = None
+    date_of_birth: date | None = None
+    permanent_address: Text
+    occupation: Occupation
+    employer_or_college: OptionalText = None
+    emergency_contact_name: Text
+    emergency_contact_phone: ContactPhone
+    id_doc_type: IdDocType
+    id_doc_number: Text
+    id_doc_path: Text = Field(description="object_key of the ID photo upload (onboarding/{property_id}/...)")
+    selfie_path: Text = Field(description="object_key of the live selfie upload (onboarding/{property_id}/...)")
+    is_foreign_national: bool = False
+    passport_number: OptionalText = Field(default=None, description="Required for foreign nationals")
+    visa_number: OptionalText = Field(default=None, description="Required for foreign nationals")
+    visa_expiry: date | None = None
+    accepted_rules: Literal[True]
+    accepted_exit_deduction_paise: Paise = Field(
+        description="The exit_deduction_paise shown on the form (from GET /public/join/{qr_slug}), unchanged"
+    )
+
+    @model_validator(mode="after")
+    def _blank_is_missing(self):
+        for name in ("email", "employer_or_college", "passport_number", "visa_number"):
+            if getattr(self, name) == "":
+                setattr(self, name, None)
+        return self
+
+
+class OnboardingSubmitted(BaseModel):
+    request_id: UUID
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str

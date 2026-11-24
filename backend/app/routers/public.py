@@ -5,11 +5,16 @@ They run with no user context, so RLS denies all table access; only the
 SECURITY DEFINER functions in schema `api` are callable.
 """
 
+import ipaddress
+import json
+
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from app import ratelimit, storage
 from app.db import transaction
-from app.schemas import JoinInfo, PublicUploadRequest, UploadTicket
+from app.errors import error_body
+from app.schemas import JoinInfo, OnboardingSubmit, OnboardingSubmitted, PublicUploadRequest, UploadTicket
 
 router = APIRouter(prefix="/public", tags=["public"])
 
@@ -45,3 +50,47 @@ def join_upload(qr_slug: str, body: PublicUploadRequest, request: Request) -> Up
         upload_url=storage.presign_put(key, body.content_type, body.size_bytes),
         expires_in=storage.UPLOAD_TTL,
     )
+
+
+def _inet(ip: str) -> str | None:
+    try:
+        return str(ipaddress.ip_address(ip))
+    except ValueError:
+        return None
+
+
+@router.post(
+    "/join/{qr_slug}",
+    response_model=OnboardingSubmitted,
+    status_code=201,
+    responses={422: {"description": "Inactive QR code, stale exit deduction, bad photos, already pending"}},
+)
+def join_submit(qr_slug: str, body: OnboardingSubmit, request: Request) -> OnboardingSubmitted | JSONResponse:
+    """Submit the onboarding form. No sign-in; 5 submissions per IP per hour. Returns only the request id.
+
+    The rules (active QR, exit deduction unchanged, one pending request per phone, passport + visa for foreign
+    nationals, photos under onboarding/{property_id}/) are enforced by `api.public_submit_onboarding`; this route
+    only adds the storage check that the photos were really uploaded."""
+    ip = ratelimit.client_ip(request)
+    with transaction() as cur:  # its own transaction, so a rejected attempt still counts
+        ratelimit.hit(cur, ratelimit.PUBLIC_JOIN_SUBMIT_IP, ip)
+    with transaction() as cur:
+        cur.execute("SELECT api.public_upload_property(%s) AS id", (qr_slug,))
+        property_id = cur.fetchone()["id"]
+    if property_id is None:
+        return JSONResponse(status_code=422, content=error_body("invalid", "This QR code is not active"))
+
+    prefix = f"onboarding/{property_id}/"
+    for key in (body.id_doc_path, body.selfie_path):
+        if not key.startswith(prefix) or not storage.object_exists(key)[0]:
+            return JSONResponse(
+                status_code=422,
+                content=error_body("invalid", "Please upload the ID photo and selfie again."),
+            )
+
+    with transaction() as cur:
+        cur.execute(
+            "SELECT api.public_submit_onboarding(%s, %s::jsonb, %s::inet, %s) AS id",
+            (qr_slug, json.dumps(body.model_dump(mode="json")), _inet(ip), request.headers.get("user-agent")),
+        )
+        return OnboardingSubmitted(request_id=cur.fetchone()["id"])

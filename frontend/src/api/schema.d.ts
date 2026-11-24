@@ -471,7 +471,15 @@ export interface paths {
         /** Join Info */
         get: operations["join_info_api_v1_public_join__qr_slug__get"];
         put?: never;
-        post?: never;
+        /**
+         * Join Submit
+         * @description Submit the onboarding form. No sign-in; 5 submissions per IP per hour. Returns only the request id.
+         *
+         *     The rules (active QR, exit deduction unchanged, one pending request per phone, passport + visa for foreign
+         *     nationals, photos under onboarding/{property_id}/) are enforced by `api.public_submit_onboarding`; this route
+         *     only adds the storage check that the photos were really uploaded.
+         */
+        post: operations["join_submit_api_v1_public_join__qr_slug__post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -858,6 +866,88 @@ export interface components {
             role: "owner" | "caretaker";
             /** Assigned Property Ids */
             assigned_property_ids: string[];
+        };
+        /**
+         * OnboardingSubmit
+         * @description The Reception QR form. Photos are object keys from POST /public/join/{qr_slug}/uploads.
+         */
+        OnboardingSubmit: {
+            /** Full Name */
+            full_name: string;
+            /**
+             * Phone
+             * @description 10 digits, starting 6-9
+             */
+            phone: string;
+            /** Email */
+            email?: string | null;
+            /** Date Of Birth */
+            date_of_birth?: string | null;
+            /** Permanent Address */
+            permanent_address: string;
+            /**
+             * Occupation
+             * @enum {string}
+             */
+            occupation: "working" | "student" | "other";
+            /** Employer Or College */
+            employer_or_college?: string | null;
+            /** Emergency Contact Name */
+            emergency_contact_name: string;
+            /** Emergency Contact Phone */
+            emergency_contact_phone: string;
+            /**
+             * Id Doc Type
+             * @enum {string}
+             */
+            id_doc_type: "aadhaar" | "pan" | "driving_licence" | "voter_id" | "passport";
+            /** Id Doc Number */
+            id_doc_number: string;
+            /**
+             * Id Doc Path
+             * @description object_key of the ID photo upload (onboarding/{property_id}/...)
+             */
+            id_doc_path: string;
+            /**
+             * Selfie Path
+             * @description object_key of the live selfie upload (onboarding/{property_id}/...)
+             */
+            selfie_path: string;
+            /**
+             * Is Foreign National
+             * @default false
+             */
+            is_foreign_national: boolean;
+            /**
+             * Passport Number
+             * @description Required for foreign nationals
+             */
+            passport_number?: string | null;
+            /**
+             * Visa Number
+             * @description Required for foreign nationals
+             */
+            visa_number?: string | null;
+            /** Visa Expiry */
+            visa_expiry?: string | null;
+            /**
+             * Accepted Rules
+             * @constant
+             */
+            accepted_rules: true;
+            /**
+             * Accepted Exit Deduction Paise
+             * @description The exit_deduction_paise shown on the form (from GET /public/join/{qr_slug}), unchanged
+             */
+            accepted_exit_deduction_paise: number;
+        };
+        /** OnboardingSubmitted */
+        OnboardingSubmitted: {
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
         };
         /** Property */
         Property: {
@@ -3283,6 +3373,75 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    join_submit_api_v1_public_join__qr_slug__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                qr_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OnboardingSubmit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingSubmitted"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Inactive QR code, stale exit deduction, bad photos, already pending */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Too Many Requests */
             429: {
