@@ -18,7 +18,7 @@ class Settings(BaseSettings):
 
     jwt_secret: str = DEV_JWT_SECRET
     jwt_ttl_minutes: int = 12 * 60  # one caretaker shift
-    cors_origins: list[str] = ["http://localhost:5173"]
+    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:4173"]
 
     @model_validator(mode="after")
     def _no_dev_secret_in_prod(self) -> "Settings":
