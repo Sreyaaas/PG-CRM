@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import errors
 from app.config import get_settings
 from app.db import close_pool
-from app.routers import auth, properties, public, rooms
+from app.routers import auth, properties, public, rooms, staff
 from app.schemas import ErrorResponse
 
 API_PREFIX = "/api/v1"
@@ -44,7 +44,7 @@ def create_app() -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
-    for r in (auth.router, properties.router, rooms.router, public.router):
+    for r in (auth.router, properties.router, rooms.router, staff.router, public.router):
         app.include_router(r, prefix=API_PREFIX)
     return app
 
