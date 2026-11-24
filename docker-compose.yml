@@ -1,5 +1,5 @@
 # Local development services. The API itself runs on your machine (see backend/README.md).
-#   docker compose up -d            -> Postgres + MinIO
+#   docker compose up -d            -> Postgres + S3 (RustFS)
 #   docker compose run --rm migrate -> apply db/migrations
 services:
   db:
@@ -33,18 +33,18 @@ services:
     profiles: ["tools"]
 
   # S3-compatible storage for KYC IDs, selfies and expense photos (private bucket).
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+  # RustFS: MinIO-compatible, no account needed. The API creates the bucket on startup in dev/test.
+  # (minio/minio and bitnami/minio can no longer be pulled; LocalStack now needs an account token. See BE-20.)
+  s3:
+    image: rustfs/rustfs:latest
     environment:
-      MINIO_ROOT_USER: pgcrm
-      MINIO_ROOT_PASSWORD: pgcrm-dev-secret
+      RUSTFS_ACCESS_KEY: pgcrm
+      RUSTFS_SECRET_KEY: pgcrm-dev-secret
     ports:
       - "9000:9000"
-      - "9001:9001"
     volumes:
-      - miniodata:/data
+      - s3data:/data
 
 volumes:
   pgdata:
-  miniodata:
+  s3data:

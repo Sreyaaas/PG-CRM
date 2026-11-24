@@ -54,7 +54,7 @@ in Chrome.
 
 | ID | Track | Ticket | Depends on |
 |---|---|---|---|
-| [BE-20](https://github.com/Sreyaaas/PG-CRM/issues/13) | BE | File uploads: presigned PUT/GET URLs for a **private** bucket (MinIO locally). Kinds: `kyc_id`, `selfie`, `expense_proof`. Size/type limits, short TTLs. Public onboarding uploads scoped to a QR slug | BE-01 |
+| [BE-20](https://github.com/Sreyaaas/PG-CRM/issues/13) | BE | File uploads: presigned PUT/GET URLs for a **private** bucket (RustFS locally). Kinds: `kyc_id`, `selfie`, `expense_proof`. Size/type limits, short TTLs. Public onboarding uploads scoped to a QR slug | BE-01 |
 | [BE-21](https://github.com/Sreyaaas/PG-CRM/issues/14) | BE | `POST /public/join/{slug}`: submit onboarding (wraps `api.public_submit_onboarding`), rate limit per IP + phone | BE-20 |
 | [BE-22](https://github.com/Sreyaaas/PG-CRM/issues/15) | BE | Onboarding queue: list pending; **approve** creates resident + stay (+ deposit invoice) in one transaction; reject with note | BE-21 |
 | [BE-23](https://github.com/Sreyaaas/PG-CRM/issues/16) | BE | Discount requests: caretaker creates, owner lists pending and approves/rejects (1 tap) | BE-12 |

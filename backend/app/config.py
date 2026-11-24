@@ -4,6 +4,7 @@ from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEV_JWT_SECRET = "dev-only-change-me-dev-only-change-me"
+DEV_S3_SECRET = "pgcrm-dev-secret"
 
 
 class Settings(BaseSettings):
@@ -22,6 +23,13 @@ class Settings(BaseSettings):
     refresh_ttl_days: int = 30
     cors_origins: list[str] = ["http://localhost:5173"]
 
+    # Private file storage: any S3-compatible service (RustFS locally; Supabase Storage / AWS S3 / R2 in prod).
+    s3_endpoint: str | None = "http://localhost:9000"  # None = AWS S3 itself
+    s3_bucket: str = "pgcrm-private"
+    s3_access_key: str = "pgcrm"
+    s3_secret_key: str = DEV_S3_SECRET
+    s3_region: str = "us-east-1"
+
     # Error + performance monitoring. Off when no DSN is set (dev, tests).
     sentry_dsn: str | None = None
     sentry_traces_sample_rate: float = 0.1
@@ -32,6 +40,8 @@ class Settings(BaseSettings):
         if self.environment == "prod":
             if self.jwt_secret == DEV_JWT_SECRET:
                 raise ValueError("PGCRM_JWT_SECRET must be set in production")
+            if self.s3_secret_key == DEV_S3_SECRET:
+                raise ValueError("PGCRM_S3_SECRET_KEY must be set in production")
             bad = [o for o in self.cors_origins if o == "*" or not o.startswith("https://") or "localhost" in o]
             if not self.cors_origins or bad:
                 raise ValueError(f"PGCRM_CORS_ORIGINS must list only the real https frontend origin(s), got {bad}")
