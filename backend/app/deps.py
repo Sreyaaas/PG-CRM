@@ -12,18 +12,22 @@ from psycopg import Cursor
 from psycopg.rows import DictRow
 
 from app.db import transaction
-from app.security import decode_access_token
+from app.security import AccessClaims, decode_access_claims
 
 _bearer = HTTPBearer(auto_error=False)
 
 
-def current_user_id(
+def current_claims(
     creds: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
-) -> UUID:
-    user_id = decode_access_token(creds.credentials) if creds else None
-    if user_id is None:
+) -> AccessClaims:
+    claims = decode_access_claims(creds.credentials) if creds else None
+    if claims is None:
         raise HTTPException(401, "Not signed in", headers={"WWW-Authenticate": "Bearer"})
-    return user_id
+    return claims
+
+
+def current_user_id(claims: Annotated[AccessClaims, Depends(current_claims)]) -> UUID:
+    return claims.user_id
 
 
 @dataclass(frozen=True)
@@ -63,4 +67,5 @@ def require_owner(cur: Cursor[DictRow], message: str = "Only the owner can do th
 
 
 UserId = Annotated[UUID, Depends(current_user_id)]
+Claims = Annotated[AccessClaims, Depends(current_claims)]
 Org = Annotated[OrgContext, Depends(org_context)]
