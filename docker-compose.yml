@@ -1,0 +1,50 @@
+# Local development services. The API itself runs on your machine (see backend/README.md).
+#   docker compose up -d            -> Postgres + MinIO
+#   docker compose run --rm migrate -> apply db/migrations
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: pgcrm
+      POSTGRES_PASSWORD: pgcrm
+      POSTGRES_DB: pgcrm
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pgcrm"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    image: ghcr.io/amacneil/dbmate:2
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://pgcrm:pgcrm@db:5432/pgcrm?sslmode=disable
+      DBMATE_MIGRATIONS_DIR: /db/migrations
+      DBMATE_NO_DUMP_SCHEMA: "true"
+    volumes:
+      - ./db:/db
+    command: ["--wait", "up"]
+    profiles: ["tools"]
+
+  # S3-compatible storage for KYC IDs, selfies and expense photos (private bucket).
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: pgcrm
+      MINIO_ROOT_PASSWORD: pgcrm-dev-secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
+volumes:
+  pgdata:
+  miniodata:
