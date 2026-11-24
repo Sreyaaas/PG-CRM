@@ -1,0 +1,125 @@
+# CI + ticket verification.
+#  * Every PR must name its ticket in the title or branch (e.g. "BE-31: log payment" or "be-31-log-payment"),
+#    or contain "[no-ticket]" for chores. The ticket's acceptance criteria are checked by tools/verify_ticket.py
+#    and the report is posted as a PR comment. Ticking a manual criterion in the PR description re-runs it.
+#  * Pushes to main run the full backend (and, once it exists, frontend) checks.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: pgcrm
+          POSTGRES_PASSWORD: pgcrm
+          POSTGRES_DB: pgcrm
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U pgcrm" --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      PGCRM_DATABASE_URL: postgresql://pgcrm:pgcrm@localhost:5432/pgcrm
+      PGCRM_ENVIRONMENT: test
+      GH_TOKEN: ${{ github.token }}
+      HAS_FRONTEND: ${{ hashFiles('frontend/package.json') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Which ticket?
+        id: ticket
+        if: github.event_name == 'pull_request'
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          T=$(printf '%s %s' "$TITLE" "$BRANCH" | grep -oiE '(^|[^A-Za-z])(BE|FE)-[0-9]+' | head -1 | grep -oiE '(BE|FE)-[0-9]+' | tr a-z A-Z || true)
+          if [ -z "$T" ] && ! printf '%s' "$TITLE" | grep -qi '\[no-ticket\]'; then
+            echo "::error::Put the ticket ID in the PR title (e.g. 'BE-31: Log payment') or add [no-ticket] for chores."
+            exit 1
+          fi
+          echo "id=$T" >> "$GITHUB_OUTPUT"
+
+      - uses: astral-sh/setup-uv@v6
+      - name: Backend setup + migrations
+        working-directory: backend
+        run: |
+          uv sync
+          uv run python scripts/migrate.py
+
+      - name: Verifier self-test
+        working-directory: backend
+        run: uv run pytest ../tools/tests -q
+
+      - uses: actions/setup-node@v4
+        if: env.HAS_FRONTEND == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Frontend install
+        if: env.HAS_FRONTEND == 'true'
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium || true
+
+      - name: Start API with demo data (frontend e2e)
+        if: env.HAS_FRONTEND == 'true' && startsWith(steps.ticket.outputs.id, 'FE-')
+        working-directory: backend
+        run: |
+          uv run python scripts/seed_dev.py
+          nohup uv run uvicorn app.main:app --port 8000 > "$RUNNER_TEMP/api.log" 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 1; done
+
+      # ---- PR with a ticket: verify its acceptance criteria -------------------------------------------
+      - name: Verify ticket ${{ steps.ticket.outputs.id }}
+        id: verify
+        if: steps.ticket.outputs.id != ''
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s' "$PR_BODY" > "$RUNNER_TEMP/pr.md"
+          python3 tools/verify_ticket.py "${{ steps.ticket.outputs.id }}" --repo "${{ github.repository }}" \
+            --pr-body-file "$RUNNER_TEMP/pr.md" --report "$RUNNER_TEMP/report.md"
+
+      - name: Post verification report on the PR
+        if: always() && steps.ticket.outputs.id != '' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          [ -f "$RUNNER_TEMP/report.md" ] || exit 0
+          gh pr comment "${{ github.event.pull_request.number }}" --edit-last --body-file "$RUNNER_TEMP/report.md" \
+            || gh pr comment "${{ github.event.pull_request.number }}" --body-file "$RUNNER_TEMP/report.md"
+
+      # ---- main, or a [no-ticket] PR: full checks ----------------------------------------------------
+      - name: Backend checks
+        if: steps.ticket.outputs.id == ''
+        working-directory: backend
+        run: |
+          uv run ruff check . ../tools
+          uv run ruff format --check . ../tools
+          uv run pytest
+          uv run python scripts/export_openapi.py --check
+
+      - name: Frontend checks
+        if: steps.ticket.outputs.id == '' && env.HAS_FRONTEND == 'true'
+        working-directory: frontend
+        run: |
+          npm run gen:api
+          npm run typecheck
+          npm run build
+          npm run test:unit

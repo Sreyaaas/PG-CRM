@@ -10,9 +10,23 @@ Read this before writing code. If a rule here conflicts with what an issue seems
 
 ## Don't guess
 - Build exactly what the issue says. Don't invent endpoints, fields, tables, enum values, libraries or user flows.
-- If something is missing, unclear or contradicts the code: **comment on the issue and wait**. Open decisions are
-  tracked in the "Decide: open MVP questions" issue; don't settle them yourself.
-- Stay in scope: one issue = one PR (`Closes #N`). Put other ideas in new issues.
+- If something is missing, unclear or contradicts the code: **comment on the issue and wait**. Product decisions
+  (billing rules etc.) are in [docs/PRODUCT.md](docs/PRODUCT.md); don't change or settle new ones yourself.
+- Stay in scope: one issue = one PR. PR title starts with the ticket ID (`BE-31: Log payment`), the description
+  says `Closes #N`.
+
+## Proving the work is done (required)
+Each issue has numbered acceptance criteria (`**AC1**`, `**AC2**`, …).
+- **Automated criteria** need at least one passing test tagged with them:
+  - backend: `@pytest.mark.ac("BE-31", "AC1", "AC2")` on the test
+  - frontend: put `[FE-21/AC1]` (or `[FE-21/AC1,AC3]`) in the Vitest/Playwright test title
+- **`[manual]` criteria**: check them yourself (usually on a real phone), then tick them in the PR description:
+  `- [x] AC6 Redmi Note 12, Chrome: 24 s`.
+- Run `python tools/verify_ticket.py <ID>` before opening the PR. It runs lint, the whole test suite, the contract
+  check and maps tests to criteria. Only open the PR when it says **VERIFIED** (manual ones may still be ⏳).
+- CI runs the same verifier on the PR and posts the report as a comment. A PR isn't done until that report is green.
+- Never tag a test with a criterion it doesn't really check, and never weaken a criterion to make it pass. If a
+  criterion is wrong or impossible, say so on the issue.
 
 ## Non-negotiables
 - **Security lives in Postgres.** RLS on every table, no DELETE on business data, guard triggers for money and
@@ -33,6 +47,9 @@ Read this before writing code. If a rule here conflicts with what an issue seems
 # backend (needs Postgres: docker compose up -d db minio)
 cd backend && uv sync && uv run python scripts/migrate.py && uv run pytest && uv run ruff check .
 uv run python scripts/export_openapi.py     # after any API change
+
+# verify a ticket (repo root; needs gh CLI logged in)
+python tools/verify_ticket.py BE-31
 
 # frontend (after FE-00)
 cd frontend && npm run gen:api && npm run typecheck && npm run build

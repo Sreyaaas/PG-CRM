@@ -21,6 +21,9 @@ from psycopg.rows import dict_row  # noqa: E402
 
 from app.db import transaction  # noqa: E402
 
+# @pytest.mark.ac("BE-31", "AC1") + --ac-report (see ticket_plugin.py, tools/verify_ticket.py)
+pytest_plugins = ["ticket_plugin"]
+
 BASE_RENT = 10_000_00  # ₹10,000 in paise
 
 

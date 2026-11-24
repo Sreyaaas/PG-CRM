@@ -32,7 +32,7 @@ in Chrome.
 |---|---|---|---|
 | BE-00 | BE | Postgres schema, RLS on every table, anti-theft triggers, audit log, test suite | ✅ done |
 | BE-01 | BE | API skeleton: signup, login, `/me`, `/properties`, `/public/join/{slug}`, error format, OpenAPI export | ✅ done |
-| [BE-02](https://github.com/Sreyaaas/PG-CRM/issues/1) | BE | CI (GitHub Actions): Postgres service → migrate → pytest + ruff; fail if `contract/openapi.json` is stale | todo |
+| [BE-02](https://github.com/Sreyaaas/PG-CRM/issues/1) | BE | Prove CI + ticket verification (`.github/workflows/ci.yml`, already added) work on GitHub; fix what doesn't | todo |
 | [FE-00](https://github.com/Sreyaaas/PG-CRM/issues/2) | FE | Scaffold `frontend/` (see [frontend/README.md](../frontend/README.md)): Vite + React + TS, vite-plugin-pwa, React Router, TanStack Query, Tailwind + shadcn/ui, `openapi-typescript` + `openapi-fetch` client | todo |
 | [FE-01](https://github.com/Sreyaaas/PG-CRM/issues/3) | FE | Design base: `tabular-nums` money/UTR/date components, `₹` formatter from paise, status badges (bed / payment / expense), caretaker bottom-nav shell, owner shell | todo |
 | [FE-02](https://github.com/Sreyaaas/PG-CRM/issues/4) | FE | Login screen, token storage, org picker (from `/me` memberships), global 401 → login, error toast from `error.message` | todo |
@@ -108,14 +108,14 @@ in Chrome.
 Police verification export / Form C, PDF receipts, per-bed electricity, reminders on a schedule, Rust rewrite of
 the API (same DB + same `contract/openapi.json`).
 
-## Open decisions
+## Decisions
 
-Tracked in [issue #46](https://github.com/Sreyaaas/PG-CRM/issues/46). Don't guess these; answer them there.
+All MVP product decisions are made; see [docs/PRODUCT.md](PRODUCT.md) ("Billing rules" and "Other MVP decisions").
+The affected tickets already contain them. If a new question comes up, ask on that ticket's issue; don't guess.
 
-| Question | Options | Needed by |
-|---|---|---|
-| Staff login | phone + password (built) / phone + OTP (costs per SMS) | M0 |
-| Rent cycle | check-in anniversary (`billing_day`, built) / everyone on the 1st | BE-30 |
-| CSV formats | need 2–3 real exported statements from owners (Paytm, PhonePe, a bank) | BE-40 |
-| Hosting | managed Postgres + API in Mumbai / a VPS | BE-52 |
-| PDF receipts in MVP? | HTML receipt link only (planned) / also PDF | BE-34 |
+## How tickets are verified
+
+Each issue has numbered acceptance criteria (`AC1`, `AC2`, …). Automated ones must be proven by tagged tests
+(backend `@pytest.mark.ac("BE-31", "AC1")`, frontend test title `[FE-21/AC1]`); `[manual]` ones are ticked by a person
+in the PR description. `python tools/verify_ticket.py <ID>` checks all of it locally, and CI runs it on every PR and
+posts the report. See [AGENTS.md](../AGENTS.md).

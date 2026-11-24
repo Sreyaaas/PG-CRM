@@ -24,6 +24,19 @@ uv run pytest        # needs the migrated database from above (PGCRM_DATABASE_UR
 uv run ruff check .
 ```
 
+## Ticket verification
+
+Tag each test with the acceptance criteria it proves, then verify the ticket from the repo root:
+
+```python
+@pytest.mark.ac("BE-31", "AC3")
+def test_duplicate_utr_is_409(): ...
+```
+
+```bash
+python tools/verify_ticket.py BE-31
+```
+
 ## After changing the API
 
 ```bash

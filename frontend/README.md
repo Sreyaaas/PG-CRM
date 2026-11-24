@@ -30,6 +30,13 @@ Add a script so types are one command away:
 "gen:api": "openapi-typescript ../contract/openapi.json -o src/api/schema.d.ts"
 ```
 
+## Tests and ticket verification
+
+- Vitest for units, Playwright (`Mobile Chrome` / Pixel 5) for end-to-end against the real API with seed data.
+- Tag tests with the ticket's acceptance criterion in the title: `test('[FE-31/AC2] duplicate UTR shows the API message', ...)`.
+- JSON reports go to `../.verify/vitest.json` and `../.verify/playwright.json`; `python tools/verify_ticket.py FE-31`
+  (repo root) reads them. Exact npm scripts and config: issue FE-00.
+
 ## Talking to the API
 
 - Base URL: `http://localhost:8000/api/v1` in dev (`VITE_API_URL`).

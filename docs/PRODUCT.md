@@ -41,6 +41,32 @@ A multi-tenant operating system for PG (paying guest) owners in Bengaluru.
 - **Exit deduction** of ₹1,500–₹3,000 from the deposit is standard; the resident accepts the exact amount on the Day-1
   onboarding form to prevent disputes.
 
+## Billing rules (decided)
+
+| Rule | Decision |
+|---|---|
+| Rent period | Calendar month (1st to last day) for everyone |
+| Due date | By the property's `rent_due_day`, default the **5th**, editable by the owner per property (1–28) |
+| Overdue | Any day after the due date. No separate grace period |
+| First month | **Pro-rata** for the days stayed (check-in day to month end), due on the check-in date. Check-in on the 1st = full month |
+| At joining | **Security deposit** (refundable) + **maintenance charge** (one-time, not refundable), both set by the owner per property. Caretakers can't enter lower amounts |
+| Notice period | Notice given on or before the property's **notice deadline day** (default the **5th**, a separate owner setting) → that month is the last: pay it, leave by its last day, nothing billed after. Notice after the deadline → the next month is the last, paid in full. Example: notice 5 Nov → leave by 30 Nov; notice 6 Nov → leave by 31 Dec |
+| Notice date | Set by the system: caretakers can't choose or backdate it (that would let a resident skip a month). Owners can override |
+| Leaving early / late | Leaving before the last day: no refund for unused days. Still there after it: billing continues and the owner dashboard flags them |
+| Exit deduction | Separate painting/maintenance deduction from the deposit at move-out, accepted by the resident on Day 1 |
+| Short stays | Daily rate × nights, charged at check-in |
+
+Pro-rata formula: `round_to_rupee(monthly_rent × days_stayed ÷ days_in_month)`, integer math.
+Example: ₹10,500, check-in 18 Nov → 13 of 30 days → ₹4,550.
+
+## Other MVP decisions
+
+- Staff log in with **phone + password** (no OTP).
+- Statement reconciliation is built against **mock CSV files** for the MVP; check against real exports before launch.
+- Receipts are **HTML links only** (no PDF).
+- Reception poster is **English only**.
+- Hosting is **not decided**; decide before launch (BE-52).
+
 ## Compliance to keep in mind (2026)
 
 - GBA trade licence + Karnataka HC safety push: 70 sq ft/resident, CCTV with 90-day retention, 24×7 guard, fire NOC,
