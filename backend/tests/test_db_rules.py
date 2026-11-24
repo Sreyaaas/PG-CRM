@@ -409,6 +409,58 @@ def test_public_onboarding_photos_must_belong_to_that_property(world: World):
         assert cur.fetchone()["id"]
 
 
+# --------------------------------------------------------------------------
+# BE-22: joining charges can't be lowered by caretakers
+# --------------------------------------------------------------------------
+
+
+def test_caretaker_deposit_cannot_be_below_property_deposit(world: World):
+    with as_user(world.owner, world.org) as cur:
+        cur.execute("UPDATE properties SET security_deposit_paise = 2000000 WHERE id = %s", (world.prop_a,))
+    with raises_sqlstate("PC002"), as_user(world.caretaker_a, world.org) as cur:
+        cur.execute(
+            """INSERT INTO stays (org_id, property_id, resident_id, bed_id, stay_type, rent_paise, deposit_paise,
+                                  check_in_date)
+               VALUES (%s, %s, %s, %s, 'monthly', %s, 1999999, app.today_ist())""",
+            (world.org, world.prop_a, world.resident_a, world.bed_a1, BASE_RENT),
+        )
+    with as_user(world.caretaker_a, world.org) as cur:
+        assert _stay(cur, world, BASE_RENT)  # deposit 2000000 = the property's amount
+    with as_user(world.owner, world.org) as cur:  # owners may take any deposit
+        cur.execute(
+            "INSERT INTO residents (org_id, property_id, full_name, phone) VALUES (%s, %s, 'B', %s) RETURNING id",
+            (world.org, world.prop_a, rand_phone()),
+        )
+        other = cur.fetchone()["id"]
+        cur.execute(
+            """INSERT INTO stays (org_id, property_id, resident_id, bed_id, stay_type, rent_paise, deposit_paise,
+                                  check_in_date)
+               VALUES (%s, %s, %s, %s, 'monthly', %s, 0, app.today_ist())""",
+            (world.org, world.prop_a, other, world.bed_a2, BASE_RENT),
+        )
+
+
+def test_caretaker_maintenance_charge_cannot_be_below_property_value(world: World):
+    with as_user(world.owner, world.org) as cur:
+        cur.execute("UPDATE properties SET maintenance_charge_paise = 100000 WHERE id = %s", (world.prop_a,))
+
+    def invoice(cur, kind, amount):
+        cur.execute(
+            """INSERT INTO invoices (org_id, property_id, resident_id, kind, amount_paise, due_date)
+               VALUES (%s, %s, %s, %s, %s, app.today_ist()) RETURNING id""",
+            (world.org, world.prop_a, world.resident_a, kind, amount),
+        )
+        return cur.fetchone()["id"]
+
+    with raises_sqlstate("PC002"), as_user(world.caretaker_a, world.org) as cur:
+        invoice(cur, "maintenance_charge", 99999)
+    with as_user(world.caretaker_a, world.org) as cur:
+        assert invoice(cur, "maintenance_charge", 100000)
+        assert invoice(cur, "other", 500)  # only the maintenance charge has this floor
+    with as_user(world.owner, world.org) as cur:
+        assert invoice(cur, "maintenance_charge", 100)
+
+
 def _session_user(c) -> dict:
     """Sign up through the API so a real session (refresh token) exists."""
     r = c.post(

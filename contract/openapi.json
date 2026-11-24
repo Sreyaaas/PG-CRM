@@ -2330,6 +2330,504 @@
         }
       }
     },
+    "/api/v1/onboarding-requests": {
+      "get": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "List Requests",
+        "description": "Requests in the buildings the caller can access (RLS), newest first. `?status=pending` for the queue.",
+        "operationId": "list_requests_api_v1_onboarding_requests_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending",
+                    "approved",
+                    "rejected"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Property Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OnboardingRequestSummary"
+                  },
+                  "title": "Response List Requests Api V1 Onboarding Requests Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding-requests/{request_id}": {
+      "get": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Get Request",
+        "description": "Every submitted field, signed photo URLs (5 minutes) and `suggested` defaults for the approve form.",
+        "operationId": "get_request_api_v1_onboarding_requests__request_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          },
+          {
+            "name": "bed_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Bed being considered: fills suggested.rent_paise",
+              "title": "Bed Id"
+            },
+            "description": "Bed being considered: fills suggested.rent_paise"
+          },
+          {
+            "name": "stay_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "monthly",
+                "short_term"
+              ],
+              "type": "string",
+              "default": "monthly",
+              "title": "Stay Type"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingRequestDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding-requests/{request_id}/approve": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Approve Request",
+        "description": "Creates the resident, the stay (`active`, or `reserved` for a future check-in) and the joining invoices,\nall due on the check-in date: deposit, maintenance charge, and the pro-rata first month (monthly) or\nnights \u00d7 daily rate (short-term). All or nothing.",
+        "operationId": "approve_request_api_v1_onboarding_requests__request_id__approve_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingApprove"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingApproved"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding-requests/{request_id}/reject": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Reject Request",
+        "description": "Once only: reviewing the same request again -> 409.",
+        "operationId": "reject_request_api_v1_onboarding_requests__request_id__reject_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingReject"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingRequestDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/uploads": {
       "post": {
         "tags": [
@@ -3603,6 +4101,445 @@
         ],
         "title": "Membership"
       },
+      "OnboardingApprove": {
+        "properties": {
+          "bed_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Bed Id"
+          },
+          "stay_type": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "short_term"
+            ],
+            "title": "Stay Type"
+          },
+          "rent_paise": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Rent Paise",
+            "description": "Monthly rent, or the daily rate for short_term, in paise"
+          },
+          "deposit_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Deposit Paise",
+            "description": "Refundable security deposit"
+          },
+          "maintenance_charge_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Maintenance Charge Paise",
+            "description": "One-time, non-refundable"
+          },
+          "check_in_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Check In Date"
+          },
+          "expected_vacate_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Vacate Date",
+            "description": "Check-out date; required for short_term"
+          },
+          "discount_request_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Request Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "bed_id",
+          "stay_type",
+          "rent_paise",
+          "deposit_paise",
+          "maintenance_charge_paise",
+          "check_in_date"
+        ],
+        "title": "OnboardingApprove"
+      },
+      "OnboardingApproved": {
+        "properties": {
+          "resident_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Resident Id"
+          },
+          "stay_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stay Id"
+          },
+          "invoice_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Invoice Ids",
+            "description": "Joining invoices: deposit, maintenance_charge, first rent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resident_id",
+          "stay_id",
+          "invoice_ids"
+        ],
+        "title": "OnboardingApproved"
+      },
+      "OnboardingReject": {
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "note"
+        ],
+        "title": "OnboardingReject"
+      },
+      "OnboardingRequestDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "property_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Property Id"
+          },
+          "property_name": {
+            "type": "string",
+            "title": "Property Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "title": "Status"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "permanent_address": {
+            "type": "string",
+            "title": "Permanent Address"
+          },
+          "occupation": {
+            "type": "string",
+            "enum": [
+              "working",
+              "student",
+              "other"
+            ],
+            "title": "Occupation"
+          },
+          "employer_or_college": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employer Or College"
+          },
+          "emergency_contact_name": {
+            "type": "string",
+            "title": "Emergency Contact Name"
+          },
+          "emergency_contact_phone": {
+            "type": "string",
+            "title": "Emergency Contact Phone"
+          },
+          "id_doc_type": {
+            "type": "string",
+            "enum": [
+              "aadhaar",
+              "pan",
+              "driving_licence",
+              "voter_id",
+              "passport"
+            ],
+            "title": "Id Doc Type"
+          },
+          "id_doc_number": {
+            "type": "string",
+            "title": "Id Doc Number"
+          },
+          "id_doc_path": {
+            "type": "string",
+            "title": "Id Doc Path"
+          },
+          "selfie_path": {
+            "type": "string",
+            "title": "Selfie Path"
+          },
+          "id_doc_url": {
+            "type": "string",
+            "title": "Id Doc Url",
+            "description": "Short-lived signed GET URL of the ID photo"
+          },
+          "selfie_url": {
+            "type": "string",
+            "title": "Selfie Url",
+            "description": "Short-lived signed GET URL of the selfie"
+          },
+          "url_expires_in": {
+            "type": "integer",
+            "title": "Url Expires In",
+            "description": "Seconds the signed URLs stay valid"
+          },
+          "is_foreign_national": {
+            "type": "boolean",
+            "title": "Is Foreign National"
+          },
+          "passport_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passport Number"
+          },
+          "visa_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visa Number"
+          },
+          "visa_expiry": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visa Expiry"
+          },
+          "accepted_rules": {
+            "type": "boolean",
+            "title": "Accepted Rules"
+          },
+          "accepted_exit_deduction_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Accepted Exit Deduction Paise",
+            "description": "Amount in paise (\u20b91 = 100)"
+          },
+          "accepted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Accepted At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "reviewed_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "review_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Note"
+          },
+          "suggested": {
+            "$ref": "#/components/schemas/OnboardingSuggested"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "property_id",
+          "property_name",
+          "status",
+          "full_name",
+          "phone",
+          "email",
+          "date_of_birth",
+          "permanent_address",
+          "occupation",
+          "employer_or_college",
+          "emergency_contact_name",
+          "emergency_contact_phone",
+          "id_doc_type",
+          "id_doc_number",
+          "id_doc_path",
+          "selfie_path",
+          "id_doc_url",
+          "selfie_url",
+          "url_expires_in",
+          "is_foreign_national",
+          "passport_number",
+          "visa_number",
+          "visa_expiry",
+          "accepted_rules",
+          "accepted_exit_deduction_paise",
+          "accepted_at",
+          "created_at",
+          "reviewed_by",
+          "reviewed_at",
+          "review_note",
+          "suggested"
+        ],
+        "title": "OnboardingRequestDetail"
+      },
+      "OnboardingRequestSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "occupation": {
+            "type": "string",
+            "enum": [
+              "working",
+              "student",
+              "other"
+            ],
+            "title": "Occupation"
+          },
+          "employer_or_college": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employer Or College"
+          },
+          "is_foreign_national": {
+            "type": "boolean",
+            "title": "Is Foreign National"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "full_name",
+          "phone",
+          "occupation",
+          "employer_or_college",
+          "is_foreign_national",
+          "created_at"
+        ],
+        "title": "OnboardingRequestSummary"
+      },
       "OnboardingSubmit": {
         "properties": {
           "full_name": {
@@ -3797,6 +4734,59 @@
           "request_id"
         ],
         "title": "OnboardingSubmitted"
+      },
+      "OnboardingSuggested": {
+        "properties": {
+          "rent_paise": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0,
+                "description": "Amount in paise (\u20b91 = 100)"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rent Paise",
+            "description": "Monthly: the bed's floor price (needs ?bed_id=). Short-term: the property's daily rate"
+          },
+          "deposit_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Deposit Paise",
+            "description": "The property's security_deposit_paise"
+          },
+          "maintenance_charge_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Maintenance Charge Paise",
+            "description": "The property's maintenance_charge_paise"
+          },
+          "first_month_rent_paise": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0,
+                "description": "Amount in paise (\u20b91 = 100)"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Month Rent Paise",
+            "description": "Monthly only: pro-rata first month for a check-in today at rent_paise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rent_paise",
+          "deposit_paise",
+          "maintenance_charge_paise",
+          "first_month_rent_paise"
+        ],
+        "title": "OnboardingSuggested",
+        "description": "Defaults for the approve form. Caretakers may raise, never lower, rent, deposit and maintenance charge."
       },
       "Property": {
         "properties": {
