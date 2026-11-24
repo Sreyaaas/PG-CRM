@@ -33,7 +33,7 @@ export function OwnerDashboardPage({ section = 'Dashboard' }: { section?: string
         )}
         {propertiesQuery.data && propertiesQuery.data.length === 0 && (
           <p className="mt-2 text-sm text-slate-500">
-            No buildings added yet. Property setup arrives in FE-10.
+            No buildings added yet.
           </p>
         )}
         {propertiesQuery.data && propertiesQuery.data.length > 0 && (
