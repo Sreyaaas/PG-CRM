@@ -115,7 +115,7 @@ export function DevUiPage() {
         orgName="Meera PGs (Preview)"
         userName="Raju (Caretaker)"
         primaryAction={
-          <Button type="button" className="w-full h-12 text-base font-medium bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button type="button" className="w-full h-12 text-base font-medium bg-slate-900 hover:bg-slate-800 text-white">
             Log Payment
           </Button>
         }
