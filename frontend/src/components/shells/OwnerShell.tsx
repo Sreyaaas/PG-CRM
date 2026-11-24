@@ -39,7 +39,7 @@ export function OwnerShell({
             <div className="truncate text-sm font-semibold text-slate-950">{orgName}</div>
             {userName && <div className="truncate text-xs text-slate-500">{userName}</div>}
           </div>
-          <span className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
+          <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700">
             Owner
           </span>
         </div>
@@ -54,7 +54,7 @@ export function OwnerShell({
                 cn(
                   'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-indigo-50 text-indigo-700'
+                    ? 'bg-slate-200/70 text-slate-950'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
                 )
               }
@@ -77,7 +77,7 @@ export function OwnerShell({
           </div>
           <div className="hidden lg:block text-sm font-medium text-slate-600">{orgName}</div>
           <div className="flex items-center gap-2">
-            <span className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 lg:hidden">
+            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700 lg:hidden">
               Owner
             </span>
             {headerAction}
@@ -103,7 +103,7 @@ export function OwnerShell({
               className={({ isActive }) =>
                 cn(
                   'flex flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors',
-                  isActive ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-900',
+                  isActive ? 'text-slate-950' : 'text-slate-500 hover:text-slate-900',
                 )
               }
             >

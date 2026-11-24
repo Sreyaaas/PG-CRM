@@ -70,7 +70,7 @@ export function CaretakerShell({
               className={({ isActive }) =>
                 cn(
                   'flex flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors',
-                  isActive ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-900',
+                  isActive ? 'text-slate-950' : 'text-slate-500 hover:text-slate-900',
                 )
               }
             >
