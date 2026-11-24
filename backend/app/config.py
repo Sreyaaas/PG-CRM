@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Short-lived access token; the app keeps the session alive with the refresh token (POST /auth/refresh).
     jwt_ttl_minutes: int = 15
     refresh_ttl_days: int = 30
-    cors_origins: list[str] = ["http://localhost:5173"]
+    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:4173"]
 
     # Private file storage: any S3-compatible service (RustFS locally; Supabase Storage / AWS S3 / R2 in prod).
     s3_endpoint: str | None = "http://localhost:9000"  # None = AWS S3 itself
