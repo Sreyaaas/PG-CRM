@@ -8,6 +8,7 @@ Run after every API change and commit the result with the change.
     uv run python scripts/export_openapi.py --check  # exit 1 if the committed file is stale (CI)
 """
 
+import difflib
 import json
 import sys
 from pathlib import Path
@@ -23,6 +24,10 @@ if __name__ == "__main__":
         current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
         if current.replace("\r\n", "\n") != fresh:
             print("contract/openapi.json is stale: run `uv run python scripts/export_openapi.py` and commit it")
+            diff = difflib.unified_diff(
+                current.replace("\r\n", "\n").splitlines(), fresh.splitlines(), "committed", "generated", lineterm=""
+            )
+            print("\n".join(list(diff)[:60]))
             raise SystemExit(1)
         print("contract/openapi.json is up to date")
         raise SystemExit(0)
