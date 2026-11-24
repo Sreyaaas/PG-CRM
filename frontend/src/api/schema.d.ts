@@ -503,6 +503,128 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/stays/{stay_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Stay */
+        get: operations["get_stay_api_v1_stays__stay_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Correct Stay
+         * @description Owner only: correct check-in date, move-out date, deposit or rent. Every change is in the audit log.
+         */
+        patch: operations["correct_stay_api_v1_stays__stay_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/stays/{stay_id}/notice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Give Notice
+         * @description Monthly stays. Caretakers send no body: notice is today (IST) and the last day follows the property's notice
+         *     deadline day. Owners may send `notice_given_on` and/or `expected_vacate_date` to override (audit-logged).
+         */
+        post: operations["give_notice_api_v1_stays__stay_id__notice_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stays/{stay_id}/withdraw-notice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw Notice
+         * @description Back to `active`; clears the notice date and the last day.
+         */
+        post: operations["withdraw_notice_api_v1_stays__stay_id__withdraw_notice_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stays/{stay_id}/move-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Move Out
+         * @description `vacated`, and the bed becomes vacant. Caretakers: today only. Doesn't settle the deposit (BE-50).
+         */
+        post: operations["move_out_api_v1_stays__stay_id__move_out_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stays/{stay_id}/check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check In
+         * @description A reserved resident has arrived: `reserved` -> `active`.
+         */
+        post: operations["check_in_api_v1_stays__stay_id__check_in_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/residents/{resident_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Resident
+         * @description Resident details, signed ID photo URLs, the current stay and past stays.
+         */
+        get: operations["get_resident_api_v1_residents__resident_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/uploads": {
         parameters: {
             query?: never;
@@ -948,6 +1070,25 @@ export interface components {
             role: "owner" | "caretaker";
             /** Assigned Property Ids */
             assigned_property_ids: string[];
+        };
+        /** MoveOutRequest */
+        MoveOutRequest: {
+            /**
+             * Actual Vacate Date
+             * Format: date
+             * @description Caretakers: today only. Owners: any date
+             */
+            actual_vacate_date: string;
+        };
+        /**
+         * NoticeRequest
+         * @description Owner overrides only. Caretakers send no body: the date is today and the last day follows the notice rule.
+         */
+        NoticeRequest: {
+            /** Notice Given On */
+            notice_given_on?: string | null;
+            /** Expected Vacate Date */
+            expected_vacate_date?: string | null;
         };
         /** OnboardingApprove */
         OnboardingApprove: {
@@ -1427,6 +1568,75 @@ export interface components {
             /** Refresh Token */
             refresh_token: string;
         };
+        /** Resident */
+        Resident: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /** Onboarding Request Id */
+            onboarding_request_id: string | null;
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone: string;
+            /** Email */
+            email: string | null;
+            /** Date Of Birth */
+            date_of_birth: string | null;
+            /** Permanent Address */
+            permanent_address: string | null;
+            /** Occupation */
+            occupation: ("working" | "student" | "other") | null;
+            /** Employer Or College */
+            employer_or_college: string | null;
+            /** Emergency Contact Name */
+            emergency_contact_name: string | null;
+            /** Emergency Contact Phone */
+            emergency_contact_phone: string | null;
+            /** Id Doc Type */
+            id_doc_type: ("aadhaar" | "pan" | "driving_licence" | "voter_id" | "passport") | null;
+            /** Id Doc Number */
+            id_doc_number: string | null;
+            /**
+             * Id Doc Url
+             * @description Short-lived signed GET URL of the ID photo
+             */
+            id_doc_url: string | null;
+            /**
+             * Selfie Url
+             * @description Short-lived signed GET URL of the selfie
+             */
+            selfie_url: string | null;
+            /** Url Expires In */
+            url_expires_in: number;
+            /** Is Foreign National */
+            is_foreign_national: boolean;
+            /** Passport Number */
+            passport_number: string | null;
+            /** Visa Number */
+            visa_number: string | null;
+            /** Visa Expiry */
+            visa_expiry: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** @description The open (not vacated) stay, if any */
+            current_stay: components["schemas"]["Stay"] | null;
+            /**
+             * Past Stays
+             * @description Vacated stays, newest first
+             */
+            past_stays: components["schemas"]["Stay"][];
+        };
         /** Room */
         Room: {
             /**
@@ -1599,6 +1809,108 @@ export interface components {
              * @enum {string}
              */
             role?: "owner" | "caretaker";
+        };
+        /** Stay */
+        Stay: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /**
+             * Resident Id
+             * Format: uuid
+             */
+            resident_id: string;
+            /** Resident Name */
+            resident_name: string;
+            /**
+             * Bed Id
+             * Format: uuid
+             */
+            bed_id: string;
+            /** Bed Label */
+            bed_label: string;
+            /** Room Label */
+            room_label: string;
+            /**
+             * Stay Type
+             * @enum {string}
+             */
+            stay_type: "monthly" | "short_term";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "reserved" | "active" | "on_notice" | "vacated";
+            /**
+             * Rent Paise
+             * @description Monthly rent, or the daily rate for short_term
+             */
+            rent_paise: number;
+            /**
+             * Deposit Paise
+             * @description Amount in paise (₹1 = 100)
+             */
+            deposit_paise: number;
+            /**
+             * Check In Date
+             * Format: date
+             */
+            check_in_date: string;
+            /** Notice Given On */
+            notice_given_on: string | null;
+            /**
+             * Expected Vacate Date
+             * @description Last day: from the notice rule, or a short stay's check-out
+             */
+            expected_vacate_date: string | null;
+            /** Actual Vacate Date */
+            actual_vacate_date: string | null;
+            /** Discount Request Id */
+            discount_request_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * StayCorrection
+         * @description Owner only. Partial update: only the fields sent are changed.
+         */
+        StayCorrection: {
+            /**
+             * Check In Date
+             * Format: date
+             */
+            check_in_date?: string;
+            /**
+             * Actual Vacate Date
+             * Format: date
+             * @description Only for a stay that has moved out
+             */
+            actual_vacate_date?: string;
+            /**
+             * Deposit Paise
+             * @description Amount in paise (₹1 = 100)
+             */
+            deposit_paise?: number;
+            /**
+             * Rent Paise
+             * @description Amount in paise (₹1 = 100)
+             */
+            rent_paise?: number;
         };
         /** TokenResponse */
         TokenResponse: {
@@ -3716,6 +4028,557 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OnboardingRequestDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_stay_api_v1_stays__stay_id__get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                stay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stay"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    correct_stay_api_v1_stays__stay_id__patch: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                stay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StayCorrection"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stay"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    give_notice_api_v1_stays__stay_id__notice_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                stay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["NoticeRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stay"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    withdraw_notice_api_v1_stays__stay_id__withdraw_notice_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                stay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stay"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    move_out_api_v1_stays__stay_id__move_out_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                stay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveOutRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stay"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    check_in_api_v1_stays__stay_id__check_in_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                stay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stay"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_resident_api_v1_residents__resident_id__get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                resident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Resident"];
                 };
             };
             /** @description Unauthorized */

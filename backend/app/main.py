@@ -8,7 +8,7 @@ from starlette.responses import Response
 from app import errors, logs, monitoring, storage
 from app.config import get_settings
 from app.db import close_pool
-from app.routers import auth, discounts, files, onboarding, properties, public, rooms, staff
+from app.routers import auth, discounts, files, onboarding, properties, public, rooms, staff, stays
 from app.schemas import ErrorResponse
 
 API_PREFIX = "/api/v1"
@@ -80,6 +80,7 @@ def create_app() -> FastAPI:
         staff.router,
         discounts.router,
         onboarding.router,
+        stays.router,
         files.router,
         public.router,
     ):

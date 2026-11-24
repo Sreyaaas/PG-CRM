@@ -6,6 +6,7 @@ same behaviour because the rules live in SQL, not in Python.
 
 from uuid import uuid4
 
+import pytest
 from conftest import BASE_RENT, World, api_client, as_user, raises_sqlstate, rand_phone, rand_utr
 
 # --------------------------------------------------------------------------
@@ -459,6 +460,52 @@ def test_caretaker_maintenance_charge_cannot_be_below_property_value(world: Worl
         assert invoice(cur, "other", 500)  # only the maintenance charge has this floor
     with as_user(world.owner, world.org) as cur:
         assert invoice(cur, "maintenance_charge", 100)
+
+
+# --------------------------------------------------------------------------
+# BE-24: notice rule (caretakers can't backdate notice or pick the last day)
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.ac("BE-24", "AC1", "AC5")
+def test_notice_last_day_sql_matches_python(world: World):
+    from datetime import date, timedelta
+
+    from app.billing import notice_last_day
+
+    cases = [(date(2026, 11, 5), 5), (date(2026, 11, 6), 5), (date(2026, 12, 6), 5), (date(2026, 11, 8), 10)]
+    start = date(2027, 12, 1)
+    cases += [(start + timedelta(days=i), d) for i in range(0, 400, 3) for d in (1, 5, 15, 28)]
+    with as_user(world.owner, world.org) as cur:
+        for notice, deadline in cases:
+            cur.execute("SELECT app.notice_last_day(%s::date, %s::smallint) AS d", (notice, deadline))
+            assert cur.fetchone()["d"] == notice_last_day(notice, deadline), (notice, deadline)
+
+
+@pytest.mark.ac("BE-24", "AC3")
+def test_caretaker_notice_must_be_today_with_computed_last_day(world: World):
+    with as_user(world.caretaker_a, world.org) as cur:
+        stay = _stay(cur, world, BASE_RENT)
+
+    def give(user, notice_sql: str, last_sql: str):
+        with as_user(user, world.org) as cur:
+            cur.execute(
+                f"""UPDATE stays SET status = 'on_notice', notice_given_on = {notice_sql},
+                                     expected_vacate_date = {last_sql} WHERE id = %s""",
+                (stay,),
+            )
+
+    rule = "app.notice_last_day({}, 5::smallint)"
+    with raises_sqlstate("PC002"):  # backdated (with a matching last day)
+        give(world.caretaker_a, "app.today_ist() - 1", rule.format("app.today_ist() - 1"))
+    with raises_sqlstate("PC002"):  # today, but a different last day
+        give(world.caretaker_a, "app.today_ist()", rule.format("app.today_ist()") + " + 31")
+    give(world.caretaker_a, "app.today_ist()", rule.format("app.today_ist()"))
+    with raises_sqlstate("PC002"):  # moving the last day afterwards
+        give(world.caretaker_a, "notice_given_on", "expected_vacate_date + 1")
+    # Withdrawing (both cleared) is allowed; owners may set anything.
+    give(world.caretaker_a, "NULL", "NULL")
+    give(world.owner, "app.today_ist() - 20", "app.today_ist() + 3")
 
 
 def _session_user(c) -> dict:

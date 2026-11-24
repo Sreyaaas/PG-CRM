@@ -573,6 +573,90 @@ class OnboardingReject(BaseModel):
     note: Annotated[str, StringConstraints(min_length=1, max_length=500, strip_whitespace=True)]
 
 
+StayStatus = Literal["reserved", "active", "on_notice", "vacated"]
+
+
+class Stay(BaseModel):
+    id: UUID
+    property_id: UUID
+    resident_id: UUID
+    resident_name: str
+    bed_id: UUID
+    bed_label: str
+    room_label: str
+    stay_type: StayType
+    status: StayStatus
+    rent_paise: Paise = Field(description="Monthly rent, or the daily rate for short_term")
+    deposit_paise: Paise
+    check_in_date: date
+    notice_given_on: date | None
+    expected_vacate_date: date | None = Field(description="Last day: from the notice rule, or a short stay's check-out")
+    actual_vacate_date: date | None
+    discount_request_id: UUID | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class NoticeRequest(BaseModel):
+    """Owner overrides only. Caretakers send no body: the date is today and the last day follows the notice rule."""
+
+    model_config = {"extra": "forbid"}
+
+    notice_given_on: date | None = None
+    expected_vacate_date: date | None = None
+
+
+class MoveOutRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    actual_vacate_date: date = Field(description="Caretakers: today only. Owners: any date")
+
+
+class StayCorrection(BaseModel):
+    """Owner only. Partial update: only the fields sent are changed."""
+
+    model_config = {"extra": "forbid"}
+
+    check_in_date: date = _optional()
+    actual_vacate_date: date = _optional(description="Only for a stay that has moved out")
+    deposit_paise: Paise = _optional()
+    rent_paise: Rent = _optional()
+
+    @model_validator(mode="after")
+    def _not_null(self):
+        for name in ("check_in_date", "actual_vacate_date", "deposit_paise", "rent_paise"):
+            if name in self.model_fields_set and getattr(self, name) is None:
+                raise ValueError(f"{name} may not be null")
+        return self
+
+
+class Resident(BaseModel):
+    id: UUID
+    property_id: UUID
+    onboarding_request_id: UUID | None
+    full_name: str
+    phone: str
+    email: str | None
+    date_of_birth: date | None
+    permanent_address: str | None
+    occupation: Occupation | None
+    employer_or_college: str | None
+    emergency_contact_name: str | None
+    emergency_contact_phone: str | None
+    id_doc_type: IdDocType | None
+    id_doc_number: str | None
+    id_doc_url: str | None = Field(description="Short-lived signed GET URL of the ID photo")
+    selfie_url: str | None = Field(description="Short-lived signed GET URL of the selfie")
+    url_expires_in: int
+    is_foreign_national: bool
+    passport_number: str | None
+    visa_number: str | None
+    visa_expiry: date | None
+    created_at: datetime
+    current_stay: Stay | None = Field(description="The open (not vacated) stay, if any")
+    past_stays: list[Stay] = Field(description="Vacated stays, newest first")
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str

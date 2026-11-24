@@ -2828,6 +2828,768 @@
         }
       }
     },
+    "/api/v1/stays/{stay_id}": {
+      "get": {
+        "tags": [
+          "stays"
+        ],
+        "summary": "Get Stay",
+        "operationId": "get_stay_api_v1_stays__stay_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "stay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Stay Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stay"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "stays"
+        ],
+        "summary": "Correct Stay",
+        "description": "Owner only: correct check-in date, move-out date, deposit or rent. Every change is in the audit log.",
+        "operationId": "correct_stay_api_v1_stays__stay_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "stay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Stay Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StayCorrection"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stay"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/stays/{stay_id}/notice": {
+      "post": {
+        "tags": [
+          "stays"
+        ],
+        "summary": "Give Notice",
+        "description": "Monthly stays. Caretakers send no body: notice is today (IST) and the last day follows the property's notice\ndeadline day. Owners may send `notice_given_on` and/or `expected_vacate_date` to override (audit-logged).",
+        "operationId": "give_notice_api_v1_stays__stay_id__notice_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "stay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Stay Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/NoticeRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stay"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/stays/{stay_id}/withdraw-notice": {
+      "post": {
+        "tags": [
+          "stays"
+        ],
+        "summary": "Withdraw Notice",
+        "description": "Back to `active`; clears the notice date and the last day.",
+        "operationId": "withdraw_notice_api_v1_stays__stay_id__withdraw_notice_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "stay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Stay Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stay"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/stays/{stay_id}/move-out": {
+      "post": {
+        "tags": [
+          "stays"
+        ],
+        "summary": "Move Out",
+        "description": "`vacated`, and the bed becomes vacant. Caretakers: today only. Doesn't settle the deposit (BE-50).",
+        "operationId": "move_out_api_v1_stays__stay_id__move_out_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "stay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Stay Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveOutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stay"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/stays/{stay_id}/check-in": {
+      "post": {
+        "tags": [
+          "stays"
+        ],
+        "summary": "Check In",
+        "description": "A reserved resident has arrived: `reserved` -> `active`.",
+        "operationId": "check_in_api_v1_stays__stay_id__check_in_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "stay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Stay Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Stay"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/residents/{resident_id}": {
+      "get": {
+        "tags": [
+          "stays"
+        ],
+        "summary": "Get Resident",
+        "description": "Resident details, signed ID photo URLs, the current stay and past stays.",
+        "operationId": "get_resident_api_v1_residents__resident_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "resident_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Resident Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resident"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/uploads": {
       "post": {
         "tags": [
@@ -4101,6 +4863,54 @@
         ],
         "title": "Membership"
       },
+      "MoveOutRequest": {
+        "properties": {
+          "actual_vacate_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Actual Vacate Date",
+            "description": "Caretakers: today only. Owners: any date"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "actual_vacate_date"
+        ],
+        "title": "MoveOutRequest"
+      },
+      "NoticeRequest": {
+        "properties": {
+          "notice_given_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice Given On"
+          },
+          "expected_vacate_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Vacate Date"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "NoticeRequest",
+        "description": "Owner overrides only. Caretakers send no body: the date is today and the last day follows the notice rule."
+      },
       "OnboardingApprove": {
         "properties": {
           "bed_id": {
@@ -5261,6 +6071,270 @@
         ],
         "title": "RefreshRequest"
       },
+      "Resident": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "property_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Property Id"
+          },
+          "onboarding_request_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarding Request Id"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "permanent_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permanent Address"
+          },
+          "occupation": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "working",
+                  "student",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occupation"
+          },
+          "employer_or_college": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employer Or College"
+          },
+          "emergency_contact_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emergency Contact Name"
+          },
+          "emergency_contact_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emergency Contact Phone"
+          },
+          "id_doc_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "aadhaar",
+                  "pan",
+                  "driving_licence",
+                  "voter_id",
+                  "passport"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Doc Type"
+          },
+          "id_doc_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Doc Number"
+          },
+          "id_doc_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Doc Url",
+            "description": "Short-lived signed GET URL of the ID photo"
+          },
+          "selfie_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selfie Url",
+            "description": "Short-lived signed GET URL of the selfie"
+          },
+          "url_expires_in": {
+            "type": "integer",
+            "title": "Url Expires In"
+          },
+          "is_foreign_national": {
+            "type": "boolean",
+            "title": "Is Foreign National"
+          },
+          "passport_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passport Number"
+          },
+          "visa_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visa Number"
+          },
+          "visa_expiry": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visa Expiry"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "current_stay": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Stay"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The open (not vacated) stay, if any"
+          },
+          "past_stays": {
+            "items": {
+              "$ref": "#/components/schemas/Stay"
+            },
+            "type": "array",
+            "title": "Past Stays",
+            "description": "Vacated stays, newest first"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "property_id",
+          "onboarding_request_id",
+          "full_name",
+          "phone",
+          "email",
+          "date_of_birth",
+          "permanent_address",
+          "occupation",
+          "employer_or_college",
+          "emergency_contact_name",
+          "emergency_contact_phone",
+          "id_doc_type",
+          "id_doc_number",
+          "id_doc_url",
+          "selfie_url",
+          "url_expires_in",
+          "is_foreign_national",
+          "passport_number",
+          "visa_number",
+          "visa_expiry",
+          "created_at",
+          "current_stay",
+          "past_stays"
+        ],
+        "title": "Resident"
+      },
       "Room": {
         "properties": {
           "id": {
@@ -5667,6 +6741,189 @@
         "type": "object",
         "title": "StaffUpdate",
         "description": "Partial update of another member's membership. Owners can't change their own."
+      },
+      "Stay": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "property_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Property Id"
+          },
+          "resident_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Resident Id"
+          },
+          "resident_name": {
+            "type": "string",
+            "title": "Resident Name"
+          },
+          "bed_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Bed Id"
+          },
+          "bed_label": {
+            "type": "string",
+            "title": "Bed Label"
+          },
+          "room_label": {
+            "type": "string",
+            "title": "Room Label"
+          },
+          "stay_type": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "short_term"
+            ],
+            "title": "Stay Type"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "reserved",
+              "active",
+              "on_notice",
+              "vacated"
+            ],
+            "title": "Status"
+          },
+          "rent_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Rent Paise",
+            "description": "Monthly rent, or the daily rate for short_term"
+          },
+          "deposit_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Deposit Paise",
+            "description": "Amount in paise (\u20b91 = 100)"
+          },
+          "check_in_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Check In Date"
+          },
+          "notice_given_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice Given On"
+          },
+          "expected_vacate_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Vacate Date",
+            "description": "Last day: from the notice rule, or a short stay's check-out"
+          },
+          "actual_vacate_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Vacate Date"
+          },
+          "discount_request_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Request Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "property_id",
+          "resident_id",
+          "resident_name",
+          "bed_id",
+          "bed_label",
+          "room_label",
+          "stay_type",
+          "status",
+          "rent_paise",
+          "deposit_paise",
+          "check_in_date",
+          "notice_given_on",
+          "expected_vacate_date",
+          "actual_vacate_date",
+          "discount_request_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Stay"
+      },
+      "StayCorrection": {
+        "properties": {
+          "check_in_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Check In Date"
+          },
+          "actual_vacate_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Actual Vacate Date",
+            "description": "Only for a stay that has moved out"
+          },
+          "deposit_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Deposit Paise",
+            "description": "Amount in paise (\u20b91 = 100)"
+          },
+          "rent_paise": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Rent Paise",
+            "description": "Amount in paise (\u20b91 = 100)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "StayCorrection",
+        "description": "Owner only. Partial update: only the fields sent are changed."
       },
       "TokenResponse": {
         "properties": {
