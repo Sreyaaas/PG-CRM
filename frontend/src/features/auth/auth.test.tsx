@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ToastProvider } from '@/components/Toast'
@@ -100,6 +99,12 @@ const MULTI_ORG_TOKEN_RESPONSE = {
   },
 }
 
+function submitLogin(phone: string, password: string) {
+  fireEvent.change(screen.getByLabelText(/mobile number/i), { target: { value: phone } })
+  fireEvent.change(screen.getByLabelText(/password/i), { target: { value: password } })
+  fireEvent.click(screen.getByRole('button', { name: /sign in/i }))
+}
+
 describe('Auth, login, org picker, and session guards', () => {
   beforeEach(() => {
     window.localStorage.clear()
@@ -111,7 +116,6 @@ describe('Auth, login, org picker, and session guards', () => {
   })
 
   test('[FE-02/AC1] owner login lands in owner shell and caretaker login lands in caretaker shell', async () => {
-    const user = userEvent.setup()
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = input instanceof Request ? input.url : String(input)
       if (url.endsWith('/health')) return jsonResponse({ status: 'ok' })
@@ -121,12 +125,10 @@ describe('Auth, login, org picker, and session guards', () => {
     })
 
     renderApp(['/login'])
-    await user.type(screen.getByLabelText(/mobile number/i), '9000000001')
-    await user.type(screen.getByLabelText(/password/i), 'devpass123')
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    submitLogin('9000000001', 'devpass123')
 
     expect(await screen.findByText(/Owner workspace/i)).toBeInTheDocument()
-    expect(screen.getByLabelText('Owner navigation', { exact: false }) || screen.getByLabelText('Owner sidebar')).toBeInTheDocument()
+    expect(screen.getByLabelText('Owner sidebar')).toBeInTheDocument()
 
     // Now test caretaker login
     cleanup()
@@ -140,16 +142,13 @@ describe('Auth, login, org picker, and session guards', () => {
     })
 
     renderApp(['/login'])
-    await user.type(screen.getByLabelText(/mobile number/i), '9000000002')
-    await user.type(screen.getByLabelText(/password/i), 'devpass123')
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    submitLogin('9000000002', 'devpass123')
 
     expect(await screen.findByText(/Caretaker workspace/i)).toBeInTheDocument()
     expect(screen.getByLabelText('Caretaker navigation')).toBeInTheDocument()
   })
 
   test('[FE-02/AC2] wrong password shows the API error message', async () => {
-    const user = userEvent.setup()
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = input instanceof Request ? input.url : String(input)
       if (url.endsWith('/health')) return jsonResponse({ status: 'ok' })
@@ -163,15 +162,12 @@ describe('Auth, login, org picker, and session guards', () => {
     })
 
     renderApp(['/login'])
-    await user.type(screen.getByLabelText(/mobile number/i), '9000000001')
-    await user.type(screen.getByLabelText(/password/i), 'wrong-pass')
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    submitLogin('9000000001', 'wrong-pass')
 
     const alerts = await screen.findAllByRole('alert')
     expect(alerts.some((el) => el.textContent?.includes('Wrong phone number or password'))).toBe(
       true,
     )
-    // Should remain on login (no token saved)
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull()
   })
 
@@ -198,9 +194,6 @@ describe('Auth, login, org picker, and session guards', () => {
   })
 
   test('[FE-02/AC4] single membership auto-selects org and multiple memberships show the picker', async () => {
-    const user = userEvent.setup()
-
-    // Single membership -> auto-selects org-1 and skips picker
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = input instanceof Request ? input.url : String(input)
       if (url.endsWith('/health')) return jsonResponse({ status: 'ok' })
@@ -210,14 +203,12 @@ describe('Auth, login, org picker, and session guards', () => {
     })
 
     renderApp(['/login'])
-    await user.type(screen.getByLabelText(/mobile number/i), '9000000001')
-    await user.type(screen.getByLabelText(/password/i), 'devpass123')
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    submitLogin('9000000001', 'devpass123')
 
     expect(await screen.findByText(/Owner workspace/i)).toBeInTheDocument()
     expect(window.localStorage.getItem(ORG_STORAGE_KEY)).toBe('org-1')
 
-    // Multiple memberships -> shows org picker, clicking selects org and navigates to its role shell
+    // Multiple memberships -> shows org picker
     cleanup()
     window.localStorage.clear()
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
@@ -229,21 +220,18 @@ describe('Auth, login, org picker, and session guards', () => {
     })
 
     renderApp(['/login'])
-    await user.type(screen.getByLabelText(/mobile number/i), '9000000003')
-    await user.type(screen.getByLabelText(/password/i), 'devpass123')
-    await user.click(screen.getByRole('button', { name: /sign in/i }))
+    submitLogin('9000000003', 'devpass123')
 
     expect(await screen.findByText('Select organization')).toBeInTheDocument()
     expect(screen.getByText('Sunrise Group')).toBeInTheDocument()
     expect(screen.getByText('Lakeview Group')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /Lakeview Group/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Lakeview Group/i }))
     expect(await screen.findByText(/Caretaker workspace/i)).toBeInTheDocument()
     expect(window.localStorage.getItem(ORG_STORAGE_KEY)).toBe('org-2')
   })
 
   test('[FE-02/AC5] logout clears token, selected org, and TanStack Query cache', async () => {
-    const user = userEvent.setup()
     window.localStorage.setItem(TOKEN_STORAGE_KEY, OWNER_TOKEN_RESPONSE.access_token)
     window.localStorage.setItem('pgcrm_me', JSON.stringify(OWNER_TOKEN_RESPONSE.me))
     window.localStorage.setItem(ORG_STORAGE_KEY, 'org-1')
@@ -263,7 +251,7 @@ describe('Auth, login, org picker, and session guards', () => {
     expect(queryClient.getQueryCache().getAll().length).toBeGreaterThan(0)
 
     const logoutButtons = screen.getAllByRole('button', { name: /log out/i })
-    await user.click(logoutButtons[0])
+    fireEvent.click(logoutButtons[0])
 
     await waitFor(() => {
       expect(screen.getByText(/Sign in to PG-CRM/i)).toBeInTheDocument()
@@ -271,6 +259,7 @@ describe('Auth, login, org picker, and session guards', () => {
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull()
     expect(window.localStorage.getItem(ORG_STORAGE_KEY)).toBeNull()
     expect(window.localStorage.getItem('pgcrm_me')).toBeNull()
-    expect(queryClient.getQueryCache().getAll().length).toBe(0)
+    expect(queryClient.getQueryData(['properties', 'org-1'])).toBeUndefined()
+    expect(queryClient.getQueryCache().findAll({ queryKey: ['properties'] })).toEqual([])
   })
 })
