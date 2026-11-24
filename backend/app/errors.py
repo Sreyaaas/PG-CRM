@@ -35,6 +35,7 @@ _CONSTRAINT_MESSAGES = {
     "rooms_property_id_label_key": "A room with this label already exists in this property.",
     "beds_room_id_label_key": "A bed with this label already exists in this room.",
     "organization_members_org_id_user_id_key": "Already a member of this organization.",
+    "uq_stays_discount_request": "This discount has already been used for another stay.",
 }
 
 

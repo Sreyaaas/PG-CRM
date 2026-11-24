@@ -317,6 +317,48 @@ class StaffMemberCreated(StaffMember):
     )
 
 
+DiscountStatus = Literal["pending", "approved", "rejected"]
+
+
+class DiscountRequestCreate(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    bed_id: UUID
+    resident_id: UUID | None = Field(
+        default=None, description="Optional: the request often happens before the resident exists (check-in)"
+    )
+    requested_rent_paise: Rent = Field(description="Exact monthly rent the stay may then use, in paise")
+    reason: Annotated[str, StringConstraints(min_length=3, strip_whitespace=True)]
+
+
+class DiscountDecision(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    decision: Literal["approved", "rejected"]
+    note: str | None = None
+
+
+class DiscountRequest(BaseModel):
+    id: UUID
+    status: DiscountStatus
+    property_id: UUID
+    property_name: str
+    bed_id: UUID
+    bed_label: str
+    resident_id: UUID | None
+    resident_name: str | None
+    base_rent_paise: Paise = Field(description="The bed's floor price now")
+    requested_rent_paise: Paise
+    difference_paise: int = Field(description="base_rent_paise - requested_rent_paise (the discount asked for)")
+    reason: str
+    requested_by: UUID
+    requested_by_name: str
+    created_at: datetime
+    decided_by: UUID | None
+    decided_at: datetime | None
+    decision_note: str | None
+
+
 class JoinInfo(BaseModel):
     property_name: str
     locality: str | None
