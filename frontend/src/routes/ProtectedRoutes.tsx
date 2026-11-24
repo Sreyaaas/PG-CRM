@@ -2,6 +2,7 @@ import { Navigate, Outlet, useNavigate } from 'react-router-dom'
 import { CaretakerShell } from '@/components/shells/CaretakerShell'
 import { OwnerShell } from '@/components/shells/OwnerShell'
 import { Button } from '@/components/ui/button'
+import { usePendingApprovalsCount } from '@/features/approvals/useDiscountRequests'
 import { useAuth } from '@/features/auth/AuthContext'
 
 export function RoleRedirect() {
@@ -19,6 +20,7 @@ export function RoleRedirect() {
 export function OwnerLayoutRoute() {
   const { session, membership, logout } = useAuth()
   const navigate = useNavigate()
+  const approvalsCount = usePendingApprovalsCount()
 
   if (!session) {
     return <Navigate to="/login" replace />
@@ -48,6 +50,7 @@ export function OwnerLayoutRoute() {
       orgName={membership.organization_name}
       userName={session.me.full_name}
       headerAction={actions}
+      badges={{ '/owner/approvals': approvalsCount }}
       sidebarFooter={
         <div className="flex flex-col gap-2">
           {session.me.memberships.length > 1 && (
