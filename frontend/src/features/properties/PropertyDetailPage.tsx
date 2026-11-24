@@ -79,12 +79,9 @@ export function PropertyDetailPage() {
         </dl>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-base font-semibold text-slate-950">Rooms &amp; beds</h2>
-        <Button asChild variant="outline" className="mt-3 h-11 w-full sm:w-auto">
-          <Link to={`/owner/properties/${p.id}/rooms`}>Rooms &amp; beds</Link>
-        </Button>
-      </section>
+      <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
+        <Link to={`/owner/properties/${p.id}/rooms`}>Rooms &amp; beds</Link>
+      </Button>
 
       <ConnectSoundboxQr propertyId={p.id} />
     </div>
