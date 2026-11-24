@@ -106,7 +106,7 @@ export function LoginPage() {
               maxLength={10}
               placeholder="9876543210"
               {...register('phone')}
-              className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base tabular-nums text-slate-950 placeholder:text-slate-400 focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+              className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base tabular-nums text-slate-950 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
             />
             {errors.phone && <p className="text-xs text-red-700">{errors.phone.message}</p>}
           </div>
@@ -121,7 +121,7 @@ export function LoginPage() {
               autoComplete="current-password"
               placeholder="••••••••"
               {...register('password')}
-              className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 placeholder:text-slate-400 focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-600"
+              className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
             />
             {errors.password && <p className="text-xs text-red-700">{errors.password.message}</p>}
           </div>
@@ -129,7 +129,7 @@ export function LoginPage() {
           <Button
             type="submit"
             disabled={loginMutation.isPending}
-            className="h-11 w-full bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700"
+            className="h-11 w-full bg-slate-900 text-sm font-medium text-white hover:bg-slate-800"
           >
             {loginMutation.isPending ? 'Signing in…' : 'Sign in'}
           </Button>
@@ -137,7 +137,7 @@ export function LoginPage() {
 
         <div className="mt-5 border-t border-slate-100 pt-4 text-center text-sm text-slate-600">
           New PG owner?{' '}
-          <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-700">
+          <Link to="/signup" className="font-medium text-slate-950 underline underline-offset-4 hover:text-slate-700">
             Create organization
           </Link>
         </div>

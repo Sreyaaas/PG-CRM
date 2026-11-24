@@ -54,7 +54,7 @@ export function OrgPickerPage() {
                     selectOrg(m.org_id)
                     navigate(m.role === 'owner' ? '/owner' : '/caretaker', { replace: true })
                   }}
-                  className="flex w-full items-center justify-between rounded-md border border-slate-200 bg-white px-4 py-3 text-left transition-colors hover:border-indigo-300 hover:bg-indigo-50/40"
+                  className="flex w-full items-center justify-between rounded-md border border-slate-200 bg-white px-4 py-3 text-left transition-colors hover:border-slate-300 hover:bg-slate-50"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <Building2 className="h-5 w-5 shrink-0 text-slate-400" />
