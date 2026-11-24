@@ -12,11 +12,26 @@ const OWNER_NAV: ShellNavItem[] = [
   { label: 'More', to: '/owner/more', icon: <Menu className="h-5 w-5" /> },
 ]
 
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null
+  return (
+    <span
+      data-testid="nav-badge"
+      aria-label={`${count} pending`}
+      className="ml-auto min-w-5 rounded-full bg-slate-900 px-1.5 text-center text-[11px] font-semibold leading-5 tabular-nums text-white"
+    >
+      {count}
+    </span>
+  )
+}
+
 export interface OwnerShellProps {
   orgName?: string
   userName?: string
   headerAction?: ReactNode
   sidebarFooter?: ReactNode
+  /** Badge counts keyed by nav `to` path; zero or absent hides the badge. */
+  badges?: Record<string, number>
   children: ReactNode
 }
 
@@ -25,6 +40,7 @@ export function OwnerShell({
   userName,
   headerAction,
   sidebarFooter,
+  badges = {},
   children,
 }: OwnerShellProps) {
   return (
@@ -61,6 +77,7 @@ export function OwnerShell({
             >
               {item.icon}
               <span>{item.label}</span>
+              <NavBadge count={badges[item.to] ?? 0} />
             </NavLink>
           ))}
         </nav>
@@ -109,7 +126,18 @@ export function OwnerShell({
                 )
               }
             >
-              {item.icon}
+              <span className="relative">
+                {item.icon}
+                {(badges[item.to] ?? 0) > 0 && (
+                  <span
+                    data-testid="nav-badge"
+                    aria-label={`${badges[item.to]} pending`}
+                    className="absolute -right-3 -top-2 min-w-4 rounded-full bg-slate-900 px-1 text-center text-[10px] font-semibold leading-4 tabular-nums text-white"
+                  >
+                    {badges[item.to]}
+                  </span>
+                )}
+              </span>
               <span>{item.label}</span>
             </NavLink>
           ))}
