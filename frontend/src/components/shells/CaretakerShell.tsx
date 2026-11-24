@@ -69,8 +69,10 @@ export function CaretakerShell({
               end={item.to === '/caretaker'}
               className={({ isActive }) =>
                 cn(
-                  'flex flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors',
-                  isActive ? 'text-slate-950' : 'text-slate-500 hover:text-slate-900',
+                  'relative flex flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors',
+                  isActive
+                    ? 'text-slate-950 before:absolute before:inset-x-5 before:top-0 before:h-0.5 before:rounded-full before:bg-slate-950'
+                    : 'text-slate-500 hover:text-slate-900',
                 )
               }
             >
