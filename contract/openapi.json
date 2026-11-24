@@ -2330,6 +2330,215 @@
         }
       }
     },
+    "/api/v1/uploads": {
+      "post": {
+        "tags": [
+          "files"
+        ],
+        "summary": "Staff Upload",
+        "description": "Presigned PUT under org/{org_id}/{property_id}/{kind}/. Only for a property the caller can access.",
+        "operationId": "staff_upload_api_v1_uploads_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadTicket"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Property not found"
+          }
+        }
+      }
+    },
+    "/api/v1/files/url": {
+      "get": {
+        "tags": [
+          "files"
+        ],
+        "summary": "File Url",
+        "description": "Signed GET (5 minutes), only if `key` is stored on a row the caller can see. Otherwise 404.",
+        "operationId": "file_url_api_v1_files_url_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "title": "Key"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileUrl"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/public/join/{qr_slug}": {
       "get": {
         "tags": [
@@ -2408,6 +2617,95 @@
               }
             },
             "description": "Too Many Requests"
+          }
+        }
+      }
+    },
+    "/api/v1/public/join/{qr_slug}/uploads": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Join Upload",
+        "description": "Presigned PUT for the onboarding form's ID photo or live selfie, under onboarding/{property_id}/.\nNo sign-in; 10 per IP per 10 minutes.",
+        "operationId": "join_upload_api_v1_public_join__qr_slug__uploads_post",
+        "parameters": [
+          {
+            "name": "qr_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Qr Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadTicket"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "description": "Too many uploads"
+          },
+          "404": {
+            "description": "Unknown or inactive QR code"
           }
         }
       }
@@ -3000,6 +3298,25 @@
           "error"
         ],
         "title": "ErrorResponse"
+      },
+      "FileUrl": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "Short-lived signed GET URL"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "expires_in"
+        ],
+        "title": "FileUrl"
       },
       "JoinInfo": {
         "properties": {
@@ -3622,6 +3939,44 @@
         "title": "PropertyUpdate",
         "description": "Partial update: only the fields sent are changed."
       },
+      "PublicUploadRequest": {
+        "properties": {
+          "content_type": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "application/pdf"
+            ],
+            "title": "Content Type",
+            "description": "Must match the upload's Content-Type. PDF only for kyc_id"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "maximum": 5242880.0,
+            "minimum": 1.0,
+            "title": "Size Bytes",
+            "description": "Exact file size in bytes, max 5 MB"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "kyc_id",
+              "selfie"
+            ],
+            "title": "Kind"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "content_type",
+          "size_bytes",
+          "kind"
+        ],
+        "title": "PublicUploadRequest"
+      },
       "RefreshRequest": {
         "properties": {
           "refresh_token": {
@@ -4149,6 +4504,76 @@
           "upi_mcc"
         ],
         "title": "UpiPayeeDetails"
+      },
+      "UploadRequest": {
+        "properties": {
+          "content_type": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "application/pdf"
+            ],
+            "title": "Content Type",
+            "description": "Must match the upload's Content-Type. PDF only for kyc_id"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "maximum": 5242880.0,
+            "minimum": 1.0,
+            "title": "Size Bytes",
+            "description": "Exact file size in bytes, max 5 MB"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "expense_proof",
+              "kyc_id",
+              "selfie"
+            ],
+            "title": "Kind"
+          },
+          "property_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Property Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "content_type",
+          "size_bytes",
+          "kind",
+          "property_id"
+        ],
+        "title": "UploadRequest"
+      },
+      "UploadTicket": {
+        "properties": {
+          "object_key": {
+            "type": "string",
+            "title": "Object Key",
+            "description": "Store this on the record (e.g. id_doc_path) after the upload succeeds"
+          },
+          "upload_url": {
+            "type": "string",
+            "title": "Upload Url",
+            "description": "PUT the file here within expires_in seconds, with exactly the same Content-Type and size"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "object_key",
+          "upload_url",
+          "expires_in"
+        ],
+        "title": "UploadTicket"
       }
     },
     "securitySchemes": {

@@ -311,7 +311,10 @@ def test_prod_settings_refuse_dev_secret_and_loose_cors():
 
     with pytest.raises(ValidationError):
         Settings(environment="prod", cors_origins=["https://app.example.in"])  # dev JWT secret
+    ok = {"environment": "prod", "jwt_secret": "x" * 40, "s3_secret_key": "y" * 40}
     for origins in (["*"], ["http://app.example.in"], ["https://localhost:5173"], []):
         with pytest.raises(ValidationError):
-            Settings(environment="prod", jwt_secret="x" * 40, cors_origins=origins)
-    assert Settings(environment="prod", jwt_secret="x" * 40, cors_origins=["https://app.example.in"])
+            Settings(**ok, cors_origins=origins)
+    with pytest.raises(ValidationError):  # dev storage secret (BE-20)
+        Settings(**(ok | {"s3_secret_key": "pgcrm-dev-secret"}), cors_origins=["https://app.example.in"])
+    assert Settings(**ok, cors_origins=["https://app.example.in"])

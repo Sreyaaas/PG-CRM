@@ -5,10 +5,10 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 
-from app import errors, logs, monitoring
+from app import errors, logs, monitoring, storage
 from app.config import get_settings
 from app.db import close_pool
-from app.routers import auth, discounts, properties, public, rooms, staff
+from app.routers import auth, discounts, files, properties, public, rooms, staff
 from app.schemas import ErrorResponse
 
 API_PREFIX = "/api/v1"
@@ -17,6 +17,11 @@ _DOCS = ("/docs", "/redoc", "/openapi.json")
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    if get_settings().environment in ("dev", "test"):
+        try:
+            storage.ensure_bucket()
+        except Exception:  # storage not running: the API still starts, uploads fail until it is
+            logs.logger.warning("could not reach object storage to create the bucket", exc_info=True)
     yield
     close_pool()
 
@@ -68,7 +73,15 @@ def create_app() -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
-    for r in (auth.router, properties.router, rooms.router, staff.router, discounts.router, public.router):
+    for r in (
+        auth.router,
+        properties.router,
+        rooms.router,
+        staff.router,
+        discounts.router,
+        files.router,
+        public.router,
+    ):
         app.include_router(r, prefix=API_PREFIX)
     return app
 
