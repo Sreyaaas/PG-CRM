@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import { CaretakerHomePage } from './CaretakerHomePage'
 import { DevUiPage } from './DevUiPage'
+import { ApprovalsPage } from '@/features/approvals/ApprovalsPage'
 import { LoginPage } from './LoginPage'
 import { OrgPickerPage } from './OrgPickerPage'
 import { OwnerDashboardPage } from './OwnerDashboardPage'
@@ -18,7 +19,7 @@ export function AppRouter() {
 
       <Route path="/owner" element={<OwnerLayoutRoute />}>
         <Route index element={<OwnerDashboardPage section="Dashboard" />} />
-        <Route path="approvals" element={<OwnerDashboardPage section="Approvals" />} />
+        <Route path="approvals" element={<ApprovalsPage />} />
         <Route path="properties" element={<OwnerDashboardPage section="Properties" />} />
         <Route path="money" element={<OwnerDashboardPage section="Money" />} />
         <Route path="more" element={<OwnerDashboardPage section="More" />} />
