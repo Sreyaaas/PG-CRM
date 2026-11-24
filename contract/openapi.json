@@ -2619,6 +2619,90 @@
             "description": "Too Many Requests"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Join Submit",
+        "description": "Submit the onboarding form. No sign-in; 5 submissions per IP per hour. Returns only the request id.\n\nThe rules (active QR, exit deduction unchanged, one pending request per phone, passport + visa for foreign\nnationals, photos under onboarding/{property_id}/) are enforced by `api.public_submit_onboarding`; this route\nonly adds the storage check that the photos were really uploaded.",
+        "operationId": "join_submit_api_v1_public_join__qr_slug__post",
+        "parameters": [
+          {
+            "name": "qr_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Qr Slug"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingSubmit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingSubmitted"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "Inactive QR code, stale exit deduction, bad photos, already pending"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        }
       }
     },
     "/api/v1/public/join/{qr_slug}/uploads": {
@@ -3518,6 +3602,201 @@
           "assigned_property_ids"
         ],
         "title": "Membership"
+      },
+      "OnboardingSubmit": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Full Name"
+          },
+          "phone": {
+            "type": "string",
+            "pattern": "^[6-9][0-9]{9}$",
+            "title": "Phone",
+            "description": "10 digits, starting 6-9"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "permanent_address": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Permanent Address"
+          },
+          "occupation": {
+            "type": "string",
+            "enum": [
+              "working",
+              "student",
+              "other"
+            ],
+            "title": "Occupation"
+          },
+          "employer_or_college": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employer Or College"
+          },
+          "emergency_contact_name": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Emergency Contact Name"
+          },
+          "emergency_contact_phone": {
+            "type": "string",
+            "pattern": "^[0-9+ ]{10,15}$",
+            "title": "Emergency Contact Phone"
+          },
+          "id_doc_type": {
+            "type": "string",
+            "enum": [
+              "aadhaar",
+              "pan",
+              "driving_licence",
+              "voter_id",
+              "passport"
+            ],
+            "title": "Id Doc Type"
+          },
+          "id_doc_number": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Id Doc Number"
+          },
+          "id_doc_path": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Id Doc Path",
+            "description": "object_key of the ID photo upload (onboarding/{property_id}/...)"
+          },
+          "selfie_path": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Selfie Path",
+            "description": "object_key of the live selfie upload (onboarding/{property_id}/...)"
+          },
+          "is_foreign_national": {
+            "type": "boolean",
+            "title": "Is Foreign National",
+            "default": false
+          },
+          "passport_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passport Number",
+            "description": "Required for foreign nationals"
+          },
+          "visa_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visa Number",
+            "description": "Required for foreign nationals"
+          },
+          "visa_expiry": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visa Expiry"
+          },
+          "accepted_rules": {
+            "type": "boolean",
+            "const": true,
+            "title": "Accepted Rules"
+          },
+          "accepted_exit_deduction_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Accepted Exit Deduction Paise",
+            "description": "The exit_deduction_paise shown on the form (from GET /public/join/{qr_slug}), unchanged"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "full_name",
+          "phone",
+          "permanent_address",
+          "occupation",
+          "emergency_contact_name",
+          "emergency_contact_phone",
+          "id_doc_type",
+          "id_doc_number",
+          "id_doc_path",
+          "selfie_path",
+          "accepted_rules",
+          "accepted_exit_deduction_paise"
+        ],
+        "title": "OnboardingSubmit",
+        "description": "The Reception QR form. Photos are object keys from POST /public/join/{qr_slug}/uploads."
+      },
+      "OnboardingSubmitted": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Request Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request_id"
+        ],
+        "title": "OnboardingSubmitted"
       },
       "Property": {
         "properties": {

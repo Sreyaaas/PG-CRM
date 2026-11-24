@@ -4,6 +4,8 @@ These tests are the spec for the database. A Rust backend later must pass the
 same behaviour because the rules live in SQL, not in Python.
 """
 
+from uuid import uuid4
+
 from conftest import BASE_RENT, World, api_client, as_user, raises_sqlstate, rand_phone, rand_utr
 
 # --------------------------------------------------------------------------
@@ -356,8 +358,8 @@ def test_public_onboarding_intake(world: World):
         "emergency_contact_phone": "9876543210",
         "id_doc_type": "aadhaar",
         "id_doc_number": "XXXX-1234",
-        "id_doc_path": "kyc/a.jpg",
-        "selfie_path": "kyc/s.jpg",
+        "id_doc_path": f"onboarding/{world.prop_a}/{uuid4()}.jpg",
+        "selfie_path": f"onboarding/{world.prop_a}/{uuid4()}.jpg",
         "accepted_rules": True,
         "accepted_exit_deduction_paise": 2_000_00,
     }
@@ -375,6 +377,36 @@ def test_public_onboarding_intake(world: World):
     with as_user(world.caretaker_b, world.org) as cur:
         cur.execute("SELECT count(*) AS n FROM onboarding_requests")
         assert cur.fetchone()["n"] == 0
+
+
+def test_public_onboarding_photos_must_belong_to_that_property(world: World):
+    """BE-21: an onboarding request can only reference keys uploaded through that property's QR form."""
+    import json
+
+    with as_user(world.owner, world.org) as cur:
+        cur.execute("SELECT qr_slug FROM properties WHERE id = %s", (world.prop_a,))
+        slug = cur.fetchone()["qr_slug"]
+    good = f"onboarding/{world.prop_a}/{uuid4()}.jpg"
+    base = {
+        "full_name": "Kiran M", "phone": rand_phone(), "permanent_address": "Mysuru", "occupation": "working",
+        "emergency_contact_name": "Parent", "emergency_contact_phone": "9876543210", "id_doc_type": "aadhaar",
+        "id_doc_number": "XXXX-1234", "id_doc_path": good, "selfie_path": good, "accepted_rules": True,
+        "accepted_exit_deduction_paise": 2_000_00,
+    }  # fmt: skip
+    for bad in (
+        f"onboarding/{world.prop_b}/{uuid4()}.jpg",  # another building
+        f"org/{world.org}/{world.prop_a}/selfie/{uuid4()}.jpg",  # a staff upload
+        f"onboarding/{world.prop_a}/../{world.prop_b}/{uuid4()}.jpg",
+        None,
+    ):
+        for field in ("id_doc_path", "selfie_path"):
+            with raises_sqlstate("PC003"), as_user(None) as cur:
+                cur.execute(
+                    "SELECT api.public_submit_onboarding(%s, %s::jsonb)", (slug, json.dumps(base | {field: bad}))
+                )
+    with as_user(None) as cur:
+        cur.execute("SELECT api.public_submit_onboarding(%s, %s::jsonb) AS id", (slug, json.dumps(base)))
+        assert cur.fetchone()["id"]
 
 
 def _session_user(c) -> dict:
