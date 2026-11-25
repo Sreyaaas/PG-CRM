@@ -29,8 +29,10 @@ import { Notice, PageHeader } from '@/components/ui/misc'
 import { useAuth } from '@/features/auth/AuthContext'
 import { compressImage } from '@/features/join/imageCompress'
 import { usePropertiesQuery } from '@/features/properties/api'
-import { parseRupeesToPaise } from '@/lib/money'
+import { formatINR, parseRupeesToPaise } from '@/lib/money'
 import { cn } from '@/lib/utils'
+import { isNetworkError } from '@/offline/retryQueue'
+import { retryQueue } from '@/offline/transport'
 import { uploadExpenseProof, useCreateExpense, type ExpenseCategory, type ExpenseCreate } from './api'
 import {
   CATEGORY_LABELS,
@@ -184,35 +186,64 @@ export function LogExpensePage() {
     }
 
     setSubmitting(true)
+    const qty = values.category === 'water_tanker' && values.quantity ? Number(values.quantity) : null
+    const draft: Omit<ExpenseCreate, 'proof_path'> = {
+      property_id: pid,
+      category: values.category as ExpenseCategory,
+      amount_paise: parseRupeesToPaise(values.amount),
+      quantity: qty,
+      unit: qty ? values.unit || null : null,
+      expense_date: values.expense_date,
+      vendor_name: values.vendor_name || null,
+      notes: values.notes || null,
+      bill_mode: values.bill_mode,
+      proof_captured_at: noBill ? photo.capturedAt.toISOString() : null,
+      proof_lat: noBill && where ? where.lat : null,
+      proof_lng: noBill && where ? where.lng : null,
+      paid_from: values.paid_from,
+    }
+    let proofPath = photo.proofPath
+    let body: ExpenseCreate | null = proofPath ? { ...draft, proof_path: proofPath } : null
+    let compressed: Awaited<ReturnType<typeof compressImage>> | null = null
     try {
-      let proofPath = photo.proofPath
       if (!proofPath) {
-        const compressed = await compressImage(photo.file)
+        compressed = await compressImage(photo.file)
         proofPath = await uploadExpenseProof(orgId, pid, compressed.blob, compressed.contentType, compressed.sizeBytes)
         // Keep the uploaded key so a retry after a failed save does not upload twice.
         setPhoto((p) => (p ? { ...p, proofPath } : p))
+        body = { ...draft, proof_path: proofPath }
       }
-      const qty = values.category === 'water_tanker' && values.quantity ? Number(values.quantity) : null
-      const body: ExpenseCreate = {
-        property_id: pid,
-        category: values.category as ExpenseCategory,
-        amount_paise: parseRupeesToPaise(values.amount),
-        quantity: qty,
-        unit: qty ? values.unit || null : null,
-        expense_date: values.expense_date,
-        vendor_name: values.vendor_name || null,
-        notes: values.notes || null,
-        bill_mode: values.bill_mode,
-        proof_path: proofPath,
-        proof_captured_at: noBill ? photo.capturedAt.toISOString() : null,
-        proof_lat: noBill && where ? where.lat : null,
-        proof_lng: noBill && where ? where.lng : null,
-        paid_from: values.paid_from,
-      }
-      await createExpense.mutateAsync({ body, idempotencyKey: keyFor(JSON.stringify(body)) })
+      await createExpense.mutateAsync({ body: body!, idempotencyKey: keyFor(JSON.stringify(body)) })
       showToast('Expense logged', 'success')
       navigate(base)
-    } catch (err) {
+    } catch (caught) {
+      let err: unknown = caught
+      if (isNetworkError(err)) {
+        // No connection: keep it on this phone. If the photo already reached storage, reuse it and the same key;
+        // otherwise the queue uploads the photo first when the phone is back online.
+        try {
+          const label = `${values.category.replace('_', ' ')} expense ${formatINR(draft.amount_paise)}`
+          const result = body
+            ? await retryQueue.submit({ kind: 'expense', label, body: { ...body }, idempotencyKey: keyFor(JSON.stringify(body)) })
+            : await retryQueue.submit({
+                kind: 'expense',
+                label,
+                body: { ...draft },
+                photo: await (async () => {
+                  const c = compressed ?? (await compressImage(photo.file))
+                  return { blob: c.blob, contentType: c.contentType, propertyId: pid }
+                })(),
+              })
+          showToast(
+            result.status === 'sent' ? 'Expense logged' : 'No connection. Saved on this phone and will sync when online.',
+            result.status === 'sent' ? 'success' : 'default',
+          )
+          navigate(base)
+          return
+        } catch (queueErr) {
+          err = queueErr
+        }
+      }
       showToast(err instanceof ApiError ? err.message : err instanceof Error ? err.message : 'Could not save the expense', 'error')
     } finally {
       setSubmitting(false)
