@@ -1,6 +1,9 @@
+import { Building2, ChevronRight, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { ApiError } from '@/api/client'
 import { Button } from '@/components/ui/button'
+import { Card, CardList } from '@/components/ui/card'
+import { EmptyState, ListRow, LoadingRows, Notice, PageHeader, ROW_LINK } from '@/components/ui/misc'
 import { usePropertiesQuery } from './api'
 import { ActiveBadge } from './ActiveBadge'
 
@@ -8,43 +11,55 @@ export function PropertiesListPage() {
   const query = usePropertiesQuery()
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <h1 className="text-xl font-semibold tracking-tight text-slate-950">Properties</h1>
-        <Button
-          asChild
-          className="h-11 bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-800"
-        >
-          <Link to="/owner/properties/new">Add property</Link>
-        </Button>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Properties"
+        actions={
+          <Button asChild>
+            <Link to="/owner/properties/new">
+              <Plus aria-hidden="true" />
+              Add property
+            </Link>
+          </Button>
+        }
+      />
 
-      {query.isLoading && <p className="text-sm text-slate-500">Loading properties…</p>}
       {query.isError && (
-        <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+        <Notice role="alert">
           {query.error instanceof ApiError ? query.error.message : 'Unable to load properties.'}
-        </div>
+        </Notice>
       )}
-      {query.data && query.data.length === 0 && (
-        <p className="text-sm text-slate-500">No properties yet. Add your first building.</p>
-      )}
-      {query.data && query.data.length > 0 && (
-        <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
-          {query.data.map((p) => (
-            <li key={p.id}>
-              <Link
-                to={`/owner/properties/${p.id}`}
-                className="flex min-h-14 items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50"
-              >
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium text-slate-950">{p.name}</div>
-                  {p.locality && <div className="truncate text-xs text-slate-500">{p.locality}</div>}
-                </div>
-                <ActiveBadge active={p.is_active} />
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+      {!query.isError && (
+        <Card className="overflow-hidden">
+          {query.isLoading && <LoadingRows label="Loading properties…" />}
+          {query.data && query.data.length === 0 && <EmptyState>No properties yet. Add your first building.</EmptyState>}
+          {query.data && query.data.length > 0 && (
+            <CardList>
+              {query.data.map((p) => (
+                <li key={p.id}>
+                  <Link to={`/owner/properties/${p.id}`} className={ROW_LINK}>
+                    <ListRow
+                      leading={
+                        <span className="inline-flex size-10 items-center justify-center rounded-full bg-surface-2 text-muted">
+                          <Building2 className="size-5" aria-hidden="true" />
+                        </span>
+                      }
+                      title={p.name}
+                      meta={p.locality ?? undefined}
+                      trailing={
+                        <>
+                          <ActiveBadge active={p.is_active} />
+                          <ChevronRight className="size-4 text-subtle" aria-hidden="true" />
+                        </>
+                      }
+                    />
+                  </Link>
+                </li>
+              ))}
+            </CardList>
+          )}
+        </Card>
       )}
     </div>
   )

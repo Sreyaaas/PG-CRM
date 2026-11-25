@@ -5,7 +5,7 @@ import { ApprovalsPage } from '@/features/approvals/ApprovalsPage'
 import { LoginPage } from './LoginPage'
 import { OrgPickerPage } from './OrgPickerPage'
 import { OwnerDashboardPage } from './OwnerDashboardPage'
-import { OwnerMorePage } from './OwnerMorePage'
+import { CaretakerMorePage, OwnerMorePage } from './MorePages'
 import { StaffPage } from '@/features/staff/StaffPage'
 import { CaretakerLayoutRoute, OwnerLayoutRoute, RoleRedirect } from './ProtectedRoutes'
 import { PropertiesListPage } from '@/features/properties/PropertiesListPage'
@@ -25,7 +25,7 @@ export function AppRouter() {
       <Route path="/dev/ui" element={<DevUiPage />} />
 
       <Route path="/owner" element={<OwnerLayoutRoute />}>
-        <Route index element={<OwnerDashboardPage section="Dashboard" />} />
+        <Route index element={<OwnerDashboardPage section="Today" />} />
         <Route path="approvals" element={<ApprovalsPage />} />
         <Route path="properties" element={<PropertiesListPage />} />
         <Route path="properties/new" element={<PropertyCreatePage />} />
@@ -43,7 +43,7 @@ export function AppRouter() {
         <Route path="check-ins" element={<CaretakerHomePage section="Check-ins" />} />
         <Route path="payments" element={<CaretakerHomePage section="Payments" />} />
         <Route path="expenses" element={<CaretakerHomePage section="Expenses" />} />
-        <Route path="more" element={<CaretakerHomePage section="More" />} />
+        <Route path="more" element={<CaretakerMorePage />} />
       </Route>
     </Routes>
   )

@@ -2,12 +2,16 @@ import { useState, type ReactNode } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { ApiError, apiClient } from '@/api/client'
 import { Money } from '@/components/Money'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Field } from '@/components/ui/field'
+import { Checkbox, Input } from '@/components/ui/input'
+import { EmptyState, LoadingRows, Notice, PageHeader } from '@/components/ui/misc'
 import { parseRupeesToPaise } from '@/lib/money'
 import { useOrgId, usePropertyQuery } from '@/features/properties/api'
 import { useBedBoardQuery, type BoardBed, type BoardRoom } from './api'
@@ -21,42 +25,8 @@ import {
   type RoomFormValues,
 } from './roomForm'
 
-const INPUT =
-  'h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900'
-const PRIMARY = 'h-11 bg-slate-900 text-sm font-medium text-white hover:bg-slate-800'
-
-function Field({
-  id,
-  label,
-  error,
-  children,
-}: {
-  id: string
-  label: string
-  error?: string
-  children: ReactNode
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700">
-        {label}
-      </label>
-      {children}
-      {error && (
-        <p role="alert" className="text-xs text-red-700">
-          {error}
-        </p>
-      )}
-    </div>
-  )
-}
-
 function Warning({ children }: { children: ReactNode }) {
-  return (
-    <p className="rounded-md border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm text-yellow-900">
-      {children}
-    </p>
-  )
+  return <Notice tone="warning">{children}</Notice>
 }
 
 const header = (orgId: string) => ({ 'x-org-id': orgId })
@@ -127,43 +97,44 @@ function AddRoomForm({
       onSubmit={handleSubmit((v) => mutation.mutate(v))}
       noValidate
       aria-label="Add room"
-      className="space-y-4 rounded-lg border border-slate-200 bg-white p-4"
+      className="flex flex-col gap-4 rounded-card border border-line bg-surface p-4 shadow-sm sm:p-5"
     >
-      <h2 className="text-base font-semibold text-slate-950">Add room</h2>
+      <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-ink">Add room</h2>
       <Field id="r-label" label="Room label" error={errors.label?.message}>
-        <input id="r-label" type="text" placeholder="204" {...register('label')} className={INPUT} />
+        <Input id="r-label" type="text" placeholder="204" {...register('label')} enterKeyHint="next" />
       </Field>
       <Field id="r-floor" label="Floor" error={errors.floor?.message}>
-        <input
+        <Input
           id="r-floor"
           type="text"
           inputMode="numeric"
           {...register('floor')}
-          className={`${INPUT} tabular-nums`}
+          enterKeyHint="next"
+          className="tabular-nums"
         />
       </Field>
-      <div className="space-y-1.5">
-        <span id="r-sharing-label" className="block text-sm font-medium text-slate-700">
+      <div className="flex flex-col gap-1.5">
+        <span id="r-sharing-label" className="block text-[14px] font-medium text-ink">
           Sharing
         </span>
         <div role="group" aria-labelledby="r-sharing-label" className="flex items-center gap-3">
           <Button
             type="button"
-            variant="outline"
-            className="h-11 w-11"
+            variant="secondary"
+            size="icon"
             aria-label="Decrease sharing"
             disabled={sharing <= 1}
             onClick={() => setValue('sharing', sharing - 1)}
           >
             −
           </Button>
-          <output aria-live="polite" className="w-8 text-center text-lg font-semibold tabular-nums">
+          <output aria-live="polite" className="w-8 text-center text-[20px] font-bold tabular-nums">
             {sharing}
           </output>
           <Button
             type="button"
-            variant="outline"
-            className="h-11 w-11"
+            variant="secondary"
+            size="icon"
             aria-label="Increase sharing"
             disabled={sharing >= 8}
             onClick={() => setValue('sharing', sharing + 1)}
@@ -172,35 +143,34 @@ function AddRoomForm({
           </Button>
         </div>
       </div>
-      <label className="flex h-11 items-center gap-3 text-sm font-medium text-slate-700">
-        <input type="checkbox" {...register('is_ac')} className="h-5 w-5 accent-slate-900" />
-        AC room
-      </label>
+      <Checkbox {...register('is_ac')} label="AC room" />
       <Field id="r-area" label="Area (sq ft, optional)" error={errors.area_sqft?.message}>
-        <input
+        <Input
           id="r-area"
           type="text"
           inputMode="numeric"
           {...register('area_sqft')}
-          className={`${INPUT} tabular-nums`}
+          enterKeyHint="next"
+          className="tabular-nums"
         />
       </Field>
       <Field id="r-rent" label="Rent per bed (₹)" error={errors.rent?.message}>
-        <input
+        <Input
           id="r-rent"
           type="text"
           inputMode="numeric"
           placeholder="6000"
           {...register('rent')}
-          className={`${INPUT} tabular-nums`}
+          enterKeyHint="next"
+          className="tabular-nums"
         />
       </Field>
       {preview && (
-        <p data-testid="room-preview" className="text-sm text-slate-700 tabular-nums">
+        <p data-testid="room-preview" className="text-[14px] text-ink tabular-nums">
           {preview}
         </p>
       )}
-      <Button type="submit" disabled={mutation.isPending} className={`${PRIMARY} w-full`}>
+      <Button type="submit" disabled={mutation.isPending} block>
         {mutation.isPending ? 'Adding…' : 'Add room'}
       </Button>
     </form>
@@ -272,38 +242,37 @@ function EditRoomForm({
       onSubmit={handleSubmit((v) => mutation.mutate(v))}
       noValidate
       aria-label={`Edit room ${room.label}`}
-      className="space-y-3 border-t border-slate-100 pt-3"
+      className="flex flex-col gap-3 border-t border-line pt-3"
     >
       <Field id={`${id}-label`} label="Room label" error={errors.label?.message}>
-        <input id={`${id}-label`} type="text" {...register('label', { required: true })} className={INPUT} />
+        <Input id={`${id}-label`} type="text" {...register('label', { required: true })} enterKeyHint="next" />
       </Field>
       <Field id={`${id}-floor`} label="Floor">
-        <input
+        <Input
           id={`${id}-floor`}
           type="text"
           inputMode="numeric"
           {...register('floor')}
-          className={`${INPUT} tabular-nums`}
+          enterKeyHint="next"
+          className="tabular-nums"
         />
       </Field>
       <Field id={`${id}-area`} label="Area (sq ft), leave blank to keep">
-        <input
+        <Input
           id={`${id}-area`}
           type="text"
           inputMode="numeric"
           {...register('area_sqft')}
-          className={`${INPUT} tabular-nums`}
+          enterKeyHint="next"
+          className="tabular-nums"
         />
       </Field>
-      <label className="flex h-11 items-center gap-3 text-sm font-medium text-slate-700">
-        <input type="checkbox" {...register('is_ac')} className="h-5 w-5 accent-slate-900" />
-        AC room
-      </label>
+      <Checkbox {...register('is_ac')} label="AC room" />
       <div className="flex gap-2">
-        <Button type="submit" disabled={mutation.isPending} className={PRIMARY}>
+        <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? 'Saving…' : 'Save room'}
         </Button>
-        <Button type="button" variant="outline" className="h-11" onClick={onDone}>
+        <Button type="button" variant="secondary" onClick={onDone}>
           Cancel
         </Button>
       </div>
@@ -377,34 +346,32 @@ function EditBedForm({ bed, onDone }: { bed: BoardBed; onDone: () => void }) {
       onSubmit={handleSubmit(submit)}
       noValidate
       aria-label={`Edit bed ${bed.label}`}
-      className="space-y-3 pt-3"
+      className="flex flex-col gap-3 pt-3"
     >
       <Field id={`${id}-label`} label="Bed label" error={errors.label?.message}>
-        <input id={`${id}-label`} type="text" {...register('label')} className={INPUT} />
+        <Input id={`${id}-label`} type="text" {...register('label')} enterKeyHint="next" />
       </Field>
       <Field id={`${id}-rent`} label="Rent (₹)" error={errors.rent?.message}>
-        <input
+        <Input
           id={`${id}-rent`}
           type="text"
           inputMode="numeric"
           {...register('rent')}
-          className={`${INPUT} tabular-nums`}
+          enterKeyHint="next"
+          className="tabular-nums"
         />
       </Field>
-      <label className="flex h-11 items-center gap-3 text-sm font-medium text-slate-700">
-        <input type="checkbox" {...register('is_active')} className="h-5 w-5 accent-slate-900" />
-        Active
-      </label>
+      <Checkbox {...register('is_active')} label="Active" />
       {activeError && (
-        <p role="alert" className="text-xs text-red-700">
+        <p role="alert" className="text-[12.5px] font-medium text-danger-ink">
           {activeError}
         </p>
       )}
       <div className="flex gap-2">
-        <Button type="submit" disabled={mutation.isPending} className={PRIMARY}>
+        <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? 'Saving…' : 'Save bed'}
         </Button>
-        <Button type="button" variant="outline" className="h-11" onClick={onDone}>
+        <Button type="button" variant="secondary" onClick={onDone}>
           Cancel
         </Button>
       </div>
@@ -451,25 +418,26 @@ function AddBedForm({ room, onDone }: { room: BoardRoom; onDone: () => void }) {
       onSubmit={handleSubmit((v) => mutation.mutate(v))}
       noValidate
       aria-label={`Add bed to room ${room.label}`}
-      className="space-y-3 border-t border-slate-100 pt-3"
+      className="flex flex-col gap-3 border-t border-line pt-3"
     >
       <Field id={`${id}-label`} label="New bed label" error={errors.label?.message}>
-        <input id={`${id}-label`} type="text" {...register('label')} className={INPUT} />
+        <Input id={`${id}-label`} type="text" {...register('label')} enterKeyHint="next" />
       </Field>
       <Field id={`${id}-rent`} label="New bed rent (₹)" error={errors.rent?.message}>
-        <input
+        <Input
           id={`${id}-rent`}
           type="text"
           inputMode="numeric"
           {...register('rent')}
-          className={`${INPUT} tabular-nums`}
+          enterKeyHint="next"
+          className="tabular-nums"
         />
       </Field>
       <div className="flex gap-2">
-        <Button type="submit" disabled={mutation.isPending} className={PRIMARY}>
+        <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? 'Adding…' : 'Add bed'}
         </Button>
-        <Button type="button" variant="outline" className="h-11" onClick={onDone}>
+        <Button type="button" variant="secondary" onClick={onDone}>
           Cancel
         </Button>
       </div>
@@ -483,10 +451,10 @@ function BedRow({ bed }: { bed: BoardBed }) {
     <li className="py-3">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-slate-950">{bed.label}</p>
-          <p className="text-sm text-slate-600">
+          <p className="text-[14px] font-medium text-ink">{bed.label}</p>
+          <p className="text-[14px] text-muted">
             <Money paise={bed.base_rent_paise} />
-            {!bed.is_active && <span className="ml-2 text-xs text-slate-500">Inactive</span>}
+            {!bed.is_active && <span className="ml-2 text-[12.5px] text-muted">Inactive</span>}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -494,8 +462,8 @@ function BedRow({ bed }: { bed: BoardBed }) {
           {!editing && (
             <Button
               type="button"
-              variant="outline"
-              className="h-11"
+              variant="secondary"
+              
               aria-label={`Edit bed ${bed.label}`}
               onClick={() => setEditing(true)}
             >
@@ -520,11 +488,11 @@ function RoomCard({
 }) {
   const [mode, setMode] = useState<'view' | 'edit' | 'addBed'>('view')
   return (
-    <section className="rounded-lg border border-slate-200 bg-white px-4 py-3" aria-label={`Room ${room.label}`}>
+    <section className="rounded-card border border-line bg-surface px-4 py-3 shadow-sm sm:px-5" aria-label={`Room ${room.label}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-slate-950">Room {room.label}</h3>
-          <p className="text-sm text-slate-500">
+          <h3 className="text-[16px] font-semibold tracking-[-0.01em] text-ink">Room {room.label}</h3>
+          <p className="text-[14px] text-muted">
             {room.floor != null && (
               <>
                 Floor <span className="tabular-nums">{room.floor}</span>
@@ -538,8 +506,8 @@ function RoomCard({
         {mode === 'view' && (
           <Button
             type="button"
-            variant="outline"
-            className="h-11"
+            variant="secondary"
+            
             aria-label={`Edit room ${room.label}`}
             onClick={() => setMode('edit')}
           >
@@ -553,7 +521,7 @@ function RoomCard({
           <EditRoomForm room={room} onDone={() => setMode('view')} onWarning={onWarning} />
         </div>
       )}
-      <ul className="mt-2 divide-y divide-slate-100">
+      <ul className="mt-2 divide-y divide-line">
         {room.beds.map((b) => (
           <BedRow key={b.id} bed={b} />
         ))}
@@ -564,8 +532,8 @@ function RoomCard({
         mode === 'view' && (
           <Button
             type="button"
-            variant="outline"
-            className="mt-2 h-11 w-full"
+            variant="secondary"
+            block className="mt-2"
             onClick={() => setMode('addBed')}
           >
             Add bed to {room.label}
@@ -585,29 +553,27 @@ export function RoomsPage() {
     setWarnings((prev) => ({ ...prev, [roomId]: warning }))
 
   return (
-    <div className="max-w-xl space-y-5">
-      <div className="border-b border-slate-200 pb-4">
-        <Link
-          to={`/owner/properties/${propertyId}`}
-          className="text-xs text-slate-500 underline underline-offset-4"
-        >
-          {property.data?.name ?? 'Back'}
-        </Link>
-        <h1 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">Rooms &amp; beds</h1>
-      </div>
+    <div className="flex max-w-xl flex-col gap-6">
+      <PageHeader back={{ to: `/owner/properties/${propertyId}`, label: property.data?.name ?? 'Back' }} title="Rooms &amp; beds" />
 
       {propertyId && <AddRoomForm propertyId={propertyId} onWarning={onWarning} />}
 
-      {board.isLoading && <p className="text-sm text-slate-500">Loading rooms…</p>}
+      {board.isLoading && (
+        <Card>
+          <LoadingRows label="Loading rooms…" />
+        </Card>
+      )}
       {board.isError && (
-        <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+        <Notice role="alert">
           {board.error instanceof ApiError ? board.error.message : 'Unable to load rooms.'}
-        </div>
+        </Notice>
       )}
       {board.data && board.data.length === 0 && (
-        <p className="text-sm text-slate-500">No rooms yet. Add the first room above.</p>
+        <Card>
+          <EmptyState>No rooms yet. Add the first room above.</EmptyState>
+        </Card>
       )}
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         {board.data?.map((room) => (
           <RoomCard key={room.id} room={room} warning={warnings[room.id]} onWarning={onWarning} />
         ))}

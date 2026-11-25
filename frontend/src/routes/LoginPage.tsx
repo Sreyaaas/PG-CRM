@@ -7,9 +7,13 @@ import { z } from 'zod'
 import { ApiError, apiClient } from '@/api/client'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
+import { Field } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Notice } from '@/components/ui/misc'
 import { useAuth } from '@/features/auth/AuthContext'
 import { getSelectedMembership } from '@/features/auth/session'
 import { useHealthQuery } from '@/features/health/useHealthQuery'
+import { AuthLayout } from './AuthLayout'
 
 const loginSchema = z.object({
   phone: z
@@ -77,75 +81,60 @@ export function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-8 text-slate-950">
-      <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-xs">
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-950">Sign in to PG-CRM</h1>
-          <p className="mt-1 text-sm text-slate-500">Staff access for PG owners and caretakers.</p>
-        </div>
-
-        {formError && (
-          <div
-            role="alert"
-            className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
-          >
-            {formError}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit((values) => loginMutation.mutate(values))} className="space-y-4">
-          <div className="space-y-1.5">
-            <label htmlFor="login-phone" className="block text-sm font-medium text-slate-700">
-              Mobile number
-            </label>
-            <input
-              id="login-phone"
-              type="tel"
-              inputMode="numeric"
-              autoComplete="tel-national"
-              maxLength={10}
-              placeholder="9876543210"
-              {...register('phone')}
-              className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base tabular-nums text-slate-950 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
-            />
-            {errors.phone && <p className="text-xs text-red-700">{errors.phone.message}</p>}
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="login-password" className="block text-sm font-medium text-slate-700">
-              Password
-            </label>
-            <input
-              id="login-password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              {...register('password')}
-              className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
-            />
-            {errors.password && <p className="text-xs text-red-700">{errors.password.message}</p>}
-          </div>
-
-          <Button
-            type="submit"
-            disabled={loginMutation.isPending}
-            className="h-11 w-full bg-slate-900 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            {loginMutation.isPending ? 'Signing in…' : 'Sign in'}
-          </Button>
-        </form>
-
-        <div className="mt-5 border-t border-slate-100 pt-4 text-center text-sm text-slate-600">
+    <AuthLayout
+      title={['Sign in to', 'PG-CRM']}
+      description="For PG owners and caretakers."
+      footer={
+        <>
           New PG owner?{' '}
-          <Link to="/signup" className="font-medium text-slate-950 underline underline-offset-4 hover:text-slate-700">
+          <Link to="/signup" className="inline-flex min-h-11 items-center font-semibold text-ink underline underline-offset-4">
             Create organization
           </Link>
-        </div>
-      </div>
+          {healthData && (
+            <span data-testid="api-status" className="mt-2 block text-[12px] text-subtle">
+              API: {healthData.status ?? 'ok'}
+            </span>
+          )}
+        </>
+      }
+    >
+      {formError && (
+        <Notice role="alert" className="mb-5">
+          {formError}
+        </Notice>
+      )}
 
-      <div className="mt-4 text-xs text-slate-400">
-        {healthData && <span data-testid="api-status">API: {healthData.status ?? 'ok'}</span>}
-      </div>
-    </main>
+      <form onSubmit={handleSubmit((values) => loginMutation.mutate(values))} className="flex flex-col gap-4" noValidate>
+        <Field id="login-phone" label="Mobile number" error={errors.phone?.message}>
+          <Input
+            id="login-phone"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel-national"
+            enterKeyHint="next"
+            maxLength={10}
+            placeholder="9876543210"
+            aria-invalid={errors.phone ? true : undefined}
+            className="tabular-nums"
+            {...register('phone')}
+          />
+        </Field>
+
+        <Field id="login-password" label="Password" error={errors.password?.message}>
+          <Input
+            id="login-password"
+            type="password"
+            autoComplete="current-password"
+            enterKeyHint="go"
+            aria-invalid={errors.password ? true : undefined}
+            {...register('password')}
+          />
+        </Field>
+
+        <Button type="submit" size="lg" block disabled={loginMutation.isPending} className="mt-2">
+          {loginMutation.isPending ? 'Signing in…' : 'Sign in'}
+        </Button>
+      </form>
+    </AuthLayout>
   )
 }

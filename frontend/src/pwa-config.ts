@@ -2,13 +2,13 @@ import type { VitePWAOptions } from 'vite-plugin-pwa'
 
 export const pwaOptions: Partial<VitePWAOptions> = {
   registerType: 'autoUpdate',
-  includeAssets: ['pwa-192x192.png', 'pwa-512x512.png'],
+  includeAssets: ['pwa-192x192.png', 'pwa-512x512.png', 'apple-touch-icon.png', 'favicon.svg'],
   manifest: {
     name: 'PG-CRM',
     short_name: 'PG-CRM',
     description: 'Operating system for multi-building PG owners',
-    theme_color: '#0f172a',
-    background_color: '#ffffff',
+    theme_color: '#faf7f0',
+    background_color: '#faf7f0',
     display: 'standalone',
     start_url: '/',
     icons: [

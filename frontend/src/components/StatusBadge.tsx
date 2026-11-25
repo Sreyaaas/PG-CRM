@@ -1,3 +1,4 @@
+import { Badge, type Tone } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 export type BedBadgeValue = 'vacant' | 'reserved' | 'occupied' | 'on_notice'
@@ -11,60 +12,28 @@ export type StatusBadgeProps =
 
 interface BadgeSpec {
   label: string
-  classes: string
+  tone: Tone
+  extra?: string
 }
 
 const BED_SPECS: Record<BedBadgeValue, BadgeSpec> = {
-  vacant: {
-    label: 'Vacant',
-    classes: 'bg-slate-100 text-slate-800 border-slate-300',
-  },
-  reserved: {
-    label: 'Reserved',
-    classes: 'bg-blue-50 text-blue-800 border-blue-200',
-  },
-  occupied: {
-    label: 'Occupied',
-    classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  },
-  on_notice: {
-    label: 'On notice',
-    classes: 'bg-amber-50 text-amber-900 border-amber-300',
-  },
+  vacant: { label: 'Vacant', tone: 'neutral' },
+  reserved: { label: 'Reserved', tone: 'info' },
+  occupied: { label: 'Occupied', tone: 'success' },
+  on_notice: { label: 'On notice', tone: 'warning' },
 }
 
 const PAYMENT_SPECS: Record<PaymentBadgeValue, BadgeSpec> = {
-  recorded: {
-    label: 'Cash',
-    classes: 'bg-slate-100 text-slate-800 border-slate-300',
-  },
-  provisional: {
-    label: 'Provisional',
-    classes: 'bg-amber-50 text-amber-900 border-amber-300',
-  },
-  verified: {
-    label: 'Verified',
-    classes: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  },
-  flagged: {
-    label: 'Flagged',
-    classes: 'bg-red-50 text-red-800 border-red-200',
-  },
-  void: {
-    label: 'Void',
-    classes: 'bg-slate-100 text-slate-700 border-slate-300 line-through',
-  },
+  recorded: { label: 'Cash', tone: 'neutral' },
+  provisional: { label: 'Provisional', tone: 'warning' },
+  verified: { label: 'Verified', tone: 'success' },
+  flagged: { label: 'Flagged', tone: 'danger' },
+  void: { label: 'Void', tone: 'neutral', extra: 'line-through' },
 }
 
 const EXPENSE_SPECS: Record<ExpenseBadgeValue, BadgeSpec> = {
-  'flagged & not reviewed': {
-    label: 'No bill: review',
-    classes: 'bg-yellow-50 text-yellow-900 border-yellow-300',
-  },
-  flagged_unreviewed: {
-    label: 'No bill: review',
-    classes: 'bg-yellow-50 text-yellow-900 border-yellow-300',
-  },
+  'flagged & not reviewed': { label: 'No bill: review', tone: 'warning' },
+  flagged_unreviewed: { label: 'No bill: review', tone: 'warning' },
 }
 
 function getSpec(props: StatusBadgeProps): BadgeSpec {
@@ -81,14 +50,8 @@ function getSpec(props: StatusBadgeProps): BadgeSpec {
 export function StatusBadge(props: StatusBadgeProps) {
   const spec = getSpec(props)
   return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium tracking-tight',
-        spec.classes,
-        props.className,
-      )}
-    >
+    <Badge tone={spec.tone} dot className={cn(spec.extra, props.className)}>
       {spec.label}
-    </span>
+    </Badge>
   )
 }

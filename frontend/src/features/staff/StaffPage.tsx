@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { UserPlus } from 'lucide-react'
 import { ApiError } from '@/api/client'
 import { useToast } from '@/components/Toast'
+import { Badge, type Tone } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Avatar, LoadingRows, PageHeader } from '@/components/ui/misc'
 import { AddCaretakerForm } from './AddCaretakerForm'
 import { EditStaffPanel } from './EditStaffPanel'
 import { usePropertiesQuery, useStaffQuery } from './useStaff'
 
-function Pill({ children }: { children: string }) {
-  return (
-    <span className="inline-flex items-center rounded-md border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-800">
-      {children}
-    </span>
-  )
+function Pill({ children, tone = 'neutral' }: { children: string; tone?: Tone }) {
+  return <Badge tone={tone}>{children}</Badge>
 }
 
 export function StaffPage() {
@@ -36,27 +35,25 @@ export function StaffPage() {
   const editing = staff.find((m) => m.user_id === editingId && m.role !== 'owner')
 
   return (
-    <div className="space-y-4">
-      <div className="border-b border-slate-200 pb-4">
-        <Link to="/owner/more" className="text-xs text-slate-500 underline underline-offset-4">
-          More
-        </Link>
-        <div className="mt-1 flex items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-950">Staff</h1>
-          {!adding && (
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        back={{ to: '/owner/more', label: 'More' }}
+        title="Staff"
+        actions={
+          !adding && (
             <Button
               type="button"
               onClick={() => {
                 setEditingId(null)
                 setAdding(true)
               }}
-              className="h-11 bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-800"
             >
+              <UserPlus aria-hidden="true" />
               Add caretaker
             </Button>
-          )}
-        </div>
-      </div>
+          )
+        }
+      />
 
       {adding && <AddCaretakerForm properties={properties} onDone={() => setAdding(false)} />}
 
@@ -69,30 +66,35 @@ export function StaffPage() {
         />
       )}
 
-      {staffQuery.isLoading && <p className="text-sm text-slate-500">Loading staff…</p>}
+      {staffQuery.isLoading && (
+        <Card>
+          <LoadingRows label="Loading staff…" />
+        </Card>
+      )}
 
-      <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+      <ul className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface shadow-sm">
         {staff.map((m) => (
-          <li key={m.user_id} className="space-y-2 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="truncate text-sm font-medium text-slate-950">{m.full_name}</div>
-                <div className="text-xs tabular-nums text-slate-500">{m.phone}</div>
+          <li key={m.user_id} className="flex flex-col gap-2.5 px-4 py-3.5 sm:px-5">
+            <div className="flex items-center gap-3">
+              <Avatar name={m.full_name} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[14.5px] font-semibold text-ink">{m.full_name}</div>
+                <div className="text-[12.5px] tabular-nums text-muted">{m.phone}</div>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
                 <Pill>{m.role === 'owner' ? 'Owner' : 'Caretaker'}</Pill>
-                <Pill>{m.is_active ? 'Active' : 'Inactive'}</Pill>
+                <Pill tone={m.is_active ? 'success' : 'neutral'}>{m.is_active ? 'Active' : 'Inactive'}</Pill>
               </div>
             </div>
             {m.role !== 'owner' && (
               <div className="flex flex-wrap gap-1.5">
                 {m.assigned_property_ids.length === 0 ? (
-                  <span className="text-xs text-slate-500">No buildings assigned</span>
+                  <span className="text-[12.5px] text-muted">No buildings assigned</span>
                 ) : (
                   m.assigned_property_ids.map((id) => (
                     <span
                       key={id}
-                      className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700"
+                      className="inline-flex h-7 items-center rounded-chip border border-line bg-surface-2 px-2.5 text-[12.5px] font-medium text-ink"
                     >
                       {propertyName(id)}
                     </span>
@@ -103,13 +105,13 @@ export function StaffPage() {
             {m.role !== 'owner' && m.is_active && (
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 aria-label={`Edit ${m.full_name}`}
                 onClick={() => {
                   setAdding(false)
                   setEditingId(m.user_id)
                 }}
-                className="h-11 w-full"
+                block
               >
                 Edit
               </Button>

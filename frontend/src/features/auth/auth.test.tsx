@@ -187,7 +187,7 @@ describe('Auth, login, org picker, and session guards', () => {
 
     renderApp(['/owner'])
 
-    expect(await screen.findByText(/Sign in to PG-CRM/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Sign in to PG-CRM/i })).toBeInTheDocument()
     expect(await screen.findByText('Session expired')).toBeInTheDocument()
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull()
     expect(window.localStorage.getItem(ORG_STORAGE_KEY)).toBeNull()
@@ -222,7 +222,7 @@ describe('Auth, login, org picker, and session guards', () => {
     renderApp(['/login'])
     submitLogin('9000000003', 'devpass123')
 
-    expect(await screen.findByText('Select organization')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Select organization' })).toBeInTheDocument()
     expect(screen.getByText('Sunrise Group')).toBeInTheDocument()
     expect(screen.getByText('Lakeview Group')).toBeInTheDocument()
 
@@ -250,11 +250,12 @@ describe('Auth, login, org picker, and session guards', () => {
     expect(await screen.findByText('Sunrise HSR')).toBeInTheDocument()
     expect(queryClient.getQueryCache().getAll().length).toBeGreaterThan(0)
 
-    const logoutButtons = screen.getAllByRole('button', { name: /log out/i })
-    fireEvent.click(logoutButtons[0])
+    // Log out lives in the account menu in the top bar (FE-03).
+    fireEvent.click(screen.getByRole('button', { name: 'Account menu' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: /log out/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/Sign in to PG-CRM/i)).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /Sign in to PG-CRM/i })).toBeInTheDocument()
     })
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull()
     expect(window.localStorage.getItem(ORG_STORAGE_KEY)).toBeNull()
