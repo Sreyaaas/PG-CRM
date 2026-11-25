@@ -54,6 +54,18 @@
   --bottomnav-h: 64px;
 }
 
+:root[data-density='compact'] {
+  --ctl-h: 38px;
+  --topbar-h: 48px;
+  --bottomnav-h: 56px;
+}
+
+:root[data-radius='sharp'] {
+  --r-card: 6px;
+  --r-control: 4px;
+  --r-chip: 4px;
+}
+
 :root[data-theme='dark'] {
   color-scheme: dark;
   --page: #0f0e0d;
