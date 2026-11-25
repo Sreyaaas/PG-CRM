@@ -28,7 +28,13 @@ export function OwnerShell({
 }: OwnerShellProps) {
   const [quickOpen, setQuickOpen] = useState(false)
   const isActive = useIsActive()
-  const account: ShellAccount = { userName, roleLabel: 'Owner', onLogout, onSwitchOrg }
+  const account: ShellAccount = {
+    userName,
+    roleLabel: 'Owner',
+    settingsTo: '/owner/settings',
+    onLogout,
+    onSwitchOrg,
+  }
 
   return (
     <div className="min-h-dvh bg-page text-ink">

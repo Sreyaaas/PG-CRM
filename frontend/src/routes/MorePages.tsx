@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Settings } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { CARETAKER_NAV, OWNER_NAV } from '@/components/shells/navConfig'
 import { Card, CardList } from '@/components/ui/card'
@@ -37,7 +37,13 @@ export function OwnerMorePage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="More" description={<>{membership?.organization_name} · Owner workspace</>} />
-      <MoreList links={[OWNER_NAV.staff, OWNER_NAV.money]} />
+      <MoreList
+        links={[
+          OWNER_NAV.staff,
+          OWNER_NAV.money,
+          { label: 'Settings', to: '/owner/settings', icon: <Settings /> },
+        ]}
+      />
     </div>
   )
 }
@@ -47,7 +53,12 @@ export function CaretakerMorePage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="More" description={<>{membership?.organization_name} · Caretaker</>} />
-      <MoreList links={[CARETAKER_NAV.expenses]} />
+      <MoreList
+        links={[
+          CARETAKER_NAV.expenses,
+          { label: 'Settings', to: '/caretaker/settings', icon: <Settings /> },
+        ]}
+      />
     </div>
   )
 }

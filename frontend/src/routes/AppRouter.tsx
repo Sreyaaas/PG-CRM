@@ -7,6 +7,7 @@ import { OrgPickerPage } from './OrgPickerPage'
 import { OwnerDashboardPage } from './OwnerDashboardPage'
 import { CaretakerMorePage, OwnerMorePage } from './MorePages'
 import { StaffPage } from '@/features/staff/StaffPage'
+import { SettingsPage } from '@/features/settings/SettingsPage'
 import { CaretakerLayoutRoute, OwnerLayoutRoute, RoleRedirect } from './ProtectedRoutes'
 import { PropertiesListPage } from '@/features/properties/PropertiesListPage'
 import { PropertyDetailPage } from '@/features/properties/PropertyDetailPage'
@@ -36,6 +37,7 @@ export function AppRouter() {
         <Route path="money" element={<OwnerDashboardPage section="Money" />} />
         <Route path="more" element={<OwnerMorePage />} />
         <Route path="staff" element={<StaffPage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
 
       <Route path="/caretaker" element={<CaretakerLayoutRoute />}>
@@ -44,6 +46,7 @@ export function AppRouter() {
         <Route path="payments" element={<CaretakerHomePage section="Payments" />} />
         <Route path="expenses" element={<CaretakerHomePage section="Expenses" />} />
         <Route path="more" element={<CaretakerMorePage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>
   )

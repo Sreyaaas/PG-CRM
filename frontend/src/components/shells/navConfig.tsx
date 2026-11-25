@@ -7,7 +7,7 @@ export const CARETAKER_NAV = {
   checkIns: { label: 'Check-ins', to: '/caretaker/check-ins', icon: <UserCheck /> },
   payments: { label: 'Payments', to: '/caretaker/payments', icon: <IndianRupee /> },
   expenses: { label: 'Expenses', to: '/caretaker/expenses', icon: <Receipt /> },
-  more: { label: 'More', to: '/caretaker/more', icon: <Menu />, alsoActiveFor: ['/caretaker/expenses'] },
+  more: { label: 'More', to: '/caretaker/more', icon: <Menu />, alsoActiveFor: ['/caretaker/expenses', '/caretaker/settings'] },
 } satisfies Record<string, ShellNavItem>
 
 export const CARETAKER_QUICK_ACTIONS: QuickAction[] = [
@@ -23,7 +23,7 @@ export const OWNER_NAV = {
   properties: { label: 'Properties', to: '/owner/properties', icon: <Building2 /> },
   money: { label: 'Money', to: '/owner/money', icon: <IndianRupee /> },
   staff: { label: 'Staff', to: '/owner/staff', icon: <Users /> },
-  more: { label: 'More', to: '/owner/more', icon: <Menu />, alsoActiveFor: ['/owner/staff', '/owner/money'] },
+  more: { label: 'More', to: '/owner/more', icon: <Menu />, alsoActiveFor: ['/owner/staff', '/owner/money', '/owner/settings'] },
 } satisfies Record<string, ShellNavItem>
 
 export const OWNER_QUICK_ACTIONS: QuickAction[] = [

@@ -20,7 +20,13 @@ export function CaretakerShell({
   children,
 }: CaretakerShellProps) {
   const [quickOpen, setQuickOpen] = useState(false)
-  const account: ShellAccount = { userName, roleLabel: 'Caretaker', onLogout, onSwitchOrg }
+  const account: ShellAccount = {
+    userName,
+    roleLabel: 'Caretaker',
+    settingsTo: '/caretaker/settings',
+    onLogout,
+    onSwitchOrg,
+  }
 
   return (
     <div className="flex min-h-dvh flex-col bg-page text-ink">

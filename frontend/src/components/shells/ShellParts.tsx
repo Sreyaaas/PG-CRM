@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeftRight, ChevronRight, LogOut, Plus } from 'lucide-react'
+import { ArrowLeftRight, ChevronRight, LogOut, Plus, Settings } from 'lucide-react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Avatar, BrandMark } from '@/components/ui/misc'
 import { Sheet } from '@/components/ui/sheet'
@@ -23,6 +23,7 @@ export interface QuickAction {
 export interface ShellAccount {
   userName?: string
   roleLabel: string
+  settingsTo?: string
   onLogout?: () => void
   onSwitchOrg?: () => void
 }
@@ -103,6 +104,17 @@ export function AccountMenu({ account }: { account: ShellAccount }) {
             </div>
           </div>
           <div className="my-1 h-px bg-line" />
+          {account.settingsTo && (
+            <Link
+              to={account.settingsTo}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex h-11 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[14px] hover:bg-surface-2 active:bg-surface-2"
+            >
+              <Settings className="size-4 text-muted" aria-hidden="true" />
+              Settings
+            </Link>
+          )}
           {account.onSwitchOrg && (
             <button
               type="button"
