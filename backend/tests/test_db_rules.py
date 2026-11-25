@@ -4,6 +4,9 @@ These tests are the spec for the database. A Rust backend later must pass the
 same behaviour because the rules live in SQL, not in Python.
 """
 
+from uuid import uuid4
+
+import pytest
 from conftest import BASE_RENT, World, api_client, as_user, raises_sqlstate, rand_phone, rand_utr
 
 # --------------------------------------------------------------------------
@@ -356,8 +359,8 @@ def test_public_onboarding_intake(world: World):
         "emergency_contact_phone": "9876543210",
         "id_doc_type": "aadhaar",
         "id_doc_number": "XXXX-1234",
-        "id_doc_path": "kyc/a.jpg",
-        "selfie_path": "kyc/s.jpg",
+        "id_doc_path": f"onboarding/{world.prop_a}/{uuid4()}.jpg",
+        "selfie_path": f"onboarding/{world.prop_a}/{uuid4()}.jpg",
         "accepted_rules": True,
         "accepted_exit_deduction_paise": 2_000_00,
     }
@@ -375,6 +378,88 @@ def test_public_onboarding_intake(world: World):
     with as_user(world.caretaker_b, world.org) as cur:
         cur.execute("SELECT count(*) AS n FROM onboarding_requests")
         assert cur.fetchone()["n"] == 0
+
+
+def test_public_onboarding_photos_must_belong_to_that_property(world: World):
+    """BE-21: an onboarding request can only reference keys uploaded through that property's QR form."""
+    import json
+
+    with as_user(world.owner, world.org) as cur:
+        cur.execute("SELECT qr_slug FROM properties WHERE id = %s", (world.prop_a,))
+        slug = cur.fetchone()["qr_slug"]
+    good = f"onboarding/{world.prop_a}/{uuid4()}.jpg"
+    base = {
+        "full_name": "Kiran M", "phone": rand_phone(), "permanent_address": "Mysuru", "occupation": "working",
+        "emergency_contact_name": "Parent", "emergency_contact_phone": "9876543210", "id_doc_type": "aadhaar",
+        "id_doc_number": "XXXX-1234", "id_doc_path": good, "selfie_path": good, "accepted_rules": True,
+        "accepted_exit_deduction_paise": 2_000_00,
+    }  # fmt: skip
+    for bad in (
+        f"onboarding/{world.prop_b}/{uuid4()}.jpg",  # another building
+        f"org/{world.org}/{world.prop_a}/selfie/{uuid4()}.jpg",  # a staff upload
+        f"onboarding/{world.prop_a}/../{world.prop_b}/{uuid4()}.jpg",
+        None,
+    ):
+        for field in ("id_doc_path", "selfie_path"):
+            with raises_sqlstate("PC003"), as_user(None) as cur:
+                cur.execute(
+                    "SELECT api.public_submit_onboarding(%s, %s::jsonb)", (slug, json.dumps(base | {field: bad}))
+                )
+    with as_user(None) as cur:
+        cur.execute("SELECT api.public_submit_onboarding(%s, %s::jsonb) AS id", (slug, json.dumps(base)))
+        assert cur.fetchone()["id"]
+
+
+# --------------------------------------------------------------------------
+# BE-22: joining charges can't be lowered by caretakers
+# --------------------------------------------------------------------------
+
+
+def test_caretaker_deposit_cannot_be_below_property_deposit(world: World):
+    with as_user(world.owner, world.org) as cur:
+        cur.execute("UPDATE properties SET security_deposit_paise = 2000000 WHERE id = %s", (world.prop_a,))
+    with raises_sqlstate("PC002"), as_user(world.caretaker_a, world.org) as cur:
+        cur.execute(
+            """INSERT INTO stays (org_id, property_id, resident_id, bed_id, stay_type, rent_paise, deposit_paise,
+                                  check_in_date)
+               VALUES (%s, %s, %s, %s, 'monthly', %s, 1999999, app.today_ist())""",
+            (world.org, world.prop_a, world.resident_a, world.bed_a1, BASE_RENT),
+        )
+    with as_user(world.caretaker_a, world.org) as cur:
+        assert _stay(cur, world, BASE_RENT)  # deposit 2000000 = the property's amount
+    with as_user(world.owner, world.org) as cur:  # owners may take any deposit
+        cur.execute(
+            "INSERT INTO residents (org_id, property_id, full_name, phone) VALUES (%s, %s, 'B', %s) RETURNING id",
+            (world.org, world.prop_a, rand_phone()),
+        )
+        other = cur.fetchone()["id"]
+        cur.execute(
+            """INSERT INTO stays (org_id, property_id, resident_id, bed_id, stay_type, rent_paise, deposit_paise,
+                                  check_in_date)
+               VALUES (%s, %s, %s, %s, 'monthly', %s, 0, app.today_ist())""",
+            (world.org, world.prop_a, other, world.bed_a2, BASE_RENT),
+        )
+
+
+def test_caretaker_maintenance_charge_cannot_be_below_property_value(world: World):
+    with as_user(world.owner, world.org) as cur:
+        cur.execute("UPDATE properties SET maintenance_charge_paise = 100000 WHERE id = %s", (world.prop_a,))
+
+    def invoice(cur, kind, amount):
+        cur.execute(
+            """INSERT INTO invoices (org_id, property_id, resident_id, kind, amount_paise, due_date)
+               VALUES (%s, %s, %s, %s, %s, app.today_ist()) RETURNING id""",
+            (world.org, world.prop_a, world.resident_a, kind, amount),
+        )
+        return cur.fetchone()["id"]
+
+    with raises_sqlstate("PC002"), as_user(world.caretaker_a, world.org) as cur:
+        invoice(cur, "maintenance_charge", 99999)
+    with as_user(world.caretaker_a, world.org) as cur:
+        assert invoice(cur, "maintenance_charge", 100000)
+        assert invoice(cur, "other", 500)  # only the maintenance charge has this floor
+    with as_user(world.owner, world.org) as cur:
+        assert invoice(cur, "maintenance_charge", 100)
 
 
 def _session_user(c) -> dict:
@@ -422,3 +507,63 @@ def test_revoked_session_cannot_be_revived_or_deleted(admin):
         )
     with raises_sqlstate("PC001"):
         admin.execute("DELETE FROM sessions WHERE user_id = (SELECT id FROM users WHERE phone = %s)", (user["phone"],))
+
+
+# --------------------------------------------------------------------------
+# BE-26: complaints
+# --------------------------------------------------------------------------
+
+
+def _complaint(cur, w: World, **cols):
+    values = {"org_id": w.org, "property_id": w.prop_a, "category": "wifi", "title": "Wi-Fi down"} | cols
+    cur.execute(
+        f"INSERT INTO complaints ({', '.join(values)}) VALUES ({', '.join(['%s'] * len(values))}) RETURNING *",
+        list(values.values()),
+    )
+    return cur.fetchone()
+
+
+@pytest.mark.ac("BE-26", "AC1")
+def test_complaint_created_by_and_status_are_forced(world: World):
+    with as_user(world.caretaker_a, world.org) as cur:
+        c = _complaint(cur, world, created_by=world.owner, status="resolved", resolution_note="fake")
+    assert c["created_by"] == world.caretaker_a and c["status"] == "open" and c["resolution_note"] is None
+
+
+@pytest.mark.ac("BE-26", "AC6")
+def test_complaints_cannot_be_deleted_even_by_superuser(world: World, admin):
+    with as_user(world.owner, world.org) as cur:
+        c = _complaint(cur, world)
+    with raises_sqlstate("42501"), as_user(world.owner, world.org) as cur:
+        cur.execute("DELETE FROM complaints WHERE id = %s", (c["id"],))
+    with raises_sqlstate("PC001"):
+        admin.execute("DELETE FROM complaints WHERE id = %s", (c["id"],))
+
+
+@pytest.mark.ac("BE-26", "AC3")
+def test_complaint_resolution_rules_in_db(world: World):
+    with as_user(world.caretaker_a, world.org) as cur:
+        c = _complaint(cur, world)
+    with raises_sqlstate("PC003"), as_user(world.caretaker_a, world.org) as cur:
+        cur.execute("UPDATE complaints SET status = 'resolved', resolution_note = 'x' WHERE id = %s", (c["id"],))
+    with as_user(world.caretaker_a, world.org) as cur:
+        cur.execute(
+            """UPDATE complaints SET status = 'resolved', resolution_note = 'Fixed the tap',
+                      resolved_by = %s, resolved_at = now() - interval '9 days'
+                WHERE id = %s RETURNING resolved_by, resolved_at > now() - interval '1 minute' AS just_now""",
+            (world.owner, c["id"]),
+        )
+        row = cur.fetchone()
+    assert row["resolved_by"] == world.caretaker_a and row["just_now"]  # stamped by the DB, not the caller
+
+
+def test_complaint_history_fields_are_immutable(world: World):
+    with as_user(world.caretaker_a, world.org) as cur:
+        c = _complaint(cur, world)
+    for change in (
+        f"property_id = '{world.prop_b}'",
+        "created_at = now() - interval '1 day'",
+        "photo_path = 'x'",
+    ):
+        with raises_sqlstate("PC001", "42501"), as_user(world.owner, world.org) as cur:
+            cur.execute(f"UPDATE complaints SET {change} WHERE id = %s", (c["id"],))

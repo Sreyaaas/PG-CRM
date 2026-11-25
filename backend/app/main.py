@@ -5,10 +5,23 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 
-from app import errors, logs, monitoring, storage
+from app import errors, logs, monitoring, startup, storage
 from app.config import get_settings
 from app.db import close_pool
-from app.routers import auth, discounts, files, properties, public, rooms, staff
+from app.routers import (
+    activity,
+    auth,
+    complaints,
+    discounts,
+    expenses,
+    files,
+    onboarding,
+    organization,
+    properties,
+    public,
+    rooms,
+    staff,
+)
 from app.schemas import ErrorResponse
 
 API_PREFIX = "/api/v1"
@@ -17,6 +30,8 @@ _DOCS = ("/docs", "/redoc", "/openapi.json")
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    if get_settings().environment == "prod":
+        startup.check_production_database()  # refuses to start if the DB login bypasses RLS
     if get_settings().environment in ("dev", "test"):
         try:
             storage.ensure_bucket()
@@ -78,7 +93,12 @@ def create_app() -> FastAPI:
         properties.router,
         rooms.router,
         staff.router,
+        organization.router,
+        activity.router,
         discounts.router,
+        onboarding.router,
+        expenses.router,
+        complaints.router,
         files.router,
         public.router,
     ):
