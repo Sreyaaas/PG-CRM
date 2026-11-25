@@ -139,3 +139,9 @@ def ledger(ctx: Org, caretaker_user_id: UUID | None = None) -> CashLedger:
             )
         )
     return CashLedger(user_id=who["user_id"], full_name=who["full_name"], in_hand_paise=balance, entries=entries)
+
+
+@router.get("/ci-proof")
+def ci_proof() -> dict:
+    """Throwaway (BE-02 proof): an API change without a regenerated contract."""
+    return {}
