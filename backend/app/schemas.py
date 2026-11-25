@@ -397,7 +397,7 @@ class PublicUploadRequest(_UploadFields):
 
 
 class UploadRequest(_UploadFields):
-    kind: Literal["expense_proof", "kyc_id", "selfie"]
+    kind: Literal["expense_proof", "kyc_id", "selfie", "complaint_photo"]
     property_id: UUID
 
 
@@ -646,6 +646,78 @@ class Expense(BaseModel):
     voided_at: datetime | None
     voided_by: UUID | None
     void_reason: str | None
+
+
+ComplaintCategory = Literal["wifi", "water", "electricity", "plumbing", "ac", "cleaning", "food", "security", "other"]
+ComplaintPriority = Literal["low", "normal", "urgent"]
+ComplaintStatus = Literal["open", "in_progress", "resolved"]
+ComplaintTitle = Annotated[str, StringConstraints(min_length=1, max_length=120, strip_whitespace=True)]
+ComplaintNote = Annotated[str, StringConstraints(max_length=2000, strip_whitespace=True)]
+
+
+class ComplaintCreate(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    property_id: UUID
+    room_id: UUID | None = None
+    bed_id: UUID | None = None
+    resident_id: UUID | None = None
+    category: ComplaintCategory
+    title: ComplaintTitle
+    note: ComplaintNote | None = None
+    priority: ComplaintPriority = "normal"
+    photo_path: str | None = Field(
+        default=None, description="object_key from POST /uploads (kind complaint_photo) for this property"
+    )
+    assigned_to: UUID | None = Field(default=None, description="An active member of the organization")
+
+
+class ComplaintUpdate(BaseModel):
+    """Partial update. Resolving needs `resolution_note`; reopening clears the resolution."""
+
+    model_config = {"extra": "forbid"}
+
+    status: ComplaintStatus = _optional()
+    priority: ComplaintPriority = _optional()
+    category: ComplaintCategory = _optional()
+    title: ComplaintTitle = _optional()
+    note: ComplaintNote | None = None
+    assigned_to: UUID | None = None
+    resolution_note: ComplaintNote | None = None
+
+    @model_validator(mode="after")
+    def _not_null(self):
+        for name in ("status", "priority", "category", "title"):
+            if name in self.model_fields_set and getattr(self, name) is None:
+                raise ValueError(f"{name} may not be null")
+        return self
+
+
+class Complaint(BaseModel):
+    id: UUID
+    property_id: UUID
+    property_name: str
+    room_id: UUID | None
+    room_label: str | None
+    bed_id: UUID | None
+    bed_label: str | None
+    resident_id: UUID | None
+    resident_name: str | None
+    category: ComplaintCategory
+    title: str
+    note: str | None
+    priority: ComplaintPriority
+    status: ComplaintStatus
+    photo_path: str | None = Field(description="View it with GET /files/url?key=...")
+    assigned_to: UUID | None
+    assigned_to_name: str | None
+    created_by: UUID
+    created_by_name: str
+    created_at: datetime
+    updated_at: datetime
+    resolved_by: UUID | None
+    resolved_at: datetime | None
+    resolution_note: str | None
 
 
 class ErrorDetail(BaseModel):
