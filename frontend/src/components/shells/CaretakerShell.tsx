@@ -9,6 +9,8 @@ export interface CaretakerShellProps {
   userName?: string
   onLogout?: () => void
   onSwitchOrg?: () => void
+  /** Badge counts keyed by nav `to` path; zero or absent hides the badge. */
+  badges?: Record<string, number>
   children: ReactNode
 }
 
@@ -17,6 +19,7 @@ export function CaretakerShell({
   userName,
   onLogout,
   onSwitchOrg,
+  badges = {},
   children,
 }: CaretakerShellProps) {
   const [quickOpen, setQuickOpen] = useState(false)
@@ -35,6 +38,7 @@ export function CaretakerShell({
         left={[NAV.home, NAV.checkIns]}
         right={[NAV.payments, NAV.more]}
         exactRoot="/caretaker"
+        badges={badges}
         onQuickActions={() => setQuickOpen(true)}
       />
       <QuickActionsSheet open={quickOpen} onClose={() => setQuickOpen(false)} actions={CARETAKER_QUICK_ACTIONS} />
