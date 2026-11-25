@@ -377,16 +377,27 @@ export function ResidentDetailPage() {
                         {' → '}
                         {stay.actual_vacate_date ? <DateText value={stay.actual_vacate_date} /> : '—'}
                       </span>
-                      {isOwner && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setCorrectStay(stay)}
-                        >
-                          Correct dates
-                        </Button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {stay.status === 'vacated' && (
+                          <Button asChild variant="secondary" size="sm">
+                            <Link
+                              to={`${isOwner ? '/owner' : '/caretaker'}/residents/${resident.id}/settlement/${stay.id}`}
+                            >
+                              {isOwner ? 'Settle deposit' : 'View settlement'}
+                            </Link>
+                          </Button>
+                        )}
+                        {isOwner && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setCorrectStay(stay)}
+                          >
+                            Correct dates
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </li>
                 ))}
