@@ -8,9 +8,12 @@ always shows exactly that many rows:
 |-----------------------------------------|-------------------------------------------------------|
 | pending_onboarding                      | GET /onboarding-requests?status=pending               |
 | pending_discounts                       | GET /discount-requests?status=pending                 |
-| flagged_expenses_unreviewed             | GET /expenses?flagged=true                            |
+| flagged_expenses_unreviewed             | GET /expenses?flagged=true&voided=false               |
 | provisional_payments_older_than_3_days  | GET /reconciliation/unverified-payments?older_than_days=3 |
-| flagged_payments                        | GET /payments?status=flagged                          |
+| flagged_payments                        | GET /payments?status=flagged&voided=false             |
+
+A void payment or expense needs no attention, so the flagged counts leave void rows out (the lists keep them by
+default, as ledgers; `voided=false` gives the matching list).
 | cash_in_hand_total_paise                | sum of in_hand_paise from GET /cash/balances          |
 | overstaying_residents                   | (no list yet)                                         |
 """
@@ -47,9 +50,9 @@ _ATTENTION = f"""
   SELECT
     (SELECT count(*) FROM onboarding_requests WHERE status = 'pending') AS pending_onboarding,
     (SELECT count(*) FROM discount_requests WHERE status = 'pending') AS pending_discounts,
-    (SELECT count(*) FROM expenses WHERE flagged_for_review) AS flagged_expenses_unreviewed,
+    (SELECT count(*) FROM expenses WHERE flagged_for_review AND voided_at IS NULL) AS flagged_expenses_unreviewed,
     (SELECT count(*) FROM payments pm WHERE {UNVERIFIED_WHERE}) AS provisional_payments_older_than_3_days,
-    (SELECT count(*) FROM payments WHERE status = 'flagged') AS flagged_payments,
+    (SELECT count(*) FROM payments WHERE status = 'flagged' AND voided_at IS NULL) AS flagged_payments,
     (SELECT coalesce(sum(in_hand_paise), 0) FROM api.cash_balances()) AS cash_in_hand_total_paise,
     (SELECT count(DISTINCT resident_id) FROM stays
       WHERE status = 'on_notice' AND expected_vacate_date < app.today_ist() AND actual_vacate_date IS NULL

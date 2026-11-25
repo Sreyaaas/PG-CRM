@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FilePlus2, HandCoins } from 'lucide-react'
+import { Check, FilePlus2, HandCoins, MessageCircle } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
 import { Money } from '@/components/Money'
@@ -7,22 +7,36 @@ import { useToast } from '@/components/Toast'
 import { Chip } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardList } from '@/components/ui/card'
+import { Sheet } from '@/components/ui/sheet'
 import { Avatar, EmptyState, ListRow, LoadingRows, Notice, PageHeader, ROW_LINK, StatTile } from '@/components/ui/misc'
 import { useAuth } from '@/features/auth/AuthContext'
-import { usePropertiesQuery } from '@/features/properties/api'
+import { useOrgId, usePropertiesQuery } from '@/features/properties/api'
 import { getErrorMessage } from '@/features/residents/api'
 import { LogPaymentSheet } from '@/features/payments/LogPaymentSheet'
 import { useDuesQuery, useGenerateInvoices, type DueRow } from './api'
+import { useReminders } from './reminders'
 
 function overdueLabel(days: number): string {
   return `${days} ${days === 1 ? 'day' : 'days'} overdue`
 }
 
-function DueRowItem({ row, base, onLog }: { row: DueRow; base: string; onLog: (row: DueRow) => void }) {
+function DueRowItem({
+  row,
+  base,
+  reminded,
+  onRemind,
+  onLog,
+}: {
+  row: DueRow
+  base: string
+  reminded: boolean
+  onRemind: (row: DueRow) => void
+  onLog: (row: DueRow) => void
+}) {
   const overdue = row.days_overdue > 0
   return (
-    <li data-testid="due-row" className="flex items-center">
-      <Link to={`${base}/residents/${row.resident_id}/ledger`} className={`${ROW_LINK} min-w-0 flex-1`}>
+    <li data-testid="due-row">
+      <Link to={`${base}/residents/${row.resident_id}/ledger`} className={ROW_LINK}>
         <ListRow
           leading={<Avatar name={row.full_name} />}
           title={row.full_name}
@@ -46,11 +60,90 @@ function DueRowItem({ row, base, onLog }: { row: DueRow; base: string; onLog: (r
           }
         />
       </Link>
-      <Button type="button" variant="secondary" size="sm" className="mr-4 shrink-0 sm:mr-5" onClick={() => onLog(row)}>
-        <span className="sr-only">{`Log payment for ${row.full_name}`}</span>
-        <span aria-hidden="true">Log payment</span>
-      </Button>
+      <div className="-mt-1 flex justify-end gap-2 px-4 pb-3 sm:px-5">
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          aria-label={`${reminded ? 'Remind again' : 'Send reminder to'} ${row.full_name}`}
+          onClick={() => onRemind(row)}
+        >
+          {reminded ? <Check aria-hidden="true" /> : <MessageCircle aria-hidden="true" />}
+          {reminded ? 'Reminded' : 'Remind'}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="primary"
+          aria-label={`Log payment for ${row.full_name}`}
+          onClick={() => onLog(row)}
+        >
+          Log payment
+        </Button>
+      </div>
     </li>
+  )
+}
+
+function RemindAllSheet({
+  open,
+  onClose,
+  rows,
+  isReminded,
+  onRemind,
+}: {
+  open: boolean
+  onClose: () => void
+  rows: DueRow[]
+  isReminded: (residentId: string) => boolean
+  onRemind: (row: DueRow) => void
+}) {
+  const sent = rows.filter((r) => isReminded(r.resident_id)).length
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title="Remind all overdue"
+      description={
+        rows.length > 0
+          ? `${sent} of ${rows.length} sent. WhatsApp opens one chat at a time.`
+          : undefined
+      }
+    >
+      {rows.length === 0 ? (
+        <EmptyState>No one is overdue.</EmptyState>
+      ) : (
+        <ul className="-mx-4 divide-y divide-line sm:-mx-5">
+          {rows.map((r) => {
+            const done = isReminded(r.resident_id)
+            return (
+              <li key={r.resident_id} data-testid="remind-row" data-sent={done}>
+                <ListRow
+                  title={r.full_name}
+                  meta={
+                    <>
+                      <Money paise={r.outstanding_paise} /> · {overdueLabel(r.days_overdue)}
+                    </>
+                  }
+                  trailing={
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={done ? 'ghost' : 'secondary'}
+                      aria-label={`${done ? 'Send again to' : 'Send reminder to'} ${r.full_name}`}
+                      onClick={() => onRemind(r)}
+                    >
+                      {done ? <Check aria-hidden="true" /> : <MessageCircle aria-hidden="true" />}
+                      {done ? 'Sent' : 'Send'}
+                    </Button>
+                  }
+                />
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </Sheet>
   )
 }
 
@@ -59,7 +152,10 @@ export function DuesPage() {
   const { membership } = useAuth()
   const { showToast } = useToast()
   const [propertyId, setPropertyId] = useState<string | null>(null)
+  const [remindAllOpen, setRemindAllOpen] = useState(false)
   const [logFor, setLogFor] = useState<DueRow | null>(null)
+  const orgId = useOrgId()
+  const reminders = useReminders(orgId)
   const base = pathname.startsWith('/owner') ? '/owner' : '/caretaker'
   const isOwner = membership?.role === 'owner'
 
@@ -68,6 +164,7 @@ export function DuesPage() {
   const generate = useGenerateInvoices()
 
   const rows = dues.data ?? []
+  const overdueRows = rows.filter((r) => r.days_overdue > 0)
   const total = rows.reduce((sum, r) => sum + r.outstanding_paise, 0)
 
   function handleGenerate() {
@@ -84,8 +181,15 @@ export function DuesPage() {
         title={isOwner ? 'Money' : 'Payments'}
         description="Residents who owe rent, most overdue first."
         actions={
-          isOwner && (
-            <>
+          <>
+            {overdueRows.length > 0 && (
+              <Button type="button" variant="secondary" onClick={() => setRemindAllOpen(true)}>
+                <MessageCircle aria-hidden="true" />
+                Remind all overdue
+              </Button>
+            )}
+            {isOwner && (
+              <>
               <Button asChild variant="secondary">
                 <Link to="/owner/money/cash">
                   <HandCoins aria-hidden="true" />
@@ -96,8 +200,9 @@ export function DuesPage() {
                 <FilePlus2 aria-hidden="true" />
                 {generate.isPending ? 'Creating invoices…' : "Generate this month's invoices"}
               </Button>
-            </>
-          )
+              </>
+            )}
+          </>
         }
       />
 
@@ -129,12 +234,26 @@ export function DuesPage() {
         {rows.length > 0 && (
           <CardList>
             {rows.map((r) => (
-              <DueRowItem key={r.resident_id} row={r} base={base} onLog={setLogFor} />
+              <DueRowItem
+                key={r.resident_id}
+                row={r}
+                base={base}
+                reminded={reminders.isRemindedToday(r.resident_id)}
+                onRemind={(row) => reminders.send(row.resident_id, row.whatsapp_url)}
+                onLog={setLogFor}
+              />
             ))}
           </CardList>
         )}
       </Card>
 
+      <RemindAllSheet
+        open={remindAllOpen}
+        onClose={() => setRemindAllOpen(false)}
+        rows={overdueRows}
+        isReminded={reminders.isRemindedToday}
+        onRemind={(row) => reminders.send(row.resident_id, row.whatsapp_url)}
+      />
       {logFor && (
         <LogPaymentSheet
           residentId={logFor.resident_id}
