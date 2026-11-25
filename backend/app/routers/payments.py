@@ -21,7 +21,7 @@ from app.schemas import Payment, PaymentCreate, PaymentMethod, PaymentStatus
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 _NOT_FOUND = {404: {"description": "Not found"}}
-_SELECT = """
+PAYMENT_SELECT = """
   SELECT pm.id, pm.property_id, pm.resident_id, r.full_name AS resident_name, r.phone AS resident_phone,
          pr.name AS property_name, pm.invoice_id, pm.amount_paise, pm.method::text AS method, pm.utr_number,
          pm.status::text AS status, pm.received_by, u.full_name AS received_by_name, pm.received_at, pm.notes,
@@ -33,7 +33,7 @@ _SELECT = """
 """
 
 
-def _payment(row: dict) -> Payment:
+def payment_out(row: dict) -> Payment:
     phone, property_name = row.pop("resident_phone"), row.pop("property_name")
     return Payment(
         **row,
@@ -50,9 +50,9 @@ def _payment(row: dict) -> Payment:
 
 
 def _one(cur: Cursor[DictRow], payment_id: UUID) -> Payment | None:
-    cur.execute(_SELECT + " WHERE pm.id = %s", (payment_id,))
+    cur.execute(PAYMENT_SELECT + " WHERE pm.id = %s", (payment_id,))
     row = cur.fetchone()
-    return _payment(row) if row else None
+    return payment_out(row) if row else None
 
 
 @router.post("", response_model=Payment, status_code=201, responses=_NOT_FOUND)
@@ -94,10 +94,10 @@ def list_payments(
         if value is not None:
             where.append(clause)
             params.append(value)
-    query = _SELECT + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY pm.received_at DESC"
+    query = PAYMENT_SELECT + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY pm.received_at DESC"
     with ctx.tx() as cur:
         cur.execute(sql.SQL(query), params)
-        return [_payment(r) for r in cur.fetchall()]
+        return [payment_out(r) for r in cur.fetchall()]
 
 
 @router.get("/{payment_id}", response_model=Payment, responses=_NOT_FOUND)

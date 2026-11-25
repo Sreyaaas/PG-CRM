@@ -1025,6 +1025,48 @@ class Payment(BaseModel):
     whatsapp_url: str = Field(description="wa.me link with the receipt message, ready to send")
 
 
+# ---- Statement reconciliation (BE-40) ----
+
+CsvSource = Literal["paytm_business", "phonepe_business", "bank_statement", "other"]
+CsvMatch = Literal["matched", "amount_mismatch", "unmatched", "already_verified"]
+
+
+class CsvImportResult(BaseModel):
+    import_id: UUID
+    row_count: int = Field(description="Credit rows read from the file")
+    matched_count: int = Field(description="Payments verified by this upload")
+    mismatch_count: int = Field(description="UTR found but the amount differs: payment flagged")
+    unmatched_count: int = Field(description="Money received that nobody logged")
+
+
+class CsvImport(BaseModel):
+    id: UUID
+    source: CsvSource
+    file_name: str
+    row_count: int
+    matched_count: int
+    mismatch_count: int
+    unmatched_count: int
+    uploaded_by: UUID
+    uploaded_by_name: str
+    created_at: datetime
+
+
+class CsvImportRow(BaseModel):
+    id: UUID
+    utr_number: str | None
+    amount_paise: int | None
+    txn_at: datetime | None
+    payer_name: str | None
+    match: CsvMatch
+    payment_id: UUID | None
+    payment_amount_paise: int | None
+    payment_status: PaymentStatus | None
+    resident_id: UUID | None
+    resident_name: str | None
+    raw: dict[str, str] = Field(description="The original row, column name -> value")
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str
