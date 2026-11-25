@@ -261,10 +261,11 @@ def void_invoice(invoice_id: UUID, body: VoidRequest, ctx: Org) -> Invoice:
     with ctx.tx() as cur:
         require_owner(cur, "Only the owner can void an invoice.")
         cur.execute(
-            f"UPDATE invoices SET voided_at = now(), void_reason = %s WHERE id = %s RETURNING {_INVOICE_COLUMNS}",
+            "UPDATE invoices SET voided_at = now(), void_reason = %s WHERE id = %s RETURNING id",
             (body.reason, invoice_id),
         )
         row = cur.fetchone()
-    if row is None:
-        raise HTTPException(404, "Invoice not found")
-    return Invoice(**row)
+        if row is None:
+            raise HTTPException(404, "Invoice not found")
+        cur.execute(INVOICE_SELECT + " WHERE i.id = %s", (row["id"],))
+        return invoice_out(cur.fetchone())
