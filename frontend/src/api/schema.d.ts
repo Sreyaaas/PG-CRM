@@ -421,6 +421,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Audit Logs
+         * @description Owner only. Every insert and update, newest first, with the actor's name.
+         */
+        get: operations["audit_logs_api_v1_audit_logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/discount-requests": {
         parameters: {
             query?: never;
@@ -771,6 +791,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/invoices/{invoice_id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Void Invoice
+         * @description Owner only. Final: a void invoice can't be changed or un-voided (409). `app.invoices_guard` records who and
+         *     when; the invoice drops out of dues and the ledger balance.
+         */
+        post: operations["void_invoice_api_v1_invoices__invoice_id__void_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payments": {
         parameters: {
             query?: never;
@@ -806,6 +847,66 @@ export interface paths {
         get: operations["get_payment_api_v1_payments__payment_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payments/{payment_id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Void Payment
+         * @description Owner only. Final. A void cash payment no longer counts in the caretaker's cash in hand, nor in dues.
+         */
+        post: operations["void_payment_api_v1_payments__payment_id__void_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payments/{payment_id}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Payment
+         * @description Owner only: the owner saw the money in their bank app. UPI / bank transfers only; cash → 422.
+         */
+        post: operations["verify_payment_api_v1_payments__payment_id__verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payments/{payment_id}/flag": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Flag Payment
+         * @description Owner only: suspicious (e.g. the UTR never showed up in a statement). UPI / bank transfers only; cash → 422.
+         */
+        post: operations["flag_payment_api_v1_payments__payment_id__flag_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -987,6 +1088,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/expenses/{expense_id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Void Expense
+         * @description Owner only. Final (409 on a second void). A void cash expense no longer lowers the caretaker's cash in hand.
+         */
+        post: operations["void_expense_api_v1_expenses__expense_id__void_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/complaints": {
         parameters: {
             query?: never;
@@ -1157,6 +1278,62 @@ export interface components {
              * @description One human-readable line. Names, labels and ₹ amounts only
              */
             summary: string;
+        };
+        /** AuditLogEntry */
+        AuditLogEntry: {
+            /** Id */
+            id: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Actor Id */
+            actor_id: string | null;
+            /**
+             * Actor Name
+             * @description None for changes made by the system
+             */
+            actor_name: string | null;
+            /**
+             * Entity Type
+             * @description Table name, e.g. payments, invoices, stays
+             */
+            entity_type: string;
+            /** Entity Id */
+            entity_id: string | null;
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "insert" | "update";
+            /**
+             * Old Value
+             * @description The row before the change (update only)
+             */
+            old_value: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * New Value
+             * @description The row after the change
+             */
+            new_value: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** AuditLogPage */
+        AuditLogPage: {
+            /**
+             * Items
+             * @description Newest first
+             */
+            items: components["schemas"]["AuditLogEntry"][];
+            /**
+             * Next Cursor
+             * @description Pass as `cursor` for the next (older) page. None on the last page
+             */
+            next_cursor: number | null;
         };
         /** Bed */
         Bed: {
@@ -2059,6 +2236,11 @@ export interface components {
             /** Expires In */
             expires_in: number;
         };
+        /** FlagRequest */
+        FlagRequest: {
+            /** Reason */
+            reason: string;
+        };
         /** GenerateDueRequest */
         GenerateDueRequest: {
             /**
@@ -2713,6 +2895,11 @@ export interface components {
             notes: string | null;
             /** Verified At */
             verified_at: string | null;
+            /**
+             * Flag Reason
+             * @description The owner's reason when they flagged it (BE-44)
+             */
+            flag_reason: string | null;
             /** Voided At */
             voided_at: string | null;
             /** Void Reason */
@@ -3426,6 +3613,14 @@ export interface components {
             upload_url: string;
             /** Expires In */
             expires_in: number;
+        };
+        /**
+         * VoidRequest
+         * @description Who voided it and when are set by the database. A void is final.
+         */
+        VoidRequest: {
+            /** Reason */
+            reason: string;
         };
     };
     responses: never;
@@ -5178,6 +5373,86 @@ export interface operations {
             };
         };
     };
+    audit_logs_api_v1_audit_logs_get: {
+        parameters: {
+            query?: {
+                /** @description Table name, e.g. payments */
+                entity_type?: string | null;
+                entity_id?: string | null;
+                actor_id?: string | null;
+                /** @description On or after (IST) */
+                from?: string | null;
+                /** @description On or before (IST) */
+                to?: string | null;
+                limit?: number;
+                /** @description `next_cursor` of the previous page */
+                cursor?: number | null;
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditLogPage"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     list_discount_requests_api_v1_discount_requests_get: {
         parameters: {
             query?: {
@@ -6652,6 +6927,87 @@ export interface operations {
             };
         };
     };
+    void_invoice_api_v1_invoices__invoice_id__void_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoidRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invoice"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     list_payments_api_v1_payments_get: {
         parameters: {
             query?: {
@@ -6820,6 +7176,245 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    void_payment_api_v1_payments__payment_id__void_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                payment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoidRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    verify_payment_api_v1_payments__payment_id__verify_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                payment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    flag_payment_api_v1_payments__payment_id__flag_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                payment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FlagRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -7633,6 +8228,87 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ExpenseReview"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    void_expense_api_v1_expenses__expense_id__void_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                expense_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoidRequest"];
             };
         };
         responses: {

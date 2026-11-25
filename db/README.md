@@ -29,6 +29,7 @@ All the anti-theft rules are enforced **inside Postgres**, so no API bug can byp
 | `*_resident_profile.sql` | `food_preference`, `vehicle_number`, `emergency_contact_relation` on requests + residents; `police_verification_status` (default pending) + date, required unless pending (CHECK) |
 | `*_invoice_rules.sql` | `app.invoices_guard`: caretakers can't create `kind='other'` (one-off) invoices; everything else unchanged |
 | `*_cash_ledger.sql` | `api.cash_ledger(caretaker)`: one caretaker's cash payments (+), cash expenses (−) and handovers (−), same scope as `api.cash_balances()` (owner: any caretaker; caretaker: only themself), across all buildings so it sums to the balance |
+| `*_payment_flag_reason.sql` | `payments.flag_reason`: the owner's reason for flagging (BE-44). `app.payments_guard` clears it on insert and lets it change only together with `status = 'flagged'` (>= 3 chars); everything else unchanged |
 
 The tests in `backend/tests/test_db_rules.py` are the executable spec for these rules.
 

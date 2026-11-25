@@ -662,3 +662,33 @@ def test_caretaker_cannot_create_one_off_invoices(world: World):
         cur.execute(sql, (*args, "other"))  # the owner can
     with as_user(world.caretaker_a, world.org) as cur:
         cur.execute(sql, (*args, "deposit"))  # check-in charges still work for caretakers
+
+
+# --------------------------------------------------------------------------
+# BE-44: a flag carries the owner's reason; it can't be set any other way
+# --------------------------------------------------------------------------
+
+
+def test_payment_flag_reason_only_with_a_flag(world: World, admin):
+    with as_user(world.caretaker_a, world.org) as cur:
+        cur.execute(
+            """INSERT INTO payments (org_id, property_id, resident_id, amount_paise, method, utr_number, flag_reason)
+               VALUES (%s, %s, %s, 100000, 'upi', %s, 'planted') RETURNING id, flag_reason""",
+            (world.org, world.prop_a, world.resident_a, rand_utr()),
+        )
+        row = cur.fetchone()
+    assert row["flag_reason"] is None  # cleared on insert
+    pid = row["id"]
+    with raises_sqlstate("PC002"), as_user(world.caretaker_a, world.org) as cur:
+        cur.execute("UPDATE payments SET status = 'flagged', flag_reason = 'Fake' WHERE id = %s", (pid,))
+    for change in ("flag_reason = 'No flag'", "status = 'flagged', flag_reason = 'x'"):
+        with raises_sqlstate("PC003"), as_user(world.owner, world.org) as cur:
+            cur.execute(f"UPDATE payments SET {change} WHERE id = %s", (pid,))
+    with raises_sqlstate("PC002", "PC003"):  # a superuser still goes through the guard
+        admin.execute("UPDATE payments SET flag_reason = 'No flag' WHERE id = %s", (pid,))
+    with as_user(world.owner, world.org) as cur:
+        cur.execute(
+            "UPDATE payments SET status = 'flagged', flag_reason = 'Not in bank' WHERE id = %s RETURNING flag_reason",
+            (pid,),
+        )
+        assert cur.fetchone()["flag_reason"] == "Not in bank"
