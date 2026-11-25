@@ -47,6 +47,7 @@ const LEDGER = {
   resident_id: 'res-1',
   full_name: 'Asha Rao',
   outstanding_paise: 600000,
+  whatsapp_url: 'https://wa.me/919111111111?text=api-ledger-asha',
   entries: [
     {
       entry_date: '2026-10-05',
@@ -243,5 +244,48 @@ describe('Rent reminders', () => {
 
     expect(await screen.findByRole('button', { name: 'Remind again Asha Rao' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Send reminder to Bala Kumar' })).toBeInTheDocument()
+  })
+})
+
+describe('Reminder on resident detail', () => {
+  beforeEach(() => signIn('caretaker'))
+
+  function mockResident(ledger: unknown) {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = (input as Request).url
+      if (url.includes('/ledger')) return jsonResponse(ledger)
+      if (url.includes('/residents/res-1'))
+        return jsonResponse({
+          id: 'res-1',
+          full_name: 'Asha Rao',
+          phone: '9111111111',
+          property_id: 'prop-1',
+          current_stay: null,
+          past_stays: [],
+        })
+      return jsonResponse({})
+    })
+  }
+
+  test('[FE-33/AC1] Send reminder on resident detail opens the ledger whatsapp_url and then shows Reminded today', async () => {
+    mockResident(LEDGER)
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    renderAt('/caretaker/residents/res-1')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Send reminder' }))
+    expect(open).toHaveBeenCalledWith(
+      'https://wa.me/919111111111?text=api-ledger-asha',
+      '_blank',
+      'noopener,noreferrer',
+    )
+    expect(screen.getByRole('button', { name: 'Reminded today' })).toBeInTheDocument()
+  })
+
+  test('the reminder button is hidden when the resident owes nothing', async () => {
+    mockResident({ ...LEDGER, outstanding_paise: 0, whatsapp_url: null })
+    renderAt('/caretaker/residents/res-1')
+
+    await screen.findByText('Asha Rao', { selector: 'h1' })
+    await waitFor(() => expect(screen.queryByRole('button', { name: /reminder|reminded/i })).not.toBeInTheDocument())
   })
 })
