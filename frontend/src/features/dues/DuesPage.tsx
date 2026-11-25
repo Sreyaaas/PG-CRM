@@ -11,17 +11,18 @@ import { Avatar, EmptyState, ListRow, LoadingRows, Notice, PageHeader, ROW_LINK,
 import { useAuth } from '@/features/auth/AuthContext'
 import { usePropertiesQuery } from '@/features/properties/api'
 import { getErrorMessage } from '@/features/residents/api'
+import { LogPaymentSheet } from '@/features/payments/LogPaymentSheet'
 import { useDuesQuery, useGenerateInvoices, type DueRow } from './api'
 
 function overdueLabel(days: number): string {
   return `${days} ${days === 1 ? 'day' : 'days'} overdue`
 }
 
-function DueRowItem({ row, base }: { row: DueRow; base: string }) {
+function DueRowItem({ row, base, onLog }: { row: DueRow; base: string; onLog: (row: DueRow) => void }) {
   const overdue = row.days_overdue > 0
   return (
-    <li data-testid="due-row">
-      <Link to={`${base}/residents/${row.resident_id}/ledger`} className={ROW_LINK}>
+    <li data-testid="due-row" className="flex items-center">
+      <Link to={`${base}/residents/${row.resident_id}/ledger`} className={`${ROW_LINK} min-w-0 flex-1`}>
         <ListRow
           leading={<Avatar name={row.full_name} />}
           title={row.full_name}
@@ -45,6 +46,10 @@ function DueRowItem({ row, base }: { row: DueRow; base: string }) {
           }
         />
       </Link>
+      <Button type="button" variant="secondary" size="sm" className="mr-4 shrink-0 sm:mr-5" onClick={() => onLog(row)}>
+        <span className="sr-only">{`Log payment for ${row.full_name}`}</span>
+        <span aria-hidden="true">Log payment</span>
+      </Button>
     </li>
   )
 }
@@ -54,6 +59,7 @@ export function DuesPage() {
   const { membership } = useAuth()
   const { showToast } = useToast()
   const [propertyId, setPropertyId] = useState<string | null>(null)
+  const [logFor, setLogFor] = useState<DueRow | null>(null)
   const base = pathname.startsWith('/owner') ? '/owner' : '/caretaker'
   const isOwner = membership?.role === 'owner'
 
@@ -123,11 +129,20 @@ export function DuesPage() {
         {rows.length > 0 && (
           <CardList>
             {rows.map((r) => (
-              <DueRowItem key={r.resident_id} row={r} base={base} />
+              <DueRowItem key={r.resident_id} row={r} base={base} onLog={setLogFor} />
             ))}
           </CardList>
         )}
       </Card>
+
+      {logFor && (
+        <LogPaymentSheet
+          residentId={logFor.resident_id}
+          residentName={logFor.full_name}
+          outstandingPaise={logFor.outstanding_paise}
+          onClose={() => setLogFor(null)}
+        />
+      )}
     </div>
   )
 }

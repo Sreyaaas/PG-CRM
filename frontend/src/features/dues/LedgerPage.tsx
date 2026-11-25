@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
 import { Money } from '@/components/Money'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardList } from '@/components/ui/card'
 import { EmptyState, LoadingRows, Notice, PageHeader, StatTile } from '@/components/ui/misc'
+import { LogPaymentSheet } from '@/features/payments/LogPaymentSheet'
 import { getErrorMessage } from '@/features/residents/api'
 import { cn } from '@/lib/utils'
 import { useLedgerQuery, type LedgerEntry } from './api'
@@ -53,6 +56,7 @@ export function LedgerPage() {
   const base = pathname.startsWith('/owner') ? '/owner' : '/caretaker'
   const query = useLedgerQuery(residentId)
   const ledger = query.data
+  const [logging, setLogging] = useState(false)
 
   return (
     <div className="flex max-w-2xl flex-col gap-5 pb-8">
@@ -60,6 +64,13 @@ export function LedgerPage() {
         back={{ to: `${base}/residents/${residentId}`, label: 'Resident' }}
         title={ledger ? ledger.full_name : 'Ledger'}
         description="Invoices and payments, oldest first."
+        actions={
+          ledger && (
+            <Button type="button" variant="brand" size="sm" onClick={() => setLogging(true)}>
+              Log payment
+            </Button>
+          )
+        }
       />
 
       {query.isError && <Notice role="alert">{getErrorMessage(query.error, 'Unable to load the ledger.')}</Notice>}
@@ -83,6 +94,15 @@ export function LedgerPage() {
           </CardList>
         )}
       </Card>
+
+      {ledger && logging && (
+        <LogPaymentSheet
+          residentId={ledger.resident_id}
+          residentName={ledger.full_name}
+          outstandingPaise={ledger.outstanding_paise}
+          onClose={() => setLogging(false)}
+        />
+      )}
     </div>
   )
 }
