@@ -7717,6 +7717,8 @@ export interface operations {
                 to?: string | null;
                 status?: ("recorded" | "provisional" | "verified" | "flagged") | null;
                 method?: ("cash" | "upi" | "bank_transfer") | null;
+                /** @description false = leave out void payments, true = only void ones */
+                voided?: boolean | null;
             };
             header: {
                 /** @description Organization the request acts on */
@@ -8842,6 +8844,8 @@ export interface operations {
                 category?: ("water_tanker" | "electricity_bescom" | "groceries" | "gas_lpg" | "maintenance_repairs" | "cleaning" | "internet" | "staff_salary" | "security" | "lease_rent" | "other") | null;
                 /** @description true = only expenses waiting for owner review */
                 flagged?: boolean | null;
+                /** @description false = leave out void expenses, true = only void ones */
+                voided?: boolean | null;
             };
             header: {
                 /** @description Organization the request acts on */

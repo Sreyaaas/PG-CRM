@@ -88,9 +88,12 @@ def list_payments(
     to: Annotated[date | None, Query(description="Received on or before (IST)")] = None,
     status: PaymentStatus | None = None,
     method: PaymentMethod | None = None,
+    voided: bool | None = Query(default=None, description="false = leave out void payments, true = only void ones"),
 ) -> list[Payment]:
     """Newest first, in the buildings the caller can access (RLS)."""
     where, params = [], []
+    if voided is not None:
+        where.append("pm.voided_at IS NOT NULL" if voided else "pm.voided_at IS NULL")
     day = "(pm.received_at AT TIME ZONE 'Asia/Kolkata')::date"
     for clause, value in (
         ("pm.property_id = %s", property_id),

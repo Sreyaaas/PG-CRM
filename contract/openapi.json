@@ -5307,6 +5307,24 @@
             }
           },
           {
+            "name": "voided",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "false = leave out void payments, true = only void ones",
+              "title": "Voided"
+            },
+            "description": "false = leave out void payments, true = only void ones"
+          },
+          {
             "name": "x-org-id",
             "in": "header",
             "required": true,
@@ -7019,6 +7037,24 @@
               "title": "Flagged"
             },
             "description": "true = only expenses waiting for owner review"
+          },
+          {
+            "name": "voided",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "false = leave out void expenses, true = only void ones",
+              "title": "Voided"
+            },
+            "description": "false = leave out void expenses, true = only void ones"
           },
           {
             "name": "x-org-id",

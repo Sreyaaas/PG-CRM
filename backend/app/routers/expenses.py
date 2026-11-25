@@ -90,9 +90,12 @@ def list_expenses(
     to: date | None = None,
     category: ExpenseCategory | None = None,
     flagged: bool | None = Query(default=None, description="true = only expenses waiting for owner review"),
+    voided: bool | None = Query(default=None, description="false = leave out void expenses, true = only void ones"),
 ) -> list[Expense]:
     """Newest first. Caretakers see their buildings only and never lease rent (RLS)."""
     where, params = [], []
+    if voided is not None:
+        where.append(sql.SQL("voided_at IS NOT NULL" if voided else "voided_at IS NULL"))
     for column, op, value in (
         ("property_id", "=", property_id),
         ("expense_date", ">=", from_),
