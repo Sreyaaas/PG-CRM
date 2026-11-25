@@ -138,7 +138,7 @@ describe('Staff screen', () => {
   test('More page links to Staff', async () => {
     mockApi([OWNER_ROW])
     renderStaff('/owner/more')
-    fireEvent.click(await screen.findByRole('link', { name: 'Staff' }))
+    fireEvent.click(within(await screen.findByRole('main')).getByRole('link', { name: 'Staff' }))
     expect(await screen.findByRole('heading', { name: 'Staff' })).toBeInTheDocument()
   })
 

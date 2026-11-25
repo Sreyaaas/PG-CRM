@@ -377,6 +377,50 @@ export interface paths {
         patch: operations["update_staff_api_v1_staff__user_id__patch"];
         trace?: never;
     };
+    "/api/v1/organization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Organization
+         * @description The organization in `X-Org-Id`.
+         */
+        get: operations["get_organization_api_v1_organization_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Organization
+         * @description Owner only. Changes only the fields sent.
+         */
+        patch: operations["update_organization_api_v1_organization_patch"];
+        trace?: never;
+    };
+    "/api/v1/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Activity
+         * @description Owner only. Newest first: who did what, as one line each (names, labels and ₹ amounts only).
+         */
+        get: operations["activity_api_v1_activity_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/discount-requests": {
         parameters: {
             query?: never;
@@ -625,6 +669,95 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/expenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Expenses
+         * @description Newest first. Caretakers see their buildings only and never lease rent (RLS).
+         */
+        get: operations["list_expenses_api_v1_expenses_get"];
+        put?: never;
+        /**
+         * Create Expense
+         * @description Caretaker or owner, for a building they can access. `created_by` is always the caller.
+         */
+        post: operations["create_expense_api_v1_expenses_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/expenses/{expense_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Review Expense
+         * @description Owner only: mark as reviewed (sets reviewed_by/reviewed_at, clears the yellow flag).
+         */
+        post: operations["review_expense_api_v1_expenses__expense_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/complaints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Complaints
+         * @description Newest first, in the buildings the caller can access (RLS).
+         */
+        get: operations["list_complaints_api_v1_complaints_get"];
+        put?: never;
+        /**
+         * Create Complaint
+         * @description Owner or a caretaker of that building. Starts `open`; `created_by` is the caller.
+         */
+        post: operations["create_complaint_api_v1_complaints_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/complaints/{complaint_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Complaint */
+        get: operations["get_complaint_api_v1_complaints__complaint_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Complaint
+         * @description Change status, priority, category, title, note or assignee. `status=resolved` needs `resolution_note`.
+         */
+        patch: operations["update_complaint_api_v1_complaints__complaint_id__patch"];
+        trace?: never;
+    };
     "/api/v1/uploads": {
         parameters: {
             query?: never;
@@ -715,6 +848,42 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ActivityItem */
+        ActivityItem: {
+            /** Id */
+            id: number;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /**
+             * Actor Id
+             * @description null when a resident did it (Reception QR form)
+             */
+            actor_id: string | null;
+            /** Actor Name */
+            actor_name: string | null;
+            /**
+             * Entity Type
+             * @description Table the change was made in, e.g. expenses, stays, payments
+             */
+            entity_type: string;
+            /** Entity Id */
+            entity_id: string | null;
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "insert" | "update";
+            /** Property Id */
+            property_id: string | null;
+            /**
+             * Summary
+             * @description One human-readable line. Names, labels and ₹ amounts only
+             */
+            summary: string;
+        };
         /** Bed */
         Bed: {
             /**
@@ -880,6 +1049,152 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /** Complaint */
+        Complaint: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /** Property Name */
+            property_name: string;
+            /** Room Id */
+            room_id: string | null;
+            /** Room Label */
+            room_label: string | null;
+            /** Bed Id */
+            bed_id: string | null;
+            /** Bed Label */
+            bed_label: string | null;
+            /** Resident Id */
+            resident_id: string | null;
+            /** Resident Name */
+            resident_name: string | null;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "wifi" | "water" | "electricity" | "plumbing" | "ac" | "cleaning" | "food" | "security" | "other";
+            /** Title */
+            title: string;
+            /** Note */
+            note: string | null;
+            /**
+             * Priority
+             * @enum {string}
+             */
+            priority: "low" | "normal" | "urgent";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "in_progress" | "resolved";
+            /**
+             * Photo Path
+             * @description View it with GET /files/url?key=...
+             */
+            photo_path: string | null;
+            /** Assigned To */
+            assigned_to: string | null;
+            /** Assigned To Name */
+            assigned_to_name: string | null;
+            /**
+             * Created By
+             * Format: uuid
+             */
+            created_by: string;
+            /** Created By Name */
+            created_by_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Resolved By */
+            resolved_by: string | null;
+            /** Resolved At */
+            resolved_at: string | null;
+            /** Resolution Note */
+            resolution_note: string | null;
+        };
+        /** ComplaintCreate */
+        ComplaintCreate: {
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /** Room Id */
+            room_id?: string | null;
+            /** Bed Id */
+            bed_id?: string | null;
+            /** Resident Id */
+            resident_id?: string | null;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "wifi" | "water" | "electricity" | "plumbing" | "ac" | "cleaning" | "food" | "security" | "other";
+            /** Title */
+            title: string;
+            /** Note */
+            note?: string | null;
+            /**
+             * Priority
+             * @default normal
+             * @enum {string}
+             */
+            priority: "low" | "normal" | "urgent";
+            /**
+             * Photo Path
+             * @description object_key from POST /uploads (kind complaint_photo) for this property
+             */
+            photo_path?: string | null;
+            /**
+             * Assigned To
+             * @description An active member of the organization
+             */
+            assigned_to?: string | null;
+        };
+        /**
+         * ComplaintUpdate
+         * @description Partial update. Resolving needs `resolution_note`; reopening clears the resolution.
+         */
+        ComplaintUpdate: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status?: "open" | "in_progress" | "resolved";
+            /**
+             * Priority
+             * @enum {string}
+             */
+            priority?: "low" | "normal" | "urgent";
+            /**
+             * Category
+             * @enum {string}
+             */
+            category?: "wifi" | "water" | "electricity" | "plumbing" | "ac" | "cleaning" | "food" | "security" | "other";
+            /** Title */
+            title?: string;
+            /** Note */
+            note?: string | null;
+            /** Assigned To */
+            assigned_to?: string | null;
+            /** Resolution Note */
+            resolution_note?: string | null;
+        };
         /** DiscountDecision */
         DiscountDecision: {
             /**
@@ -986,6 +1301,156 @@ export interface components {
         /** ErrorResponse */
         ErrorResponse: {
             error: components["schemas"]["ErrorDetail"];
+        };
+        /** Expense */
+        Expense: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "water_tanker" | "electricity_bescom" | "groceries" | "gas_lpg" | "maintenance_repairs" | "cleaning" | "internet" | "staff_salary" | "security" | "lease_rent" | "other";
+            /**
+             * Amount Paise
+             * @description Amount in paise (₹1 = 100)
+             */
+            amount_paise: number;
+            /** Quantity */
+            quantity: number | null;
+            /** Unit */
+            unit: string | null;
+            /**
+             * Expense Date
+             * Format: date
+             */
+            expense_date: string;
+            /** Vendor Name */
+            vendor_name: string | null;
+            /** Notes */
+            notes: string | null;
+            /**
+             * Bill Mode
+             * @enum {string}
+             */
+            bill_mode: "has_bill" | "no_bill";
+            /**
+             * Proof Path
+             * @description View it with GET /files/url?key=...
+             */
+            proof_path: string;
+            /** Proof Captured At */
+            proof_captured_at: string | null;
+            /** Proof Lat */
+            proof_lat: number | null;
+            /** Proof Lng */
+            proof_lng: number | null;
+            /**
+             * Paid From
+             * @enum {string}
+             */
+            paid_from: "caretaker_cash" | "owner_direct";
+            /** Owner Only */
+            owner_only: boolean;
+            /** Flagged For Review */
+            flagged_for_review: boolean;
+            /** Reviewed By */
+            reviewed_by: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Review Note */
+            review_note: string | null;
+            /**
+             * Created By
+             * Format: uuid
+             */
+            created_by: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Voided At */
+            voided_at: string | null;
+            /** Voided By */
+            voided_by: string | null;
+            /** Void Reason */
+            void_reason: string | null;
+        };
+        /**
+         * ExpenseCreate
+         * @description `no_bill` needs a note (>= 5 chars), a live photo uploaded in the last 15 minutes, its capture time and GPS.
+         *     Caretakers: paid from their cash, dated within the last 3 days, never lease rent. The database enforces it.
+         */
+        ExpenseCreate: {
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "water_tanker" | "electricity_bescom" | "groceries" | "gas_lpg" | "maintenance_repairs" | "cleaning" | "internet" | "staff_salary" | "security" | "lease_rent" | "other";
+            /**
+             * Amount Paise
+             * @description Amount in paise (₹1 = 100)
+             */
+            amount_paise: number;
+            /**
+             * Quantity
+             * @description e.g. 3 (tankers), so the owner sees the price per unit
+             */
+            quantity?: number | null;
+            /**
+             * Unit
+             * @description e.g. 'tanker'
+             */
+            unit?: string | null;
+            /**
+             * Expense Date
+             * Format: date
+             */
+            expense_date: string;
+            /** Vendor Name */
+            vendor_name?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Bill Mode
+             * @enum {string}
+             */
+            bill_mode: "has_bill" | "no_bill";
+            /**
+             * Proof Path
+             * @description object_key from POST /uploads (kind expense_proof) for this property
+             */
+            proof_path: string;
+            /** Proof Captured At */
+            proof_captured_at?: string | null;
+            /** Proof Lat */
+            proof_lat?: number | null;
+            /** Proof Lng */
+            proof_lng?: number | null;
+            /**
+             * Paid From
+             * @enum {string}
+             */
+            paid_from: "caretaker_cash" | "owner_direct";
+        };
+        /** ExpenseReview */
+        ExpenseReview: {
+            /** Note */
+            note?: string | null;
         };
         /** FileUrl */
         FileUrl: {
@@ -1385,6 +1850,51 @@ export interface components {
              * @description Monthly only: pro-rata first month for a check-in today at rent_paise
              */
             first_month_rent_paise: number | null;
+        };
+        /** Organization */
+        Organization: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Name
+             * @description Business name shown on receipts and the Reception poster
+             */
+            name: string;
+            /** Gstin */
+            gstin: string | null;
+            /**
+             * Whatsapp Language
+             * @description Language of WhatsApp messages (BE-35 templates)
+             * @enum {string}
+             */
+            whatsapp_language: "en" | "kn" | "hi" | "ta" | "te";
+            /** Receipt Footer */
+            receipt_footer: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * OrganizationUpdate
+         * @description Owner only. Partial update: only the fields sent change. Send null to clear gstin / receipt_footer.
+         */
+        OrganizationUpdate: {
+            /** Name */
+            name?: string;
+            /** Gstin */
+            gstin?: string | null;
+            /**
+             * Whatsapp Language
+             * @enum {string}
+             */
+            whatsapp_language?: "en" | "kn" | "hi" | "ta" | "te";
+            /** Receipt Footer */
+            receipt_footer?: string | null;
         };
         /** Property */
         Property: {
@@ -1978,7 +2488,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "expense_proof" | "kyc_id" | "selfie";
+            kind: "expense_proof" | "kyc_id" | "selfie" | "complaint_photo";
             /**
              * Property Id
              * Format: uuid
@@ -3540,6 +4050,217 @@ export interface operations {
             };
         };
     };
+    get_organization_api_v1_organization_get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Organization"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_organization_api_v1_organization_patch: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrganizationUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Organization"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    activity_api_v1_activity_get: {
+        parameters: {
+            query?: {
+                property_id?: string | null;
+                limit?: number;
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityItem"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     list_discount_requests_api_v1_discount_requests_get: {
         parameters: {
             query?: {
@@ -4579,6 +5300,551 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Resident"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_expenses_api_v1_expenses_get: {
+        parameters: {
+            query?: {
+                property_id?: string | null;
+                from?: string | null;
+                to?: string | null;
+                category?: ("water_tanker" | "electricity_bescom" | "groceries" | "gas_lpg" | "maintenance_repairs" | "cleaning" | "internet" | "staff_salary" | "security" | "lease_rent" | "other") | null;
+                /** @description true = only expenses waiting for owner review */
+                flagged?: boolean | null;
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_expense_api_v1_expenses_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    review_expense_api_v1_expenses__expense_id__review_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                expense_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpenseReview"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Expense"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_complaints_api_v1_complaints_get: {
+        parameters: {
+            query?: {
+                property_id?: string | null;
+                status?: ("open" | "in_progress" | "resolved") | null;
+                priority?: ("low" | "normal" | "urgent") | null;
+                category?: ("wifi" | "water" | "electricity" | "plumbing" | "ac" | "cleaning" | "food" | "security" | "other") | null;
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Complaint"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_complaint_api_v1_complaints_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComplaintCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Complaint"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_complaint_api_v1_complaints__complaint_id__get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                complaint_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Complaint"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_complaint_api_v1_complaints__complaint_id__patch: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                complaint_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComplaintUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Complaint"];
                 };
             };
             /** @description Unauthorized */

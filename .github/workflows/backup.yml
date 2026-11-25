@@ -1,0 +1,54 @@
+# Nightly encrypted database backup (BE-53). The free database plan has no backups of its own, so this is THE
+# backup. The dump is encrypted to the owner's age public key (repository variable BACKUP_AGE_RECIPIENT) before it
+# is stored; only the owner's offline private key can read it. Restore: tools/backup/restore.sh, docs/DEPLOY.md.
+# Does nothing until BACKUP_DATABASE_URL (secret) and BACKUP_AGE_RECIPIENT (variable) exist.
+name: Nightly backup
+
+on:
+  schedule:
+    - cron: "30 21 * * *" # 03:00 IST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+      BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+    steps:
+      - name: Configured?
+        id: cfg
+        run: |
+          if [ -z "$BACKUP_DATABASE_URL" ] || [ -z "$BACKUP_AGE_RECIPIENT" ]; then
+            echo "::notice::Backups aren't configured yet (BACKUP_DATABASE_URL / BACKUP_AGE_RECIPIENT), see docs/DEPLOY.md."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ok == 'true'
+      - name: Install age
+        if: steps.cfg.outputs.ok == 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq age
+      - name: Dump and encrypt
+        if: steps.cfg.outputs.ok == 'true'
+        env:
+          PG_DUMP: docker run --rm -i postgres:17 pg_dump # client must match the server (17)
+        run: |
+          file="pgcrm-$(date -u +%Y%m%dT%H%MZ).dump.age"
+          tools/backup/backup.sh "$file"
+          echo "BACKUP_FILE=$file" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        if: steps.cfg.outputs.ok == 'true'
+        with:
+          name: ${{ env.BACKUP_FILE }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 30
+          if-no-files-found: error

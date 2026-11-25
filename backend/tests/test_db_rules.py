@@ -553,3 +553,63 @@ def test_revoked_session_cannot_be_revived_or_deleted(admin):
         )
     with raises_sqlstate("PC001"):
         admin.execute("DELETE FROM sessions WHERE user_id = (SELECT id FROM users WHERE phone = %s)", (user["phone"],))
+
+
+# --------------------------------------------------------------------------
+# BE-26: complaints
+# --------------------------------------------------------------------------
+
+
+def _complaint(cur, w: World, **cols):
+    values = {"org_id": w.org, "property_id": w.prop_a, "category": "wifi", "title": "Wi-Fi down"} | cols
+    cur.execute(
+        f"INSERT INTO complaints ({', '.join(values)}) VALUES ({', '.join(['%s'] * len(values))}) RETURNING *",
+        list(values.values()),
+    )
+    return cur.fetchone()
+
+
+@pytest.mark.ac("BE-26", "AC1")
+def test_complaint_created_by_and_status_are_forced(world: World):
+    with as_user(world.caretaker_a, world.org) as cur:
+        c = _complaint(cur, world, created_by=world.owner, status="resolved", resolution_note="fake")
+    assert c["created_by"] == world.caretaker_a and c["status"] == "open" and c["resolution_note"] is None
+
+
+@pytest.mark.ac("BE-26", "AC6")
+def test_complaints_cannot_be_deleted_even_by_superuser(world: World, admin):
+    with as_user(world.owner, world.org) as cur:
+        c = _complaint(cur, world)
+    with raises_sqlstate("42501"), as_user(world.owner, world.org) as cur:
+        cur.execute("DELETE FROM complaints WHERE id = %s", (c["id"],))
+    with raises_sqlstate("PC001"):
+        admin.execute("DELETE FROM complaints WHERE id = %s", (c["id"],))
+
+
+@pytest.mark.ac("BE-26", "AC3")
+def test_complaint_resolution_rules_in_db(world: World):
+    with as_user(world.caretaker_a, world.org) as cur:
+        c = _complaint(cur, world)
+    with raises_sqlstate("PC003"), as_user(world.caretaker_a, world.org) as cur:
+        cur.execute("UPDATE complaints SET status = 'resolved', resolution_note = 'x' WHERE id = %s", (c["id"],))
+    with as_user(world.caretaker_a, world.org) as cur:
+        cur.execute(
+            """UPDATE complaints SET status = 'resolved', resolution_note = 'Fixed the tap',
+                      resolved_by = %s, resolved_at = now() - interval '9 days'
+                WHERE id = %s RETURNING resolved_by, resolved_at > now() - interval '1 minute' AS just_now""",
+            (world.owner, c["id"]),
+        )
+        row = cur.fetchone()
+    assert row["resolved_by"] == world.caretaker_a and row["just_now"]  # stamped by the DB, not the caller
+
+
+def test_complaint_history_fields_are_immutable(world: World):
+    with as_user(world.caretaker_a, world.org) as cur:
+        c = _complaint(cur, world)
+    for change in (
+        f"property_id = '{world.prop_b}'",
+        "created_at = now() - interval '1 day'",
+        "photo_path = 'x'",
+    ):
+        with raises_sqlstate("PC001", "42501"), as_user(world.owner, world.org) as cur:
+            cur.execute(f"UPDATE complaints SET {change} WHERE id = %s", (c["id"],))

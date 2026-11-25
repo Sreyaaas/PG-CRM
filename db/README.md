@@ -24,6 +24,8 @@ All the anti-theft rules are enforced **inside Postgres**, so no API bug can byp
 | `*_rls_policies.sql` | Row Level Security on every table + grants (no DELETE grant anywhere) |
 | `*_api_functions.sql` | `api.*` functions: login lookup, signup, add staff, public join/receipt, cash balances, P&L |
 | `*_sessions_and_rate_limits.sql` | `sessions` (hashed refresh tokens, rotation, reuse revokes the family; own rows only), `rate_limit_events` (hashed keys, reachable only via `api.rate_limit_*`) |
+| `*_complaints.sql` | `complaints` work queue: building-scoped RLS, forced `created_by`, resolution note + who/when on resolve, active-member assignee, no delete, audited |
+| `*_organization_settings.sql` | `organizations.gstin` (format CHECK), `whatsapp_language` (en/kn/hi/ta/te, default en), `receipt_footer`; owner-only via `org_update` |
 
 The tests in `backend/tests/test_db_rules.py` are the executable spec for these rules.
 

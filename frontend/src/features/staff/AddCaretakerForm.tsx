@@ -6,6 +6,7 @@ import { ApiError } from '@/api/client'
 import type { components } from '@/api/schema'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { PropertyChecklist } from './PropertyChecklist'
 import { useAddStaff } from './useStaff'
 
@@ -21,9 +22,6 @@ const schema = z.object({
 })
 
 type Values = z.infer<typeof schema>
-
-const inputClass =
-  'h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900'
 
 export function AddCaretakerForm({
   properties,
@@ -77,14 +75,14 @@ export function AddCaretakerForm({
 
   if (existing) {
     return (
-      <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
-        <p role="status" className="text-sm text-slate-800">
+      <div className="flex flex-col gap-3 rounded-card border border-line bg-surface shadow-sm p-4">
+        <p role="status" className="text-[14px] text-ink">
           This person already has a PG-CRM account; they'll use their existing password.
         </p>
         <Button
           type="button"
           onClick={onDone}
-          className="h-11 w-full bg-slate-900 text-white hover:bg-slate-800"
+          block
         >
           Done
         </Button>
@@ -96,69 +94,83 @@ export function AddCaretakerForm({
     <form
       onSubmit={handleSubmit(onSubmit)}
       aria-label="Add caretaker"
-      className="space-y-4 rounded-lg border border-slate-200 bg-white p-4"
+      className="flex flex-col gap-4 rounded-card border border-line bg-surface shadow-sm p-4"
     >
-      <h2 className="text-sm font-semibold text-slate-900">Add caretaker</h2>
+      <h2 className="text-[14px] font-semibold text-ink">Add caretaker</h2>
 
-      <div className="space-y-1.5">
-        <label htmlFor="staff-phone" className="block text-sm font-medium text-slate-700">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="staff-phone" className="text-[13.5px] font-medium text-ink">
           Mobile number
         </label>
-        <input
+        <Input
           id="staff-phone"
+          autoComplete="off"
+          enterKeyHint="next"
           type="tel"
           inputMode="numeric"
           maxLength={10}
           placeholder="9876543210"
           {...register('phone')}
-          className={`${inputClass} tabular-nums`}
+          className="tabular-nums"
         />
-        {errors.phone && <p className="text-xs text-red-700">{errors.phone.message}</p>}
+        {errors.phone && (
+          <p role="alert" className="text-[12.5px] font-medium text-danger-ink">
+            {errors.phone.message}
+          </p>
+        )}
       </div>
 
-      <div className="space-y-1.5">
-        <label htmlFor="staff-name" className="block text-sm font-medium text-slate-700">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="staff-name" className="text-[13.5px] font-medium text-ink">
           Full name
         </label>
-        <input
+        <Input
           id="staff-name"
+          autoCapitalize="words"
+          enterKeyHint="next"
           type="text"
           autoComplete="off"
           {...register('full_name')}
-          className={inputClass}
         />
-        {errors.full_name && <p className="text-xs text-red-700">{errors.full_name.message}</p>}
+        {errors.full_name && (
+          <p role="alert" className="text-[12.5px] font-medium text-danger-ink">
+            {errors.full_name.message}
+          </p>
+        )}
       </div>
 
-      <div className="space-y-1.5">
-        <label htmlFor="staff-password" className="block text-sm font-medium text-slate-700">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="staff-password" className="text-[13.5px] font-medium text-ink">
           Initial password
         </label>
         <div className="flex gap-2">
-          <input
+          <Input
             id="staff-password"
             type={showPassword ? 'text' : 'password'}
             autoComplete="new-password"
             {...register('password')}
-            className={inputClass}
-          />
+            />
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             onClick={() => setShowPassword((s) => !s)}
-            className="h-11 px-3"
+            
           >
             {showPassword ? 'Hide' : 'Show'}
           </Button>
-          <Button type="button" variant="outline" onClick={copyPassword} className="h-11 px-3">
+          <Button type="button" variant="secondary" onClick={copyPassword} >
             Copy
           </Button>
         </div>
-        {errors.password && <p className="text-xs text-red-700">{errors.password.message}</p>}
+        {errors.password && (
+          <p role="alert" className="text-[12.5px] font-medium text-danger-ink">
+            {errors.password.message}
+          </p>
+        )}
       </div>
 
-      <fieldset className="space-y-1.5">
-        <legend className="text-sm font-medium text-slate-700">Buildings they can see</legend>
+      <fieldset className="flex flex-col gap-1.5">
+        <legend className="text-[14px] font-medium text-ink">Buildings they can see</legend>
         <Controller
           control={control}
           name="property_ids"
@@ -173,13 +185,13 @@ export function AddCaretakerForm({
       </fieldset>
 
       <div className="flex gap-2">
-        <Button type="button" variant="outline" onClick={onDone} className="h-11 flex-1">
+        <Button type="button" variant="secondary" onClick={onDone} className="flex-1">
           Cancel
         </Button>
         <Button
           type="submit"
           disabled={addStaff.isPending}
-          className="h-11 flex-1 bg-slate-900 text-white hover:bg-slate-800"
+          className="flex-1"
         >
           {addStaff.isPending ? 'Adding…' : 'Add caretaker'}
         </Button>

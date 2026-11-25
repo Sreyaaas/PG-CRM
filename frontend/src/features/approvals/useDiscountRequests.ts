@@ -8,6 +8,10 @@ export function pendingDiscountsKey(orgId: string | undefined) {
   return ['discount-requests', orgId, 'pending'] as const
 }
 
+export function myDiscountsKey(orgId: string | undefined) {
+  return ['discount-requests', orgId, 'all'] as const
+}
+
 export function usePendingDiscounts() {
   const { membership } = useAuth()
   const orgId = membership?.org_id
@@ -15,10 +19,29 @@ export function usePendingDiscounts() {
     queryKey: pendingDiscountsKey(orgId),
     enabled: Boolean(orgId) && membership?.role === 'owner',
     refetchInterval: APPROVALS_REFETCH_MS,
+    refetchOnWindowFocus: true,
     retry: false,
     queryFn: async () => {
       const { data } = await apiClient.GET('/api/v1/discount-requests', {
         params: { query: { status: 'pending' }, header: { 'x-org-id': orgId! } },
+      })
+      return data ?? []
+    },
+  })
+}
+
+/** Loads discount requests visible to the current user (owner or caretaker). */
+export function useMyDiscountRequests() {
+  const { membership } = useAuth()
+  const orgId = membership?.org_id
+  return useQuery({
+    queryKey: myDiscountsKey(orgId),
+    enabled: Boolean(orgId),
+    refetchOnWindowFocus: true,
+    retry: false,
+    queryFn: async () => {
+      const { data } = await apiClient.GET('/api/v1/discount-requests', {
+        params: { header: { 'x-org-id': orgId! } },
       })
       return data ?? []
     },

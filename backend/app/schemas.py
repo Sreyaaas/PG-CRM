@@ -397,7 +397,7 @@ class PublicUploadRequest(_UploadFields):
 
 
 class UploadRequest(_UploadFields):
-    kind: Literal["expense_proof", "kyc_id", "selfie"]
+    kind: Literal["expense_proof", "kyc_id", "selfie", "complaint_photo"]
     property_id: UUID
 
 
@@ -630,6 +630,126 @@ class StayCorrection(BaseModel):
         return self
 
 
+ExpenseCategory = Literal[
+    "water_tanker",
+    "electricity_bescom",
+    "groceries",
+    "gas_lpg",
+    "maintenance_repairs",
+    "cleaning",
+    "internet",
+    "staff_salary",
+    "security",
+    "lease_rent",
+    "other",
+]
+
+
+class ExpenseCreate(BaseModel):
+    """`no_bill` needs a note (>= 5 chars), a live photo uploaded in the last 15 minutes, its capture time and GPS.
+    Caretakers: paid from their cash, dated within the last 3 days, never lease rent. The database enforces it."""
+
+    model_config = {"extra": "forbid"}
+
+    property_id: UUID
+    category: ExpenseCategory
+    amount_paise: Rent
+    quantity: Annotated[float, Field(gt=0, le=99_999_999)] | None = Field(
+        default=None, description="e.g. 3 (tankers), so the owner sees the price per unit"
+    )
+    unit: Annotated[str, StringConstraints(min_length=1, max_length=20, strip_whitespace=True)] | None = Field(
+        default=None, description="e.g. 'tanker'"
+    )
+    expense_date: date
+    vendor_name: Annotated[str, StringConstraints(min_length=1, max_length=120, strip_whitespace=True)] | None = None
+    notes: Annotated[str, StringConstraints(max_length=1000, strip_whitespace=True)] | None = None
+    bill_mode: Literal["has_bill", "no_bill"]
+    proof_path: str = Field(description="object_key from POST /uploads (kind expense_proof) for this property")
+    proof_captured_at: datetime | None = None
+    proof_lat: Annotated[float, Field(ge=-90, le=90)] | None = None
+    proof_lng: Annotated[float, Field(ge=-180, le=180)] | None = None
+    paid_from: Literal["caretaker_cash", "owner_direct"]
+
+
+class ExpenseReview(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    note: Annotated[str, StringConstraints(max_length=1000, strip_whitespace=True)] | None = None
+
+
+class Expense(BaseModel):
+    id: UUID
+    property_id: UUID
+    category: ExpenseCategory
+    amount_paise: Paise
+    quantity: float | None
+    unit: str | None
+    expense_date: date
+    vendor_name: str | None
+    notes: str | None
+    bill_mode: Literal["has_bill", "no_bill"]
+    proof_path: str = Field(description="View it with GET /files/url?key=...")
+    proof_captured_at: datetime | None
+    proof_lat: float | None
+    proof_lng: float | None
+    paid_from: Literal["caretaker_cash", "owner_direct"]
+    owner_only: bool
+    flagged_for_review: bool
+    reviewed_by: UUID | None
+    reviewed_at: datetime | None
+    review_note: str | None
+    created_by: UUID
+    created_at: datetime
+    voided_at: datetime | None
+    voided_by: UUID | None
+    void_reason: str | None
+
+
+ComplaintCategory = Literal["wifi", "water", "electricity", "plumbing", "ac", "cleaning", "food", "security", "other"]
+ComplaintPriority = Literal["low", "normal", "urgent"]
+ComplaintStatus = Literal["open", "in_progress", "resolved"]
+ComplaintTitle = Annotated[str, StringConstraints(min_length=1, max_length=120, strip_whitespace=True)]
+ComplaintNote = Annotated[str, StringConstraints(max_length=2000, strip_whitespace=True)]
+
+
+class ComplaintCreate(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    property_id: UUID
+    room_id: UUID | None = None
+    bed_id: UUID | None = None
+    resident_id: UUID | None = None
+    category: ComplaintCategory
+    title: ComplaintTitle
+    note: ComplaintNote | None = None
+    priority: ComplaintPriority = "normal"
+    photo_path: str | None = Field(
+        default=None, description="object_key from POST /uploads (kind complaint_photo) for this property"
+    )
+    assigned_to: UUID | None = Field(default=None, description="An active member of the organization")
+
+
+class ComplaintUpdate(BaseModel):
+    """Partial update. Resolving needs `resolution_note`; reopening clears the resolution."""
+
+    model_config = {"extra": "forbid"}
+
+    status: ComplaintStatus = _optional()
+    priority: ComplaintPriority = _optional()
+    category: ComplaintCategory = _optional()
+    title: ComplaintTitle = _optional()
+    note: ComplaintNote | None = None
+    assigned_to: UUID | None = None
+    resolution_note: ComplaintNote | None = None
+
+    @model_validator(mode="after")
+    def _not_null(self):
+        for name in ("status", "priority", "category", "title"):
+            if name in self.model_fields_set and getattr(self, name) is None:
+                raise ValueError(f"{name} may not be null")
+        return self
+
+
 class Resident(BaseModel):
     id: UUID
     property_id: UUID
@@ -655,6 +775,76 @@ class Resident(BaseModel):
     created_at: datetime
     current_stay: Stay | None = Field(description="The open (not vacated) stay, if any")
     past_stays: list[Stay] = Field(description="Vacated stays, newest first")
+
+
+class Complaint(BaseModel):
+    id: UUID
+    property_id: UUID
+    property_name: str
+    room_id: UUID | None
+    room_label: str | None
+    bed_id: UUID | None
+    bed_label: str | None
+    resident_id: UUID | None
+    resident_name: str | None
+    category: ComplaintCategory
+    title: str
+    note: str | None
+    priority: ComplaintPriority
+    status: ComplaintStatus
+    photo_path: str | None = Field(description="View it with GET /files/url?key=...")
+    assigned_to: UUID | None
+    assigned_to_name: str | None
+    created_by: UUID
+    created_by_name: str
+    created_at: datetime
+    updated_at: datetime
+    resolved_by: UUID | None
+    resolved_at: datetime | None
+    resolution_note: str | None
+
+
+Gstin = Annotated[str, StringConstraints(pattern=r"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$")]
+MessageLanguage = Literal["en", "kn", "hi", "ta", "te"]
+
+
+class Organization(BaseModel):
+    id: UUID
+    name: str = Field(description="Business name shown on receipts and the Reception poster")
+    gstin: str | None
+    whatsapp_language: MessageLanguage = Field(description="Language of WhatsApp messages (BE-35 templates)")
+    receipt_footer: str | None
+    created_at: datetime
+
+
+class OrganizationUpdate(BaseModel):
+    """Owner only. Partial update: only the fields sent change. Send null to clear gstin / receipt_footer."""
+
+    model_config = {"extra": "forbid"}
+
+    name: Annotated[str, StringConstraints(min_length=1, max_length=120, strip_whitespace=True)] = _optional()
+    gstin: Gstin | None = None
+    whatsapp_language: MessageLanguage = _optional()
+    receipt_footer: Annotated[str, StringConstraints(max_length=300, strip_whitespace=True)] | None = None
+
+    @model_validator(mode="after")
+    def _not_null(self):
+        for name in ("name", "whatsapp_language"):
+            if name in self.model_fields_set and getattr(self, name) is None:
+                raise ValueError(f"{name} may not be null")
+        return self
+
+
+class ActivityItem(BaseModel):
+    id: int
+    at: datetime
+    actor_id: UUID | None = Field(description="null when a resident did it (Reception QR form)")
+    actor_name: str | None
+    entity_type: str = Field(description="Table the change was made in, e.g. expenses, stays, payments")
+    entity_id: UUID | None
+    action: Literal["insert", "update"]
+    property_id: UUID | None
+    summary: str = Field(description="One human-readable line. Names, labels and ₹ amounts only")
 
 
 class ErrorDetail(BaseModel):

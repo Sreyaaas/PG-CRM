@@ -7,7 +7,11 @@ import { z } from 'zod'
 import { ApiError, apiClient } from '@/api/client'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
+import { Field } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Notice } from '@/components/ui/misc'
 import { useAuth } from '@/features/auth/AuthContext'
+import { AuthLayout } from './AuthLayout'
 
 const signupSchema = z.object({
   phone: z
@@ -65,102 +69,81 @@ export function SignupPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-8 text-slate-950">
-      <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-xs">
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-950">
-            Create PG-CRM account
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">Set up your organization as a PG owner.</p>
-        </div>
-
-        {formError && (
-          <div
-            role="alert"
-            className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
-          >
-            {formError}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit((values) => signupMutation.mutate(values))} className="space-y-4">
-          <div className="space-y-1.5">
-            <label htmlFor="signup-name" className="block text-sm font-medium text-slate-700">
-              Full name
-            </label>
-            <input
-              id="signup-name"
-              type="text"
-              placeholder="Meera Nair"
-              {...register('full_name')}
-              className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
-            />
-            {errors.full_name && <p className="text-xs text-red-700">{errors.full_name.message}</p>}
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="signup-org" className="block text-sm font-medium text-slate-700">
-              Organization / PG group name
-            </label>
-            <input
-              id="signup-org"
-              type="text"
-              placeholder="Sunrise Living PGs"
-              {...register('organization_name')}
-              className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
-            />
-            {errors.organization_name && (
-              <p className="text-xs text-red-700">{errors.organization_name.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="signup-phone" className="block text-sm font-medium text-slate-700">
-              Mobile number
-            </label>
-            <input
-              id="signup-phone"
-              type="tel"
-              inputMode="numeric"
-              maxLength={10}
-              placeholder="9876543210"
-              {...register('phone')}
-              className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base tabular-nums text-slate-950 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
-            />
-            {errors.phone && <p className="text-xs text-red-700">{errors.phone.message}</p>}
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="signup-password" className="block text-sm font-medium text-slate-700">
-              Password (min 8 characters)
-            </label>
-            <input
-              id="signup-password"
-              type="password"
-              autoComplete="new-password"
-              placeholder="••••••••"
-              {...register('password')}
-              className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
-            />
-            {errors.password && <p className="text-xs text-red-700">{errors.password.message}</p>}
-          </div>
-
-          <Button
-            type="submit"
-            disabled={signupMutation.isPending}
-            className="h-11 w-full bg-slate-900 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            {signupMutation.isPending ? 'Creating account…' : 'Create organization'}
-          </Button>
-        </form>
-
-        <div className="mt-5 border-t border-slate-100 pt-4 text-center text-sm text-slate-600">
+    <AuthLayout
+      title={['Create', 'PG-CRM account']}
+      description="Set up your organization as a PG owner."
+      footer={
+        <>
           Already have an account?{' '}
-          <Link to="/login" className="font-medium text-slate-950 underline underline-offset-4 hover:text-slate-700">
+          <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-ink underline underline-offset-4">
             Sign in
           </Link>
-        </div>
-      </div>
-    </main>
+        </>
+      }
+    >
+      {formError && (
+        <Notice role="alert" className="mb-5">
+          {formError}
+        </Notice>
+      )}
+
+      <form onSubmit={handleSubmit((values) => signupMutation.mutate(values))} className="flex flex-col gap-4" noValidate>
+        <Field id="signup-name" label="Full name" error={errors.full_name?.message}>
+          <Input
+            id="signup-name"
+            type="text"
+            autoComplete="name"
+            autoCapitalize="words"
+            enterKeyHint="next"
+            placeholder="Meera Nair"
+            aria-invalid={errors.full_name ? true : undefined}
+            {...register('full_name')}
+          />
+        </Field>
+
+        <Field id="signup-org" label="Organization / PG group name" error={errors.organization_name?.message}>
+          <Input
+            id="signup-org"
+            type="text"
+            autoComplete="organization"
+            autoCapitalize="words"
+            enterKeyHint="next"
+            placeholder="Sunrise Living PGs"
+            aria-invalid={errors.organization_name ? true : undefined}
+            {...register('organization_name')}
+          />
+        </Field>
+
+        <Field id="signup-phone" label="Mobile number" error={errors.phone?.message}>
+          <Input
+            id="signup-phone"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel-national"
+            enterKeyHint="next"
+            maxLength={10}
+            placeholder="9876543210"
+            aria-invalid={errors.phone ? true : undefined}
+            className="tabular-nums"
+            {...register('phone')}
+          />
+        </Field>
+
+        <Field id="signup-password" label="Password (min 8 characters)" error={errors.password?.message}>
+          <Input
+            id="signup-password"
+            type="password"
+            autoComplete="new-password"
+            enterKeyHint="go"
+            aria-invalid={errors.password ? true : undefined}
+            {...register('password')}
+          />
+        </Field>
+
+        <Button type="submit" size="lg" block disabled={signupMutation.isPending} className="mt-2">
+          {signupMutation.isPending ? 'Creating account…' : 'Create organization'}
+        </Button>
+      </form>
+    </AuthLayout>
   )
 }

@@ -1,18 +1,39 @@
 import type { ReactNode } from 'react'
+import { BedDouble, ChevronRight, Pencil, QrCode } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '@/api/client'
 import { Money } from '@/components/Money'
 import { Button } from '@/components/ui/button'
+import { Card, CardHeader, CardList } from '@/components/ui/card'
+import { ListRow, LoadingRows, Notice, PageHeader, ROW_LINK } from '@/components/ui/misc'
 import { usePropertyQuery } from './api'
 import { ActiveBadge } from './ActiveBadge'
 import { ConnectSoundboxQr } from './ConnectSoundboxQr'
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-2 text-sm">
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="text-right text-slate-950">{children}</dd>
+    <div className="flex items-baseline justify-between gap-4 px-4 py-3 text-[14px] sm:px-5">
+      <dt className="text-muted">{label}</dt>
+      <dd className="text-right font-medium text-ink tabular-nums">{children}</dd>
     </div>
+  )
+}
+
+function NavRow({ to, icon, children }: { to: string; icon: ReactNode; children: string }) {
+  return (
+    <li>
+      <Link to={to} className={ROW_LINK}>
+        <ListRow
+          leading={
+            <span className="inline-flex size-10 items-center justify-center rounded-full bg-surface-2 text-muted [&_svg]:size-5">
+              {icon}
+            </span>
+          }
+          title={children}
+          trailing={<ChevronRight className="size-4 text-subtle" aria-hidden="true" />}
+        />
+      </Link>
+    </li>
   )
 }
 
@@ -20,36 +41,57 @@ export function PropertyDetailPage() {
   const { propertyId } = useParams()
   const query = usePropertyQuery(propertyId)
 
-  if (query.isLoading) return <p className="text-sm text-slate-500">Loading property…</p>
+  if (query.isLoading) {
+    return (
+      <Card>
+        <LoadingRows label="Loading property…" />
+      </Card>
+    )
+  }
   if (query.isError || !query.data) {
     return (
-      <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+      <Notice role="alert">
         {query.error instanceof ApiError ? query.error.message : 'Unable to load property.'}
-      </div>
+      </Notice>
     )
   }
   const p = query.data
 
   return (
-    <div className="max-w-xl space-y-5">
-      <div className="border-b border-slate-200 pb-4">
-        <Link to="/owner/properties" className="text-xs text-slate-500 underline underline-offset-4">
-          All properties
-        </Link>
-        <div className="mt-1 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="truncate text-xl font-semibold tracking-tight text-slate-950">{p.name}</h1>
-            {p.locality && <p className="text-sm text-slate-500">{p.locality}</p>}
-          </div>
-          <ActiveBadge active={p.is_active} />
-        </div>
-        <Button asChild variant="outline" className="mt-3 h-11 w-full sm:w-auto">
-          <Link to={`/owner/properties/${p.id}/edit`}>Edit property</Link>
-        </Button>
-      </div>
+    <div className="flex max-w-2xl flex-col gap-6">
+      <PageHeader
+        back={{ to: '/owner/properties', label: 'All properties' }}
+        title={p.name}
+        description={
+          <span className="inline-flex flex-wrap items-center gap-2">
+            {p.locality && <span>{p.locality}</span>}
+            <ActiveBadge active={p.is_active} />
+          </span>
+        }
+        actions={
+          <Button asChild variant="secondary" className="max-sm:flex-1">
+            <Link to={`/owner/properties/${p.id}/edit`}>
+              <Pencil aria-hidden="true" />
+              Edit property
+            </Link>
+          </Button>
+        }
+      />
 
-      <section className="rounded-lg border border-slate-200 bg-white px-4 py-2">
-        <dl className="divide-y divide-slate-100">
+      <Card className="overflow-hidden">
+        <CardList>
+          <NavRow to={`/owner/properties/${p.id}/rooms`} icon={<BedDouble />}>
+            Rooms &amp; beds
+          </NavRow>
+          <NavRow to={`/owner/properties/${p.id}/poster`} icon={<QrCode />}>
+            Reception QR
+          </NavRow>
+        </CardList>
+      </Card>
+
+      <Card className="overflow-hidden">
+        <CardHeader title="Billing rules" />
+        <dl className="divide-y divide-line">
           <Row label="Rent due by day">{p.rent_due_day}</Row>
           <Row label="Security deposit">
             <Money paise={p.security_deposit_paise} />
@@ -70,21 +112,14 @@ export function PropertyDetailPage() {
             {p.upi_vpa ? (
               <span>
                 {p.upi_payee_name && <span className="block">{p.upi_payee_name}</span>}
-                <span className="break-all">{p.upi_vpa}</span>
+                <span className="break-all font-normal text-muted">{p.upi_vpa}</span>
               </span>
             ) : (
-              'Not connected'
+              <span className="font-normal text-muted">Not connected</span>
             )}
           </Row>
         </dl>
-      </section>
-
-      <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
-        <Link to={`/owner/properties/${p.id}/rooms`}>Rooms &amp; beds</Link>
-      </Button>
-      <Button asChild variant="outline" className="h-11 w-full sm:w-auto">
-        <Link to={`/owner/properties/${p.id}/poster`}>Reception QR</Link>
-      </Button>
+      </Card>
 
       <ConnectSoundboxQr propertyId={p.id} />
     </div>

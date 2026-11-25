@@ -2,17 +2,21 @@ import { Route, Routes } from 'react-router-dom'
 import { CaretakerHomePage } from './CaretakerHomePage'
 import { DevUiPage } from './DevUiPage'
 import { ApprovalsPage } from '@/features/approvals/ApprovalsPage'
+import { CheckInDetailPage } from '@/features/checkins/CheckInDetailPage'
+import { CheckInsPage } from '@/features/checkins/CheckInsPage'
 import { LoginPage } from './LoginPage'
 import { OrgPickerPage } from './OrgPickerPage'
 import { OwnerDashboardPage } from './OwnerDashboardPage'
-import { OwnerMorePage } from './OwnerMorePage'
+import { CaretakerMorePage, OwnerMorePage } from './MorePages'
 import { StaffPage } from '@/features/staff/StaffPage'
+import { SettingsPage } from '@/features/settings/SettingsPage'
 import { CaretakerLayoutRoute, OwnerLayoutRoute, RoleRedirect } from './ProtectedRoutes'
 import { PropertiesListPage } from '@/features/properties/PropertiesListPage'
 import { PropertyDetailPage } from '@/features/properties/PropertyDetailPage'
 import { PropertyCreatePage, PropertyEditPage } from '@/features/properties/PropertyFormPage'
 import { RoomsPage } from '@/features/rooms/RoomsPage'
 import { PosterPage } from '@/features/poster/PosterPage'
+import { JoinPage } from '@/features/join/JoinPage'
 import { SignupPage } from './SignupPage'
 
 export function AppRouter() {
@@ -22,11 +26,14 @@ export function AppRouter() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/select-org" element={<OrgPickerPage />} />
+      <Route path="/join/:slug" element={<JoinPage />} />
       <Route path="/dev/ui" element={<DevUiPage />} />
 
       <Route path="/owner" element={<OwnerLayoutRoute />}>
-        <Route index element={<OwnerDashboardPage section="Dashboard" />} />
+        <Route index element={<OwnerDashboardPage section="Today" />} />
         <Route path="approvals" element={<ApprovalsPage />} />
+        <Route path="check-ins" element={<CheckInsPage />} />
+        <Route path="check-ins/:requestId" element={<CheckInDetailPage />} />
         <Route path="properties" element={<PropertiesListPage />} />
         <Route path="properties/new" element={<PropertyCreatePage />} />
         <Route path="properties/:propertyId" element={<PropertyDetailPage />} />
@@ -36,14 +43,17 @@ export function AppRouter() {
         <Route path="money" element={<OwnerDashboardPage section="Money" />} />
         <Route path="more" element={<OwnerMorePage />} />
         <Route path="staff" element={<StaffPage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
 
       <Route path="/caretaker" element={<CaretakerLayoutRoute />}>
         <Route index element={<CaretakerHomePage section="Home" />} />
-        <Route path="check-ins" element={<CaretakerHomePage section="Check-ins" />} />
+        <Route path="check-ins" element={<CheckInsPage />} />
+        <Route path="check-ins/:requestId" element={<CheckInDetailPage />} />
         <Route path="payments" element={<CaretakerHomePage section="Payments" />} />
         <Route path="expenses" element={<CaretakerHomePage section="Expenses" />} />
-        <Route path="more" element={<CaretakerHomePage section="More" />} />
+        <Route path="more" element={<CaretakerMorePage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>
   )

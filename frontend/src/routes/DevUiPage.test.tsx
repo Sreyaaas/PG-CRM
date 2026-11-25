@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, test } from 'vitest'
+import { ToastProvider } from '@/components/Toast'
 import { DevUiPage } from './DevUiPage'
 
 const EXPECTED_BADGE_LABELS = [
@@ -19,9 +20,11 @@ const EXPECTED_BADGE_LABELS = [
 describe('/dev/ui showcase', () => {
   test('[FE-01/AC3] /dev/ui renders every status badge label from the specification', () => {
     render(
-      <MemoryRouter initialEntries={['/dev/ui']}>
-        <DevUiPage />
-      </MemoryRouter>,
+      <ToastProvider>
+        <MemoryRouter initialEntries={['/dev/ui']}>
+          <DevUiPage />
+        </MemoryRouter>
+      </ToastProvider>,
     )
 
     for (const label of EXPECTED_BADGE_LABELS) {

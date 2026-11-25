@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
-import { X } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export type ToastVariant = 'default' | 'error' | 'success'
@@ -28,7 +28,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback(
     (message: string, variant: ToastVariant = 'default') => {
       const id = nextToastId++
-      setToasts((prev) => [...prev, { id, message, variant }])
+      // Several requests can fail at once (e.g. every query on a page gets a 401); show each message once.
+      setToasts((prev) =>
+        prev.some((t) => t.message === message && t.variant === variant) ? prev : [...prev, { id, message, variant }],
+      )
       window.setTimeout(() => {
         dismiss(id)
       }, 5000)
@@ -41,25 +44,31 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="fixed inset-x-0 top-4 z-50 mx-auto flex max-w-md flex-col gap-2 px-4 pointer-events-none"
+        className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+8px)] z-[60] mx-auto flex max-w-md flex-col gap-2 safe-x print:hidden"
       >
         {toasts.map((toast) => (
           <div
             key={toast.id}
             role={toast.variant === 'error' ? 'alert' : 'status'}
-            className={cn(
-              'pointer-events-auto flex items-start justify-between gap-3 rounded-lg border px-4 py-3 text-sm shadow-sm',
-              toast.variant === 'error' && 'border-red-200 bg-red-50 text-red-900',
-              toast.variant === 'success' && 'border-emerald-200 bg-emerald-50 text-emerald-900',
-              toast.variant === 'default' && 'border-slate-200 bg-white text-slate-900',
-            )}
+            className="anim-pop pointer-events-auto flex items-start gap-3 rounded-xl border border-line bg-surface py-2 pl-3.5 pr-1 text-[14px] text-ink shadow-lg"
           >
-            <span>{toast.message}</span>
+            <span
+              aria-hidden="true"
+              className={cn(
+                'mt-2.5 [&_svg]:size-4',
+                toast.variant === 'error' && 'text-danger',
+                toast.variant === 'success' && 'text-success',
+                toast.variant === 'default' && 'text-muted',
+              )}
+            >
+              {toast.variant === 'error' ? <AlertCircle /> : toast.variant === 'success' ? <CheckCircle2 /> : <Info />}
+            </span>
+            <span className="min-w-0 flex-1 py-2">{toast.message}</span>
             <button
               type="button"
               onClick={() => dismiss(toast.id)}
               aria-label="Dismiss notification"
-              className="rounded p-0.5 text-current/70 hover:text-current"
+              className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-ink active:bg-surface-2"
             >
               <X className="h-4 w-4" />
             </button>
