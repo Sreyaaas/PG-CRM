@@ -436,6 +436,12 @@ Occupation = Literal["working", "student", "other"]
 IdDocType = Literal["aadhaar", "pan", "driving_licence", "voter_id", "passport"]
 
 
+FoodPreference = Literal["veg", "non_veg", "egg"]
+PoliceVerificationStatus = Literal["pending", "submitted", "verified"]
+VehicleNumber = Annotated[str, StringConstraints(max_length=20, strip_whitespace=True)]
+ContactRelation = Annotated[str, StringConstraints(max_length=40, strip_whitespace=True)]
+
+
 class OnboardingSubmit(BaseModel):
     """The Reception QR form. Photos are object keys from POST /public/join/{qr_slug}/uploads."""
 
@@ -450,6 +456,9 @@ class OnboardingSubmit(BaseModel):
     employer_or_college: OptionalText = None
     emergency_contact_name: Text
     emergency_contact_phone: ContactPhone
+    emergency_contact_relation: ContactRelation | None = Field(default=None, description="e.g. father, sister")
+    food_preference: FoodPreference | None = None
+    vehicle_number: VehicleNumber | None = Field(default=None, description="e.g. KA01AB1234")
     id_doc_type: IdDocType
     id_doc_number: Text
     id_doc_path: Text = Field(description="object_key of the ID photo upload (onboarding/{property_id}/...)")
@@ -465,7 +474,14 @@ class OnboardingSubmit(BaseModel):
 
     @model_validator(mode="after")
     def _blank_is_missing(self):
-        for name in ("email", "employer_or_college", "passport_number", "visa_number"):
+        for name in (
+            "email",
+            "employer_or_college",
+            "passport_number",
+            "visa_number",
+            "emergency_contact_relation",
+            "vehicle_number",
+        ):
             if getattr(self, name) == "":
                 setattr(self, name, None)
         return self
@@ -516,6 +532,9 @@ class OnboardingRequestDetail(BaseModel):
     employer_or_college: str | None
     emergency_contact_name: str
     emergency_contact_phone: str
+    emergency_contact_relation: str | None
+    food_preference: FoodPreference | None
+    vehicle_number: str | None
     id_doc_type: IdDocType
     id_doc_number: str
     id_doc_path: str
@@ -772,6 +791,11 @@ class Resident(BaseModel):
     passport_number: str | None
     visa_number: str | None
     visa_expiry: date | None
+    emergency_contact_relation: str | None
+    food_preference: FoodPreference | None
+    vehicle_number: str | None
+    police_verification_status: PoliceVerificationStatus
+    police_verification_date: date | None
     created_at: datetime
     current_stay: Stay | None = Field(description="The open (not vacated) stay, if any")
     past_stays: list[Stay] = Field(description="Vacated stays, newest first")
@@ -845,6 +869,28 @@ class ActivityItem(BaseModel):
     action: Literal["insert", "update"]
     property_id: UUID | None
     summary: str = Field(description="One human-readable line. Names, labels and ₹ amounts only")
+
+
+class ResidentProfileUpdate(BaseModel):
+    """Owner or a caretaker of the resident's building. Partial: only the fields sent change.
+    `submitted` / `verified` need `police_verification_date` (sent now, or already saved)."""
+
+    model_config = {"extra": "forbid"}
+
+    food_preference: FoodPreference | None = None
+    vehicle_number: VehicleNumber | None = None
+    emergency_contact_relation: ContactRelation | None = None
+    police_verification_status: PoliceVerificationStatus = _optional()
+    police_verification_date: date | None = None
+
+    @model_validator(mode="after")
+    def _clean(self):
+        if "police_verification_status" in self.model_fields_set and self.police_verification_status is None:
+            raise ValueError("police_verification_status may not be null")
+        for name in ("vehicle_number", "emergency_contact_relation"):
+            if getattr(self, name) == "":
+                setattr(self, name, None)
+        return self
 
 
 class ErrorDetail(BaseModel):

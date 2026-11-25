@@ -3904,6 +3904,120 @@
         }
       }
     },
+    "/api/v1/residents/{resident_id}/profile": {
+      "patch": {
+        "tags": [
+          "stays"
+        ],
+        "summary": "Update Resident Profile",
+        "description": "Owner or a caretaker of the resident's building (RLS; anyone else gets 404). Food preference, vehicle number,\nemergency contact relation and police verification. `submitted` / `verified` need a date (DB CHECK).",
+        "operationId": "update_resident_profile_api_v1_residents__resident_id__profile_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "resident_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Resident Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidentProfileUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resident"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/expenses": {
       "post": {
         "tags": [
@@ -7329,6 +7443,44 @@
             "type": "string",
             "title": "Emergency Contact Phone"
           },
+          "emergency_contact_relation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emergency Contact Relation"
+          },
+          "food_preference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "veg",
+                  "non_veg",
+                  "egg"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Preference"
+          },
+          "vehicle_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehicle Number"
+          },
           "id_doc_type": {
             "type": "string",
             "enum": [
@@ -7479,6 +7631,9 @@
           "employer_or_college",
           "emergency_contact_name",
           "emergency_contact_phone",
+          "emergency_contact_relation",
+          "food_preference",
+          "vehicle_number",
           "id_doc_type",
           "id_doc_number",
           "id_doc_path",
@@ -7633,6 +7788,48 @@
             "type": "string",
             "pattern": "^[0-9+ ]{10,15}$",
             "title": "Emergency Contact Phone"
+          },
+          "emergency_contact_relation": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emergency Contact Relation",
+            "description": "e.g. father, sister"
+          },
+          "food_preference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "veg",
+                  "non_veg",
+                  "egg"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Preference"
+          },
+          "vehicle_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehicle Number",
+            "description": "e.g. KA01AB1234"
           },
           "id_doc_type": {
             "type": "string",
@@ -8601,6 +8798,65 @@
             ],
             "title": "Visa Expiry"
           },
+          "emergency_contact_relation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emergency Contact Relation"
+          },
+          "food_preference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "veg",
+                  "non_veg",
+                  "egg"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Preference"
+          },
+          "vehicle_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehicle Number"
+          },
+          "police_verification_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "submitted",
+              "verified"
+            ],
+            "title": "Police Verification Status"
+          },
+          "police_verification_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Police Verification Date"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -8649,11 +8905,85 @@
           "passport_number",
           "visa_number",
           "visa_expiry",
+          "emergency_contact_relation",
+          "food_preference",
+          "vehicle_number",
+          "police_verification_status",
+          "police_verification_date",
           "created_at",
           "current_stay",
           "past_stays"
         ],
         "title": "Resident"
+      },
+      "ResidentProfileUpdate": {
+        "properties": {
+          "food_preference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "veg",
+                  "non_veg",
+                  "egg"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Preference"
+          },
+          "vehicle_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehicle Number"
+          },
+          "emergency_contact_relation": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emergency Contact Relation"
+          },
+          "police_verification_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "submitted",
+              "verified"
+            ],
+            "title": "Police Verification Status"
+          },
+          "police_verification_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Police Verification Date"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ResidentProfileUpdate",
+        "description": "Owner or a caretaker of the resident's building. Partial: only the fields sent change.\n`submitted` / `verified` need `police_verification_date` (sent now, or already saved)."
       },
       "Room": {
         "properties": {

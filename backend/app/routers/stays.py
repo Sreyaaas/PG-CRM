@@ -15,7 +15,7 @@ from psycopg.rows import DictRow
 from app import billing, storage
 from app.deps import Org, require_owner
 from app.errors import error_body
-from app.schemas import MoveOutRequest, NoticeRequest, Resident, Stay, StayCorrection
+from app.schemas import MoveOutRequest, NoticeRequest, Resident, ResidentProfileUpdate, Stay, StayCorrection
 
 router = APIRouter(tags=["stays"])
 
@@ -139,7 +139,10 @@ def get_resident(resident_id: UUID, ctx: Org) -> Resident:
             """SELECT id, property_id, onboarding_request_id, full_name, phone, email, date_of_birth,
                       permanent_address, occupation::text AS occupation, employer_or_college, emergency_contact_name,
                       emergency_contact_phone, id_doc_type::text AS id_doc_type, id_doc_number, id_doc_path,
-                      selfie_path, is_foreign_national, passport_number, visa_number, visa_expiry, created_at
+                      selfie_path, is_foreign_national, passport_number, visa_number, visa_expiry,
+                      emergency_contact_relation, food_preference::text AS food_preference, vehicle_number,
+                      police_verification_status::text AS police_verification_status, police_verification_date,
+                      created_at
                  FROM residents WHERE id = %s""",
             (resident_id,),
         )
@@ -159,3 +162,26 @@ def get_resident(resident_id: UUID, ctx: Org) -> Resident:
         current_stay=next((s for s in stays if s.status != "vacated"), None),
         past_stays=[s for s in stays if s.status == "vacated"],
     )
+
+
+@router.patch("/residents/{resident_id}/profile", response_model=Resident, responses=_NOT_FOUND)
+def update_resident_profile(resident_id: UUID, body: ResidentProfileUpdate, ctx: Org) -> Resident:
+    """Owner or a caretaker of the resident's building (RLS; anyone else gets 404). Food preference, vehicle number,
+    emergency contact relation and police verification. `submitted` / `verified` need a date (DB CHECK)."""
+    values = body.model_dump(exclude_unset=True)
+    with ctx.tx() as cur:
+        if values:
+            cur.execute(
+                sql.SQL("UPDATE residents SET {} WHERE id = {} RETURNING id").format(
+                    sql.SQL(", ").join(
+                        sql.SQL("{} = {}").format(sql.Identifier(k), sql.Placeholder(k)) for k in values
+                    ),
+                    sql.Placeholder("_id"),
+                ),
+                values | {"_id": resident_id},
+            )
+        else:
+            cur.execute("SELECT id FROM residents WHERE id = %s", (resident_id,))
+        if cur.fetchone() is None:
+            raise HTTPException(404, "Resident not found")
+    return get_resident(resident_id, ctx)

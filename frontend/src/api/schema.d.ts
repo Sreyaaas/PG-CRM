@@ -669,6 +669,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/residents/{resident_id}/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Resident Profile
+         * @description Owner or a caretaker of the resident's building (RLS; anyone else gets 404). Food preference, vehicle number,
+         *     emergency contact relation and police verification. `submitted` / `verified` need a date (DB CHECK).
+         */
+        patch: operations["update_resident_profile_api_v1_residents__resident_id__profile_patch"];
+        trace?: never;
+    };
     "/api/v1/expenses": {
         parameters: {
             query?: never;
@@ -1658,6 +1679,12 @@ export interface components {
             emergency_contact_name: string;
             /** Emergency Contact Phone */
             emergency_contact_phone: string;
+            /** Emergency Contact Relation */
+            emergency_contact_relation: string | null;
+            /** Food Preference */
+            food_preference: ("veg" | "non_veg" | "egg") | null;
+            /** Vehicle Number */
+            vehicle_number: string | null;
             /**
              * Id Doc Type
              * @enum {string}
@@ -1772,6 +1799,18 @@ export interface components {
             emergency_contact_name: string;
             /** Emergency Contact Phone */
             emergency_contact_phone: string;
+            /**
+             * Emergency Contact Relation
+             * @description e.g. father, sister
+             */
+            emergency_contact_relation?: string | null;
+            /** Food Preference */
+            food_preference?: ("veg" | "non_veg" | "egg") | null;
+            /**
+             * Vehicle Number
+             * @description e.g. KA01AB1234
+             */
+            vehicle_number?: string | null;
             /**
              * Id Doc Type
              * @enum {string}
@@ -2134,6 +2173,19 @@ export interface components {
             visa_number: string | null;
             /** Visa Expiry */
             visa_expiry: string | null;
+            /** Emergency Contact Relation */
+            emergency_contact_relation: string | null;
+            /** Food Preference */
+            food_preference: ("veg" | "non_veg" | "egg") | null;
+            /** Vehicle Number */
+            vehicle_number: string | null;
+            /**
+             * Police Verification Status
+             * @enum {string}
+             */
+            police_verification_status: "pending" | "submitted" | "verified";
+            /** Police Verification Date */
+            police_verification_date: string | null;
             /**
              * Created At
              * Format: date-time
@@ -2146,6 +2198,26 @@ export interface components {
              * @description Vacated stays, newest first
              */
             past_stays: components["schemas"]["Stay"][];
+        };
+        /**
+         * ResidentProfileUpdate
+         * @description Owner or a caretaker of the resident's building. Partial: only the fields sent change.
+         *     `submitted` / `verified` need `police_verification_date` (sent now, or already saved).
+         */
+        ResidentProfileUpdate: {
+            /** Food Preference */
+            food_preference?: ("veg" | "non_veg" | "egg") | null;
+            /** Vehicle Number */
+            vehicle_number?: string | null;
+            /** Emergency Contact Relation */
+            emergency_contact_relation?: string | null;
+            /**
+             * Police Verification Status
+             * @enum {string}
+             */
+            police_verification_status?: "pending" | "submitted" | "verified";
+            /** Police Verification Date */
+            police_verification_date?: string | null;
         };
         /** Room */
         Room: {
@@ -5292,6 +5364,87 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Resident"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_resident_profile_api_v1_residents__resident_id__profile_patch: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                resident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResidentProfileUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

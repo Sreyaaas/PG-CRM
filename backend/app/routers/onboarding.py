@@ -35,7 +35,8 @@ _NOT_FOUND = {404: {"description": "Not found"}}
 _RESIDENT_FIELDS = (
     "full_name, phone, email, date_of_birth, permanent_address, occupation, employer_or_college, "
     "emergency_contact_name, emergency_contact_phone, id_doc_type, id_doc_number, id_doc_path, selfie_path, "
-    "is_foreign_national, passport_number, visa_number, visa_expiry"
+    "is_foreign_national, passport_number, visa_number, visa_expiry, "
+    "emergency_contact_relation, food_preference, vehicle_number"
 )
 
 
@@ -68,6 +69,7 @@ def _detail(
         """SELECT o.id, o.property_id, p.name AS property_name, o.status::text AS status,
                   o.full_name, o.phone, o.email, o.date_of_birth, o.permanent_address, o.occupation::text AS occupation,
                   o.employer_or_college, o.emergency_contact_name, o.emergency_contact_phone,
+                  o.emergency_contact_relation, o.food_preference::text AS food_preference, o.vehicle_number,
                   o.id_doc_type::text AS id_doc_type, o.id_doc_number, o.id_doc_path, o.selfie_path,
                   o.is_foreign_national, o.passport_number, o.visa_number, o.visa_expiry, o.accepted_rules,
                   o.accepted_exit_deduction_paise, o.accepted_at, o.created_at, o.reviewed_by, o.reviewed_at,

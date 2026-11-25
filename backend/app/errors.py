@@ -42,6 +42,7 @@ _CONSTRAINT_MESSAGES = {
     "fk_complaints_room": "That room isn't in this building.",
     "fk_complaints_bed": "That bed isn't in this building.",
     "fk_complaints_resident": "That resident isn't in this building.",
+    "residents_police_date_check": "Give the date the police verification was submitted or completed.",
     "onboarding_requests_check": "Foreign nationals must give their passport and visa numbers.",
 }
 
