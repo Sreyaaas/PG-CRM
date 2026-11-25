@@ -15,8 +15,8 @@ from psycopg import Cursor, sql
 from psycopg.rows import DictRow
 
 from app import whatsapp
-from app.deps import Org
-from app.schemas import Payment, PaymentCreate, PaymentMethod, PaymentStatus
+from app.deps import Org, require_owner
+from app.schemas import FlagRequest, Payment, PaymentCreate, PaymentMethod, PaymentStatus, VoidRequest
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -25,7 +25,7 @@ PAYMENT_SELECT = """
   SELECT pm.id, pm.property_id, pm.resident_id, r.full_name AS resident_name, r.phone AS resident_phone,
          pr.name AS property_name, pm.invoice_id, pm.amount_paise, pm.method::text AS method, pm.utr_number,
          pm.status::text AS status, pm.received_by, u.full_name AS received_by_name, pm.received_at, pm.notes,
-         pm.verified_at, pm.voided_at, pm.void_reason, pm.public_token
+         pm.verified_at, pm.flag_reason, pm.voided_at, pm.void_reason, pm.public_token
     FROM payments pm
     JOIN residents r ON r.id = pm.resident_id
     JOIN properties pr ON pr.id = pm.property_id
@@ -107,3 +107,39 @@ def get_payment(payment_id: UUID, ctx: Org) -> Payment:
     if payment is None:
         raise HTTPException(404, "Payment not found")
     return payment
+
+
+# ---- Owner actions (BE-44) ------------------------------------------------------------------------------------------
+# `app.payments_guard` does the rest: owner only, a void payment can't change again (409), cash is reconciled through
+# handovers so it can't be verified or flagged (422), and it records who verified / voided and when.
+
+
+def _owner_update(ctx: Org, payment_id: UUID, message: str, assignments: str, params: tuple) -> Payment:
+    with ctx.tx() as cur:
+        require_owner(cur, message)
+        cur.execute(f"UPDATE payments SET {assignments} WHERE id = %s RETURNING id", (*params, payment_id))
+        if cur.fetchone() is None:
+            raise HTTPException(404, "Payment not found")
+        return _one(cur, payment_id)
+
+
+@router.post("/{payment_id}/void", response_model=Payment, responses=_NOT_FOUND)
+def void_payment(payment_id: UUID, body: VoidRequest, ctx: Org) -> Payment:
+    """Owner only. Final. A void cash payment no longer counts in the caretaker's cash in hand, nor in dues."""
+    return _owner_update(
+        ctx, payment_id, "Only the owner can void a payment.", "voided_at = now(), void_reason = %s", (body.reason,)
+    )
+
+
+@router.post("/{payment_id}/verify", response_model=Payment, responses=_NOT_FOUND)
+def verify_payment(payment_id: UUID, ctx: Org) -> Payment:
+    """Owner only: the owner saw the money in their bank app. UPI / bank transfers only; cash → 422."""
+    return _owner_update(ctx, payment_id, "Only the owner can verify a payment.", "status = 'verified'", ())
+
+
+@router.post("/{payment_id}/flag", response_model=Payment, responses=_NOT_FOUND)
+def flag_payment(payment_id: UUID, body: FlagRequest, ctx: Org) -> Payment:
+    """Owner only: suspicious (e.g. the UTR never showed up in a statement). UPI / bank transfers only; cash → 422."""
+    return _owner_update(
+        ctx, payment_id, "Only the owner can flag a payment.", "status = 'flagged', flag_reason = %s", (body.reason,)
+    )

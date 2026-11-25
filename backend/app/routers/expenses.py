@@ -19,7 +19,7 @@ from psycopg import sql
 from app import storage
 from app.deps import Org, require_owner
 from app.errors import error_body
-from app.schemas import Expense, ExpenseCategory, ExpenseCreate, ExpenseReview
+from app.schemas import Expense, ExpenseCategory, ExpenseCreate, ExpenseReview, VoidRequest
 
 router = APIRouter(prefix="/expenses", tags=["expenses"])
 
@@ -114,6 +114,24 @@ def review_expense(expense_id: UUID, body: ExpenseReview, ctx: Org) -> Expense:
             f"""UPDATE expenses SET reviewed_at = now(), flagged_for_review = false, review_note = %s
                  WHERE id = %s RETURNING {_COLUMNS}""",
             (body.note, expense_id),
+        )
+        row = cur.fetchone()
+    if row is None:
+        raise HTTPException(404, "Expense not found")
+    return Expense(**row)
+
+
+# ---- Void (BE-44) -------------------------------------------------------------------------------------------------
+
+
+@router.post("/{expense_id}/void", response_model=Expense, responses=_NOT_FOUND)
+def void_expense(expense_id: UUID, body: VoidRequest, ctx: Org) -> Expense:
+    """Owner only. Final (409 on a second void). A void cash expense no longer lowers the caretaker's cash in hand."""
+    with ctx.tx() as cur:
+        require_owner(cur, "Only the owner can void an expense.")
+        cur.execute(
+            f"UPDATE expenses SET voided_at = now(), void_reason = %s WHERE id = %s RETURNING {_COLUMNS}",
+            (body.reason, expense_id),
         )
         row = cur.fetchone()
     if row is None:
