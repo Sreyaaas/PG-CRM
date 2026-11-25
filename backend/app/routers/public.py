@@ -8,13 +8,21 @@ SECURITY DEFINER functions in schema `api` are callable.
 import ipaddress
 import json
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
+from pydantic import TypeAdapter
 
-from app import ratelimit, storage
+from app import ratelimit, storage, upi
 from app.db import transaction
 from app.errors import error_body
-from app.schemas import JoinInfo, OnboardingSubmit, OnboardingSubmitted, PublicUploadRequest, UploadTicket
+from app.schemas import (
+    JoinInfo,
+    OnboardingSubmit,
+    OnboardingSubmitted,
+    PublicDocument,
+    PublicUploadRequest,
+    UploadTicket,
+)
 
 router = APIRouter(prefix="/public", tags=["public"])
 
@@ -94,3 +102,32 @@ def join_submit(qr_slug: str, body: OnboardingSubmit, request: Request) -> Onboa
             (qr_slug, json.dumps(body.model_dump(mode="json")), _inet(ip), request.headers.get("user-agent")),
         )
         return OnboardingSubmitted(request_id=cur.fetchone()["id"])
+
+
+_DOCUMENT = TypeAdapter(PublicDocument)
+# Secret-token pages: never cached (shared phones, proxies) and never indexed.
+_DOCUMENT_HEADERS = {"Cache-Control": "no-store", "X-Robots-Tag": "noindex"}
+
+
+@router.get(
+    "/documents/{token}",
+    response_model=PublicDocument,
+    responses={404: {"description": "Unknown or malformed token"}, 429: {"description": "Too many requests"}},
+)
+def document(token: str, request: Request, response: Response) -> PublicDocument:
+    """One payment receipt, invoice or exit settlement by its 64-character link token (`type` says which).
+    No sign-in; 60 requests per IP per minute. Unknown and malformed tokens get the same 404 through the same path
+    (the database function answers both), so the response doesn't reveal which tokens exist."""
+    with transaction() as cur:  # its own transaction, so the attempt counts even for an unknown token
+        ratelimit.hit(cur, ratelimit.PUBLIC_DOCUMENTS_IP, ratelimit.client_ip(request))
+    with transaction() as cur:
+        cur.execute("SELECT api.public_get_document(%s) AS doc", (token,))
+        doc = cur.fetchone()["doc"]
+    if doc is None:
+        raise HTTPException(404, "This link is not valid", headers=_DOCUMENT_HEADERS)
+    if doc["type"] == "invoice":
+        due = 0 if doc["status"] == "void" else max(0, doc["amount_paise"] - doc["paid_paise"])
+        doc["outstanding_paise"] = due
+        doc["upi_uri"] = upi.build_upi_uri(doc, due, doc["invoice_no"])
+    response.headers.update(_DOCUMENT_HEADERS)
+    return _DOCUMENT.validate_python(doc)
