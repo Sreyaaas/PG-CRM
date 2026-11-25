@@ -223,3 +223,21 @@ def test_key_must_be_a_uuid(w):
     r = client.post("/api/v1/payments", json=_payment_body(w), headers=w.ct_a_h | {"Idempotency-Key": "tap-tap"})
     assert r.status_code == 422
     assert _payment_count(w) == 0
+
+
+@pytest.mark.parametrize("path", ["/api/v1/payments", "/api/v1/expenses", "/api/v1/cash/handovers"])
+def test_browser_preflight_allows_idempotency_key(path):
+    """The PWA sends Idempotency-Key from the browser; without it in the CORS allowlist the preflight fails and
+    every payment/expense/handover save from the frontend is blocked."""
+
+    origin = "http://localhost:5173"
+    r = api_client().options(
+        path,
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "authorization,content-type,x-org-id,idempotency-key",
+        },
+    )
+    assert r.status_code == 200, r.text
+    assert "idempotency-key" in r.headers.get("access-control-allow-headers", "").lower()

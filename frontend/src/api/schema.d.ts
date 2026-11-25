@@ -710,6 +710,47 @@ export interface paths {
         patch: operations["update_resident_profile_api_v1_residents__resident_id__profile_patch"];
         trace?: never;
     };
+    "/api/v1/stays/{stay_id}/settlement-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Settlement Preview
+         * @description Owner or a caretaker of the building: the numbers to explain to the resident before settling.
+         */
+        get: operations["settlement_preview_api_v1_stays__stay_id__settlement_preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stays/{stay_id}/settlement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Settle
+         * @description Owner only. Records the settlement with the preview's numbers plus any other deductions, and returns the
+         *     public settlement link and a ready WhatsApp message. Final: it can't be changed afterwards.
+         */
+        post: operations["settle_api_v1_stays__stay_id__settlement_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/invoices/generate-due": {
         parameters: {
             query?: never;
@@ -745,6 +786,27 @@ export interface paths {
          * @description Owner only (the database also refuses caretakers' `other` invoices).
          */
         post: operations["create_one_off_api_v1_invoices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invoices/{invoice_id}/upi": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Invoice Upi
+         * @description The dynamic UPI payload for what is still due on this invoice, paid straight to the property's own UPI ID.
+         *     Owner or a caretaker of the building (RLS).
+         */
+        get: operations["invoice_upi_api_v1_invoices__invoice_id__upi_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1045,6 +1107,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dashboard
+         * @description Owner only. P&L for the period, occupancy now, and the counts that need the owner's attention now.
+         */
+        get: operations["dashboard_api_v1_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/expenses": {
         parameters: {
             query?: never;
@@ -1235,6 +1317,28 @@ export interface paths {
          *     No sign-in; 10 per IP per 10 minutes.
          */
         post: operations["join_upload_api_v1_public_join__qr_slug__uploads_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/documents/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Document
+         * @description One payment receipt, invoice or exit settlement by its 64-character link token (`type` says which).
+         *     No sign-in; 60 requests per IP per minute. Unknown and malformed tokens get the same 404 through the same path
+         *     (the database function answers both), so the response doesn't reveal which tokens exist.
+         */
+        get: operations["document_api_v1_public_documents__token__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1938,6 +2042,118 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** Dashboard */
+        Dashboard: {
+            /** Pnl */
+            pnl: components["schemas"]["DashboardPnl"][];
+            /** Occupancy */
+            occupancy: components["schemas"]["DashboardOccupancy"][];
+            attention: components["schemas"]["DashboardAttention"];
+        };
+        /**
+         * DashboardAttention
+         * @description Each count equals the length of the list the dashboard links to.
+         */
+        DashboardAttention: {
+            /**
+             * Pending Onboarding
+             * @description GET /onboarding-requests?status=pending
+             */
+            pending_onboarding: number;
+            /**
+             * Pending Discounts
+             * @description GET /discount-requests?status=pending
+             */
+            pending_discounts: number;
+            /**
+             * Flagged Expenses Unreviewed
+             * @description GET /expenses?flagged=true
+             */
+            flagged_expenses_unreviewed: number;
+            /**
+             * Provisional Payments Older Than 3 Days
+             * @description GET /reconciliation/unverified-payments?older_than_days=3
+             */
+            provisional_payments_older_than_3_days: number;
+            /**
+             * Flagged Payments
+             * @description GET /payments?status=flagged
+             */
+            flagged_payments: number;
+            /**
+             * Cash In Hand Total Paise
+             * @description Sum of in_hand_paise from GET /cash/balances
+             */
+            cash_in_hand_total_paise: number;
+            /**
+             * Overstaying Residents
+             * @description Residents on notice whose expected vacate date is before today (IST) and who haven't moved out
+             */
+            overstaying_residents: number;
+        };
+        /**
+         * DashboardOccupancy
+         * @description Active beds of one building by status.
+         */
+        DashboardOccupancy: {
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /** Name */
+            name: string;
+            /** Beds Total */
+            beds_total: number;
+            /** Vacant */
+            vacant: number;
+            /** Reserved */
+            reserved: number;
+            /** Occupied */
+            occupied: number;
+            /** On Notice */
+            on_notice: number;
+        };
+        /**
+         * DashboardPnl
+         * @description One `api.owner_pnl(from, to)` row: payments by IST received date, expenses by expense date, voids left out.
+         */
+        DashboardPnl: {
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /** Property Name */
+            property_name: string;
+            /**
+             * Collected Verified Paise
+             * @description UPI / bank payments verified (statement match or by the owner)
+             */
+            collected_verified_paise: number;
+            /**
+             * Collected Cash Paise
+             * @description Cash payments
+             */
+            collected_cash_paise: number;
+            /**
+             * Provisional Paise
+             * @description UPI / bank payments not yet seen in a statement
+             */
+            provisional_paise: number;
+            /**
+             * Flagged Paise
+             * @description Flagged payments (statement amount mismatch or flagged by the owner)
+             */
+            flagged_paise: number;
+            /** Expenses Paise */
+            expenses_paise: number;
+            /**
+             * Net Paise
+             * @description verified + cash - expenses (provisional and flagged are not counted)
+             */
+            net_paise: number;
+        };
         /** DiscountDecision */
         DiscountDecision: {
             /**
@@ -2066,6 +2282,11 @@ export interface components {
              * @description max(0, today (IST) - oldest_due_date). 0 on the due day itself
              */
             days_overdue: number;
+            /**
+             * Whatsapp Url
+             * @description wa.me link with the rent reminder (outstanding, oldest due date, link to that invoice)
+             */
+            whatsapp_url: string;
         };
         /** ErrorDetail */
         ErrorDetail: {
@@ -2322,6 +2543,29 @@ export interface components {
             voided_at: string | null;
             /** Void Reason */
             void_reason: string | null;
+            /**
+             * Invoice Url
+             * @description Public invoice page for the resident
+             */
+            invoice_url: string;
+            /**
+             * Whatsapp Url
+             * @description wa.me link with the invoice message, ready to send
+             */
+            whatsapp_url: string;
+        };
+        /** InvoiceUpi */
+        InvoiceUpi: {
+            /**
+             * Upi Uri
+             * @description upi://pay?pa=..&pn=..&mc=..&am=..&tn=<invoice_no>&cu=INR for a dynamic QR. Null when the property has no UPI ID or nothing is left to pay: show the fallback UPI ID / bank details instead
+             */
+            upi_uri: string | null;
+            /**
+             * Amount Paise
+             * @description Still due on this invoice: amount minus non-void payments against it
+             */
+            amount_paise: number;
         };
         /** JoinInfo */
         JoinInfo: {
@@ -3110,6 +3354,151 @@ export interface components {
             /** Name */
             name?: string;
         };
+        /** PublicExitSettlement */
+        PublicExitSettlement: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "exit_settlement";
+            /** Resident Name */
+            resident_name: string;
+            /** Property Name */
+            property_name: string;
+            /**
+             * Check In Date
+             * Format: date
+             */
+            check_in_date: string;
+            /** Vacate Date */
+            vacate_date: string | null;
+            /** Deposit Paise */
+            deposit_paise: number;
+            /** Exit Deduction Paise */
+            exit_deduction_paise: number;
+            /** Other Deductions Paise */
+            other_deductions_paise: number;
+            /** Other Deductions Note */
+            other_deductions_note: string | null;
+            /** Pending Dues Paise */
+            pending_dues_paise: number;
+            /**
+             * Net Refund Paise
+             * @description Positive: refunded to the resident. Negative: the resident still owes
+             */
+            net_refund_paise: number;
+            /** Refund Method */
+            refund_method: ("cash" | "upi" | "bank_transfer") | null;
+            /** Refund Utr */
+            refund_utr: string | null;
+            /**
+             * Settled At
+             * Format: date-time
+             */
+            settled_at: string;
+        };
+        /** PublicInvoice */
+        PublicInvoice: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "invoice";
+            /** Invoice No */
+            invoice_no: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "rent" | "short_term" | "deposit" | "maintenance_charge" | "exit_deduction" | "other";
+            /** Amount Paise */
+            amount_paise: number;
+            /**
+             * Paid Paise
+             * @description Non-void payments logged against this invoice
+             */
+            paid_paise: number;
+            /**
+             * Outstanding Paise
+             * @description Still due: max(0, amount - paid); 0 once void
+             */
+            outstanding_paise: number;
+            /**
+             * Due Date
+             * Format: date
+             */
+            due_date: string;
+            /** Period Start */
+            period_start: string | null;
+            /** Period End */
+            period_end: string | null;
+            /**
+             * Status
+             * @description "void" for a voided invoice, otherwise null
+             */
+            status: "void" | null;
+            /** Resident Name */
+            resident_name: string;
+            /** Property Name */
+            property_name: string;
+            /** Upi Vpa */
+            upi_vpa: string | null;
+            /** Upi Payee Name */
+            upi_payee_name: string | null;
+            /** Upi Mcc */
+            upi_mcc: string | null;
+            /** Fallback Upi Id */
+            fallback_upi_id: string | null;
+            /** Bank Details */
+            bank_details: string | null;
+            /**
+             * Upi Uri
+             * @description Dynamic UPI payload for outstanding_paise (BE-33). Null when the property has no UPI ID or nothing is due: show fallback_upi_id / bank_details
+             */
+            upi_uri: string | null;
+        };
+        /** PublicPaymentReceipt */
+        PublicPaymentReceipt: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "payment_receipt";
+            /**
+             * Receipt No
+             * @description First 8 characters of the payment id
+             */
+            receipt_no: string;
+            /** Amount Paise */
+            amount_paise: number;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "cash" | "upi" | "bank_transfer";
+            /** Utr Number */
+            utr_number: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "recorded" | "provisional" | "verified" | "flagged" | "void";
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Resident Name */
+            resident_name: string;
+            /** Property Name */
+            property_name: string;
+            /** Invoice No */
+            invoice_no: string | null;
+            /** Period Start */
+            period_start: string | null;
+            /** Period End */
+            period_end: string | null;
+        };
         /** PublicUploadRequest */
         PublicUploadRequest: {
             /**
@@ -3232,6 +3621,11 @@ export interface components {
              * @description Oldest first
              */
             entries: components["schemas"]["LedgerEntry"][];
+            /**
+             * Whatsapp Url
+             * @description wa.me rent reminder, as on GET /dues; null when nothing is owed
+             */
+            whatsapp_url: string | null;
         };
         /**
          * ResidentProfileUpdate
@@ -3327,6 +3721,78 @@ export interface components {
             is_ac?: boolean;
             /** Area Sqft */
             area_sqft?: number | null;
+        };
+        /**
+         * SettlementCreate
+         * @description Owner only. Deposit, exit deduction and pending dues are computed by the server (as in the preview).
+         */
+        SettlementCreate: {
+            /**
+             * Other Deductions Paise
+             * @description Amount in paise (₹1 = 100)
+             * @default 0
+             */
+            other_deductions_paise: number;
+            /**
+             * Other Deductions Note
+             * @description Required when other_deductions_paise > 0 (e.g. Broken cupboard door)
+             */
+            other_deductions_note?: string | null;
+            /** Refund Method */
+            refund_method?: ("cash" | "upi" | "bank_transfer") | null;
+            /**
+             * Refund Utr
+             * @description 12-digit UPI/bank reference of the refund. Spaces removed
+             */
+            refund_utr?: string | null;
+        };
+        /** SettlementCreated */
+        SettlementCreated: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Net Refund Paise
+             * @description Positive: refund to the resident. Negative: the resident still owes
+             */
+            net_refund_paise: number;
+            /** Public Token */
+            public_token: string;
+            /**
+             * Settlement Url
+             * @description Public settlement page for the resident
+             */
+            settlement_url: string;
+            /**
+             * Whatsapp Url
+             * @description wa.me link with the settlement message, ready to send
+             */
+            whatsapp_url: string;
+        };
+        /** SettlementPreview */
+        SettlementPreview: {
+            /**
+             * Deposit Held Paise
+             * @description Non-void payments against this stay's deposit invoices
+             */
+            deposit_held_paise: number;
+            /**
+             * Exit Deduction Paise
+             * @description What the resident accepted on the onboarding form; the property's exit deduction if none
+             */
+            exit_deduction_paise: number;
+            /**
+             * Pending Dues Paise
+             * @description Still owed on non-deposit invoices: this stay's, plus one-off charges (they have no stay)
+             */
+            pending_dues_paise: number;
+            /**
+             * Suggested Net Refund Paise
+             * @description deposit - exit deduction - pending dues. Negative: the resident still owes
+             */
+            suggested_net_refund_paise: number;
         };
         /** SignupRequest */
         SignupRequest: {
@@ -6631,6 +7097,160 @@ export interface operations {
             };
         };
     };
+    settlement_preview_api_v1_stays__stay_id__settlement_preview_get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                stay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettlementPreview"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    settle_api_v1_stays__stay_id__settlement_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                stay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettlementCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettlementCreated"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Already settled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not moved out yet */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     generate_due_api_v1_invoices_generate_due_post: {
         parameters: {
             query?: never;
@@ -6726,6 +7346,83 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Invoice"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    invoice_upi_api_v1_invoices__invoice_id__upi_get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceUpi"];
                 };
             };
             /** @description Unauthorized */
@@ -8065,6 +8762,77 @@ export interface operations {
             };
         };
     };
+    dashboard_api_v1_dashboard_get: {
+        parameters: {
+            query?: {
+                /** @description First day (IST). Default: 1st of the month */
+                from?: string | null;
+                /** @description Last day (IST), inclusive. Default: last day of this month */
+                to?: string | null;
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Dashboard"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description `from` is after `to` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     list_expenses_api_v1_expenses_get: {
         parameters: {
             query?: {
@@ -9053,6 +9821,78 @@ export interface operations {
                 };
             };
             /** @description Too many uploads */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    document_api_v1_public_documents__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicPaymentReceipt"] | components["schemas"]["PublicInvoice"] | components["schemas"]["PublicExitSettlement"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unknown or malformed token */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many requests */
             429: {
                 headers: {
                     [name: string]: unknown;

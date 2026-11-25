@@ -19,7 +19,11 @@ import { PosterPage } from '@/features/poster/PosterPage'
 import { JoinPage } from '@/features/join/JoinPage'
 import { BedBoardPage } from '@/features/beds/BedBoardPage'
 import { ResidentDetailPage } from '@/features/residents/ResidentDetailPage'
+import { MyCashPage } from '@/features/cash/MyCashPage'
+import { OwnerCaretakerCashPage, OwnerCashPage } from '@/features/cash/OwnerCashPage'
 import { SignupPage } from './SignupPage'
+import { DuesPage } from '@/features/dues/DuesPage'
+import { LedgerPage } from '@/features/dues/LedgerPage'
 import { ExpensesPage } from '@/features/expenses/ExpensesPage'
 import { LogExpensePage } from '@/features/expenses/LogExpensePage'
 
@@ -47,7 +51,10 @@ export function AppRouter() {
         <Route path="properties/:propertyId/poster" element={<PosterPage />} />
         <Route path="beds" element={<BedBoardPage />} />
         <Route path="residents/:residentId" element={<ResidentDetailPage />} />
-        <Route path="money" element={<OwnerDashboardPage section="Money" />} />
+        <Route path="money" element={<DuesPage />} />
+        <Route path="money/cash" element={<OwnerCashPage />} />
+        <Route path="money/cash/:userId" element={<OwnerCaretakerCashPage />} />
+        <Route path="residents/:residentId/ledger" element={<LedgerPage />} />
         <Route path="expenses" element={<ExpensesPage />} />
         <Route path="expenses/new" element={<LogExpensePage />} />
         <Route path="more" element={<OwnerMorePage />} />
@@ -61,9 +68,11 @@ export function AppRouter() {
         <Route path="residents/:residentId" element={<ResidentDetailPage />} />
         <Route path="check-ins" element={<CheckInsPage />} />
         <Route path="check-ins/:requestId" element={<CheckInDetailPage />} />
-        <Route path="payments" element={<CaretakerHomePage section="Payments" />} />
+        <Route path="payments" element={<DuesPage />} />
+        <Route path="residents/:residentId/ledger" element={<LedgerPage />} />
         <Route path="expenses" element={<ExpensesPage />} />
         <Route path="expenses/new" element={<LogExpensePage />} />
+        <Route path="cash" element={<MyCashPage />} />
         <Route path="more" element={<CaretakerMorePage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
