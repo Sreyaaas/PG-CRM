@@ -12,7 +12,7 @@ export const CARETAKER_NAV = {
     label: 'More',
     to: '/caretaker/more',
     icon: <Menu />,
-    alsoActiveFor: ['/caretaker/beds', '/caretaker/residents', '/caretaker/expenses', '/caretaker/settings'],
+    alsoActiveFor: ['/caretaker/beds', '/caretaker/residents', '/caretaker/expenses', '/caretaker/settings', '/caretaker/cash'],
   },
 } satisfies Record<string, ShellNavItem>
 

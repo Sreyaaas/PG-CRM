@@ -4230,6 +4230,210 @@
         }
       }
     },
+    "/api/v1/stays/{stay_id}/settlement-preview": {
+      "get": {
+        "tags": [
+          "settlements"
+        ],
+        "summary": "Settlement Preview",
+        "description": "Owner or a caretaker of the building: the numbers to explain to the resident before settling.",
+        "operationId": "settlement_preview_api_v1_stays__stay_id__settlement_preview_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "stay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Stay Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettlementPreview"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/stays/{stay_id}/settlement": {
+      "post": {
+        "tags": [
+          "settlements"
+        ],
+        "summary": "Settle",
+        "description": "Owner only. Records the settlement with the preview's numbers plus any other deductions, and returns the\npublic settlement link and a ready WhatsApp message. Final: it can't be changed afterwards.",
+        "operationId": "settle_api_v1_stays__stay_id__settlement_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "stay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Stay Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettlementCreated"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Already settled"
+          },
+          "422": {
+            "description": "Not moved out yet"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/invoices/generate-due": {
       "post": {
         "tags": [
@@ -4375,6 +4579,110 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/invoices/{invoice_id}/upi": {
+      "get": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Invoice Upi",
+        "description": "The dynamic UPI payload for what is still due on this invoice, paid straight to the property's own UPI ID.\nOwner or a caretaker of the building (RLS).",
+        "operationId": "invoice_upi_api_v1_invoices__invoice_id__upi_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Invoice Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceUpi"
                 }
               }
             }
@@ -6357,6 +6665,128 @@
         }
       }
     },
+    "/api/v1/dashboard": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Dashboard",
+        "description": "Owner only. P&L for the period, occupancy now, and the counts that need the owner's attention now.",
+        "operationId": "dashboard_api_v1_dashboard_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "First day (IST). Default: 1st of the month",
+              "title": "From"
+            },
+            "description": "First day (IST). Default: 1st of the month"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Last day (IST), inclusive. Default: last day of this month",
+              "title": "To"
+            },
+            "description": "Last day (IST), inclusive. Default: last day of this month"
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dashboard"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "`from` is after `to`"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        }
+      }
+    },
     "/api/v1/expenses": {
       "post": {
         "tags": [
@@ -7857,6 +8287,104 @@
           },
           "404": {
             "description": "Unknown or inactive QR code"
+          }
+        }
+      }
+    },
+    "/api/v1/public/documents/{token}": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Document",
+        "description": "One payment receipt, invoice or exit settlement by its 64-character link token (`type` says which).\nNo sign-in; 60 requests per IP per minute. Unknown and malformed tokens get the same 404 through the same path\n(the database function answers both), so the response doesn't reveal which tokens exist.",
+        "operationId": "document_api_v1_public_documents__token__get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/PublicPaymentReceipt"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PublicInvoice"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PublicExitSettlement"
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                      "payment_receipt": "#/components/schemas/PublicPaymentReceipt",
+                      "invoice": "#/components/schemas/PublicInvoice",
+                      "exit_settlement": "#/components/schemas/PublicExitSettlement"
+                    }
+                  },
+                  "title": "Response Document Api V1 Public Documents  Token  Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "description": "Too many requests"
+          },
+          "404": {
+            "description": "Unknown or malformed token"
           }
         }
       }
@@ -9485,6 +10013,185 @@
         ],
         "title": "CsvImportRow"
       },
+      "Dashboard": {
+        "properties": {
+          "pnl": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardPnl"
+            },
+            "type": "array",
+            "title": "Pnl"
+          },
+          "occupancy": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardOccupancy"
+            },
+            "type": "array",
+            "title": "Occupancy"
+          },
+          "attention": {
+            "$ref": "#/components/schemas/DashboardAttention"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pnl",
+          "occupancy",
+          "attention"
+        ],
+        "title": "Dashboard"
+      },
+      "DashboardAttention": {
+        "properties": {
+          "pending_onboarding": {
+            "type": "integer",
+            "title": "Pending Onboarding",
+            "description": "GET /onboarding-requests?status=pending"
+          },
+          "pending_discounts": {
+            "type": "integer",
+            "title": "Pending Discounts",
+            "description": "GET /discount-requests?status=pending"
+          },
+          "flagged_expenses_unreviewed": {
+            "type": "integer",
+            "title": "Flagged Expenses Unreviewed",
+            "description": "GET /expenses?flagged=true"
+          },
+          "provisional_payments_older_than_3_days": {
+            "type": "integer",
+            "title": "Provisional Payments Older Than 3 Days",
+            "description": "GET /reconciliation/unverified-payments?older_than_days=3"
+          },
+          "flagged_payments": {
+            "type": "integer",
+            "title": "Flagged Payments",
+            "description": "GET /payments?status=flagged"
+          },
+          "cash_in_hand_total_paise": {
+            "type": "integer",
+            "title": "Cash In Hand Total Paise",
+            "description": "Sum of in_hand_paise from GET /cash/balances"
+          },
+          "overstaying_residents": {
+            "type": "integer",
+            "title": "Overstaying Residents",
+            "description": "Residents on notice whose expected vacate date is before today (IST) and who haven't moved out"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pending_onboarding",
+          "pending_discounts",
+          "flagged_expenses_unreviewed",
+          "provisional_payments_older_than_3_days",
+          "flagged_payments",
+          "cash_in_hand_total_paise",
+          "overstaying_residents"
+        ],
+        "title": "DashboardAttention",
+        "description": "Each count equals the length of the list the dashboard links to."
+      },
+      "DashboardOccupancy": {
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Property Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "beds_total": {
+            "type": "integer",
+            "title": "Beds Total"
+          },
+          "vacant": {
+            "type": "integer",
+            "title": "Vacant"
+          },
+          "reserved": {
+            "type": "integer",
+            "title": "Reserved"
+          },
+          "occupied": {
+            "type": "integer",
+            "title": "Occupied"
+          },
+          "on_notice": {
+            "type": "integer",
+            "title": "On Notice"
+          }
+        },
+        "type": "object",
+        "required": [
+          "property_id",
+          "name",
+          "beds_total",
+          "vacant",
+          "reserved",
+          "occupied",
+          "on_notice"
+        ],
+        "title": "DashboardOccupancy",
+        "description": "Active beds of one building by status."
+      },
+      "DashboardPnl": {
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Property Id"
+          },
+          "property_name": {
+            "type": "string",
+            "title": "Property Name"
+          },
+          "collected_verified_paise": {
+            "type": "integer",
+            "title": "Collected Verified Paise",
+            "description": "UPI / bank payments verified (statement match or by the owner)"
+          },
+          "collected_cash_paise": {
+            "type": "integer",
+            "title": "Collected Cash Paise",
+            "description": "Cash payments"
+          },
+          "provisional_paise": {
+            "type": "integer",
+            "title": "Provisional Paise",
+            "description": "UPI / bank payments not yet seen in a statement"
+          },
+          "flagged_paise": {
+            "type": "integer",
+            "title": "Flagged Paise",
+            "description": "Flagged payments (statement amount mismatch or flagged by the owner)"
+          },
+          "expenses_paise": {
+            "type": "integer",
+            "title": "Expenses Paise"
+          },
+          "net_paise": {
+            "type": "integer",
+            "title": "Net Paise",
+            "description": "verified + cash - expenses (provisional and flagged are not counted)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "property_id",
+          "property_name",
+          "collected_verified_paise",
+          "collected_cash_paise",
+          "provisional_paise",
+          "flagged_paise",
+          "expenses_paise",
+          "net_paise"
+        ],
+        "title": "DashboardPnl",
+        "description": "One `api.owner_pnl(from, to)` row: payments by IST received date, expenses by expense date, voids left out."
+      },
       "DiscountDecision": {
         "properties": {
           "decision": {
@@ -9748,6 +10455,11 @@
             "type": "integer",
             "title": "Days Overdue",
             "description": "max(0, today (IST) - oldest_due_date). 0 on the due day itself"
+          },
+          "whatsapp_url": {
+            "type": "string",
+            "title": "Whatsapp Url",
+            "description": "wa.me link with the rent reminder (outstanding, oldest due date, link to that invoice)"
           }
         },
         "type": "object",
@@ -9758,7 +10470,8 @@
           "bed_label",
           "outstanding_paise",
           "oldest_due_date",
-          "days_overdue"
+          "days_overdue",
+          "whatsapp_url"
         ],
         "title": "DueRow"
       },
@@ -10450,6 +11163,16 @@
               }
             ],
             "title": "Void Reason"
+          },
+          "invoice_url": {
+            "type": "string",
+            "title": "Invoice Url",
+            "description": "Public invoice page for the resident"
+          },
+          "whatsapp_url": {
+            "type": "string",
+            "title": "Whatsapp Url",
+            "description": "wa.me link with the invoice message, ready to send"
           }
         },
         "type": "object",
@@ -10468,9 +11191,38 @@
           "created_by",
           "created_at",
           "voided_at",
-          "void_reason"
+          "void_reason",
+          "invoice_url",
+          "whatsapp_url"
         ],
         "title": "Invoice"
+      },
+      "InvoiceUpi": {
+        "properties": {
+          "upi_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upi Uri",
+            "description": "upi://pay?pa=..&pn=..&mc=..&am=..&tn=<invoice_no>&cu=INR for a dynamic QR. Null when the property has no UPI ID or nothing is left to pay: show the fallback UPI ID / bank details instead"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise",
+            "description": "Still due on this invoice: amount minus non-void payments against it"
+          }
+        },
+        "type": "object",
+        "required": [
+          "upi_uri",
+          "amount_paise"
+        ],
+        "title": "InvoiceUpi"
       },
       "JoinInfo": {
         "properties": {
@@ -12371,6 +13123,413 @@
         "title": "PropertyUpdate",
         "description": "Partial update: only the fields sent are changed."
       },
+      "PublicExitSettlement": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "exit_settlement",
+            "title": "Type"
+          },
+          "resident_name": {
+            "type": "string",
+            "title": "Resident Name"
+          },
+          "property_name": {
+            "type": "string",
+            "title": "Property Name"
+          },
+          "check_in_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Check In Date"
+          },
+          "vacate_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vacate Date"
+          },
+          "deposit_paise": {
+            "type": "integer",
+            "title": "Deposit Paise"
+          },
+          "exit_deduction_paise": {
+            "type": "integer",
+            "title": "Exit Deduction Paise"
+          },
+          "other_deductions_paise": {
+            "type": "integer",
+            "title": "Other Deductions Paise"
+          },
+          "other_deductions_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Deductions Note"
+          },
+          "pending_dues_paise": {
+            "type": "integer",
+            "title": "Pending Dues Paise"
+          },
+          "net_refund_paise": {
+            "type": "integer",
+            "title": "Net Refund Paise",
+            "description": "Positive: refunded to the resident. Negative: the resident still owes"
+          },
+          "refund_method": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "cash",
+                  "upi",
+                  "bank_transfer"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Method"
+          },
+          "refund_utr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Utr"
+          },
+          "settled_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Settled At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "resident_name",
+          "property_name",
+          "check_in_date",
+          "vacate_date",
+          "deposit_paise",
+          "exit_deduction_paise",
+          "other_deductions_paise",
+          "other_deductions_note",
+          "pending_dues_paise",
+          "net_refund_paise",
+          "refund_method",
+          "refund_utr",
+          "settled_at"
+        ],
+        "title": "PublicExitSettlement"
+      },
+      "PublicInvoice": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "invoice",
+            "title": "Type"
+          },
+          "invoice_no": {
+            "type": "string",
+            "title": "Invoice No"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "rent",
+              "short_term",
+              "deposit",
+              "maintenance_charge",
+              "exit_deduction",
+              "other"
+            ],
+            "title": "Kind"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise"
+          },
+          "paid_paise": {
+            "type": "integer",
+            "title": "Paid Paise",
+            "description": "Non-void payments logged against this invoice"
+          },
+          "outstanding_paise": {
+            "type": "integer",
+            "title": "Outstanding Paise",
+            "description": "Still due: max(0, amount - paid); 0 once void"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Due Date"
+          },
+          "period_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Start"
+          },
+          "period_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "void"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "description": "\"void\" for a voided invoice, otherwise null"
+          },
+          "resident_name": {
+            "type": "string",
+            "title": "Resident Name"
+          },
+          "property_name": {
+            "type": "string",
+            "title": "Property Name"
+          },
+          "upi_vpa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upi Vpa"
+          },
+          "upi_payee_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upi Payee Name"
+          },
+          "upi_mcc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upi Mcc"
+          },
+          "fallback_upi_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Upi Id"
+          },
+          "bank_details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Details"
+          },
+          "upi_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upi Uri",
+            "description": "Dynamic UPI payload for outstanding_paise (BE-33). Null when the property has no UPI ID or nothing is due: show fallback_upi_id / bank_details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "invoice_no",
+          "kind",
+          "amount_paise",
+          "paid_paise",
+          "outstanding_paise",
+          "due_date",
+          "period_start",
+          "period_end",
+          "status",
+          "resident_name",
+          "property_name",
+          "upi_vpa",
+          "upi_payee_name",
+          "upi_mcc",
+          "fallback_upi_id",
+          "bank_details",
+          "upi_uri"
+        ],
+        "title": "PublicInvoice"
+      },
+      "PublicPaymentReceipt": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "payment_receipt",
+            "title": "Type"
+          },
+          "receipt_no": {
+            "type": "string",
+            "title": "Receipt No",
+            "description": "First 8 characters of the payment id"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "upi",
+              "bank_transfer"
+            ],
+            "title": "Method"
+          },
+          "utr_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utr Number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "recorded",
+              "provisional",
+              "verified",
+              "flagged",
+              "void"
+            ],
+            "title": "Status"
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Received At"
+          },
+          "resident_name": {
+            "type": "string",
+            "title": "Resident Name"
+          },
+          "property_name": {
+            "type": "string",
+            "title": "Property Name"
+          },
+          "invoice_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice No"
+          },
+          "period_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Start"
+          },
+          "period_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "receipt_no",
+          "amount_paise",
+          "method",
+          "utr_number",
+          "status",
+          "received_at",
+          "resident_name",
+          "property_name",
+          "invoice_no",
+          "period_start",
+          "period_end"
+        ],
+        "title": "PublicPaymentReceipt"
+      },
       "PublicUploadRequest": {
         "properties": {
           "content_type": {
@@ -12774,6 +13933,18 @@
             "type": "array",
             "title": "Entries",
             "description": "Oldest first"
+          },
+          "whatsapp_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp Url",
+            "description": "wa.me rent reminder, as on GET /dues; null when nothing is owed"
           }
         },
         "type": "object",
@@ -12781,7 +13952,8 @@
           "resident_id",
           "full_name",
           "outstanding_paise",
-          "entries"
+          "entries",
+          "whatsapp_url"
         ],
         "title": "ResidentLedger"
       },
@@ -13048,6 +14220,132 @@
         "type": "object",
         "title": "RoomUpdate",
         "description": "Partial update: only the fields sent are changed."
+      },
+      "SettlementCreate": {
+        "properties": {
+          "other_deductions_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Other Deductions Paise",
+            "description": "Amount in paise (\u20b91 = 100)",
+            "default": 0
+          },
+          "other_deductions_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Deductions Note",
+            "description": "Required when other_deductions_paise > 0 (e.g. Broken cupboard door)"
+          },
+          "refund_method": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "cash",
+                  "upi",
+                  "bank_transfer"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Method"
+          },
+          "refund_utr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Utr",
+            "description": "12-digit UPI/bank reference of the refund. Spaces removed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SettlementCreate",
+        "description": "Owner only. Deposit, exit deduction and pending dues are computed by the server (as in the preview)."
+      },
+      "SettlementCreated": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "net_refund_paise": {
+            "type": "integer",
+            "title": "Net Refund Paise",
+            "description": "Positive: refund to the resident. Negative: the resident still owes"
+          },
+          "public_token": {
+            "type": "string",
+            "title": "Public Token"
+          },
+          "settlement_url": {
+            "type": "string",
+            "title": "Settlement Url",
+            "description": "Public settlement page for the resident"
+          },
+          "whatsapp_url": {
+            "type": "string",
+            "title": "Whatsapp Url",
+            "description": "wa.me link with the settlement message, ready to send"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "net_refund_paise",
+          "public_token",
+          "settlement_url",
+          "whatsapp_url"
+        ],
+        "title": "SettlementCreated"
+      },
+      "SettlementPreview": {
+        "properties": {
+          "deposit_held_paise": {
+            "type": "integer",
+            "title": "Deposit Held Paise",
+            "description": "Non-void payments against this stay's deposit invoices"
+          },
+          "exit_deduction_paise": {
+            "type": "integer",
+            "title": "Exit Deduction Paise",
+            "description": "What the resident accepted on the onboarding form; the property's exit deduction if none"
+          },
+          "pending_dues_paise": {
+            "type": "integer",
+            "title": "Pending Dues Paise",
+            "description": "Still owed on non-deposit invoices: this stay's, plus one-off charges (they have no stay)"
+          },
+          "suggested_net_refund_paise": {
+            "type": "integer",
+            "title": "Suggested Net Refund Paise",
+            "description": "deposit - exit deduction - pending dues. Negative: the resident still owes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deposit_held_paise",
+          "exit_deduction_paise",
+          "pending_dues_paise",
+          "suggested_net_refund_paise"
+        ],
+        "title": "SettlementPreview"
       },
       "SignupRequest": {
         "properties": {
