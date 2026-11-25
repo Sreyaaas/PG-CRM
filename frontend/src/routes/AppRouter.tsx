@@ -26,6 +26,8 @@ import { ReceiptPage } from '@/features/receipt/ReceiptPage'
 import { SignupPage } from './SignupPage'
 import { DuesPage } from '@/features/dues/DuesPage'
 import { LedgerPage } from '@/features/dues/LedgerPage'
+import { ExpensesPage } from '@/features/expenses/ExpensesPage'
+import { LogExpensePage } from '@/features/expenses/LogExpensePage'
 import { SettlementPage } from '@/features/settlement/SettlementPage'
 
 export function AppRouter() {
@@ -58,6 +60,8 @@ export function AppRouter() {
         <Route path="money/cash" element={<OwnerCashPage />} />
         <Route path="money/cash/:userId" element={<OwnerCaretakerCashPage />} />
         <Route path="residents/:residentId/ledger" element={<LedgerPage />} />
+        <Route path="expenses" element={<ExpensesPage />} />
+        <Route path="expenses/new" element={<LogExpensePage />} />
         <Route path="residents/:residentId/settlement/:stayId" element={<SettlementPage />} />
         <Route path="more" element={<OwnerMorePage />} />
         <Route path="staff" element={<StaffPage />} />
@@ -73,7 +77,8 @@ export function AppRouter() {
         <Route path="payments" element={<DuesPage />} />
         <Route path="residents/:residentId/ledger" element={<LedgerPage />} />
         <Route path="residents/:residentId/settlement/:stayId" element={<SettlementPage />} />
-        <Route path="expenses" element={<CaretakerHomePage section="Expenses" />} />
+        <Route path="expenses" element={<ExpensesPage />} />
+        <Route path="expenses/new" element={<LogExpensePage />} />
         <Route path="cash" element={<MyCashPage />} />
         <Route path="more" element={<CaretakerMorePage />} />
         <Route path="settings" element={<SettingsPage />} />

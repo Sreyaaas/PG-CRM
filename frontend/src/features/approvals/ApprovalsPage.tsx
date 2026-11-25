@@ -4,6 +4,10 @@ import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { EmptyState, LoadingRows, Notice, PageHeader } from '@/components/ui/misc'
+import { ExpenseReviewCard } from '@/features/expenses/ExpenseReviewCard'
+import { useExpensesQuery } from '@/features/expenses/api'
+import { useStaffQuery } from '@/features/staff/useStaff'
+import { SectionHeader } from '@/components/ui/misc'
 import { DiscountRequestCard } from './DiscountRequestCard'
 import { useDecideDiscount, usePendingDiscounts } from './useDiscountRequests'
 
@@ -18,7 +22,12 @@ export function ApprovalsPage() {
 
   // Card types plug in here: each contributes its own list; empty state shows when all are empty.
   const discounts = query.data ?? []
-  const total = discounts.length
+  const expensesQuery = useExpensesQuery({ flagged: true })
+  const staffQuery = useStaffQuery()
+  const flaggedExpenses = (expensesQuery.data ?? []).filter((e) => !e.voided_at)
+  const staffName = (id: string) =>
+    Array.isArray(staffQuery.data) ? staffQuery.data.find((m) => m.user_id === id)?.full_name : undefined
+  const total = discounts.length + flaggedExpenses.length
 
   return (
     <div
@@ -36,7 +45,7 @@ export function ApprovalsPage() {
     >
       <PageHeader
         title="Approvals"
-        description="Discount requests from your caretakers."
+        description="Discount requests and no-bill expenses from your caretakers."
         actions={
           <Button type="button" variant="secondary" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}>
             <RefreshCw aria-hidden="true" className={query.isFetching ? 'animate-spin' : undefined} />
@@ -75,6 +84,17 @@ export function ApprovalsPage() {
             />
           ))}
         </ul>
+      )}
+
+      {flaggedExpenses.length > 0 && (
+        <section aria-label="No-bill expenses" className="flex flex-col gap-3">
+          <SectionHeader title="No-bill expenses to review" />
+          <ul className="flex flex-col gap-3">
+            {flaggedExpenses.map((e) => (
+              <ExpenseReviewCard key={e.id} expense={e} who={staffName(e.created_by)} />
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   )
