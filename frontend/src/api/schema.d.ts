@@ -812,6 +812,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reconciliation/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Imports
+         * @description Newest first.
+         */
+        get: operations["list_imports_api_v1_reconciliation_imports_get"];
+        put?: never;
+        /**
+         * Upload Statement
+         * @description Read the statement's credit rows and reconcile them against logged UPI / bank payments, in one transaction.
+         */
+        post: operations["upload_statement_api_v1_reconciliation_imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reconciliation/imports/{import_id}/rows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Import Rows
+         * @description Every credit row of one upload with its match, and the payment and resident it matched.
+         */
+        get: operations["import_rows_api_v1_reconciliation_imports__import_id__rows_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reconciliation/unverified-payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Unverified Payments
+         * @description Provisional UPI / bank payments that no uploaded statement has ever contained: likely fake screenshots.
+         *     Oldest first.
+         */
+        get: operations["unverified_payments_api_v1_reconciliation_unverified_payments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/expenses": {
         parameters: {
             query?: never;
@@ -1185,6 +1250,19 @@ export interface components {
             expected_vacate_date: string | null;
             resident: components["schemas"]["BoardResident"];
         };
+        /** Body_upload_statement_api_v1_reconciliation_imports_post */
+        Body_upload_statement_api_v1_reconciliation_imports_post: {
+            /**
+             * File
+             * @description Statement CSV, at most 5 MB
+             */
+            file: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "paytm_business" | "phonepe_business" | "bank_statement" | "other";
+        };
         /** ChangePasswordRequest */
         ChangePasswordRequest: {
             /** Current Password */
@@ -1337,6 +1415,107 @@ export interface components {
             assigned_to?: string | null;
             /** Resolution Note */
             resolution_note?: string | null;
+        };
+        /** CsvImport */
+        CsvImport: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "paytm_business" | "phonepe_business" | "bank_statement" | "other";
+            /** File Name */
+            file_name: string;
+            /** Row Count */
+            row_count: number;
+            /** Matched Count */
+            matched_count: number;
+            /** Mismatch Count */
+            mismatch_count: number;
+            /** Unmatched Count */
+            unmatched_count: number;
+            /**
+             * Uploaded By
+             * Format: uuid
+             */
+            uploaded_by: string;
+            /** Uploaded By Name */
+            uploaded_by_name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** CsvImportResult */
+        CsvImportResult: {
+            /**
+             * Import Id
+             * Format: uuid
+             */
+            import_id: string;
+            /**
+             * Row Count
+             * @description Credit rows read from the file
+             */
+            row_count: number;
+            /**
+             * Matched Count
+             * @description Payments verified by this upload
+             */
+            matched_count: number;
+            /**
+             * Mismatch Count
+             * @description UTR found but the amount differs: payment flagged
+             */
+            mismatch_count: number;
+            /**
+             * Unmatched Count
+             * @description Money received that nobody logged
+             */
+            unmatched_count: number;
+        };
+        /** CsvImportRow */
+        CsvImportRow: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Utr Number */
+            utr_number: string | null;
+            /** Amount Paise */
+            amount_paise: number | null;
+            /** Txn At */
+            txn_at: string | null;
+            /** Payer Name */
+            payer_name: string | null;
+            /**
+             * Match
+             * @enum {string}
+             */
+            match: "matched" | "amount_mismatch" | "unmatched" | "already_verified";
+            /** Payment Id */
+            payment_id: string | null;
+            /** Payment Amount Paise */
+            payment_amount_paise: number | null;
+            /** Payment Status */
+            payment_status: ("recorded" | "provisional" | "verified" | "flagged") | null;
+            /** Resident Id */
+            resident_id: string | null;
+            /** Resident Name */
+            resident_name: string | null;
+            /**
+             * Raw
+             * @description The original row, column name -> value
+             */
+            raw: {
+                [key: string]: string;
+            };
         };
         /** DiscountDecision */
         DiscountDecision: {
@@ -6433,6 +6612,299 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_imports_api_v1_reconciliation_imports_get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CsvImport"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    upload_statement_api_v1_reconciliation_imports_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_statement_api_v1_reconciliation_imports_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CsvImportResult"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description File larger than 5 MB */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a readable statement */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    import_rows_api_v1_reconciliation_imports__import_id__rows_get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CsvImportRow"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    unverified_payments_api_v1_reconciliation_unverified_payments_get: {
+        parameters: {
+            query?: {
+                /** @description Logged at least this many days ago */
+                older_than_days?: number;
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
             /** @description Conflict */
             409: {
