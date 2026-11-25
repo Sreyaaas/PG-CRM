@@ -3,6 +3,8 @@
 #    or contain "[no-ticket]" for chores. The ticket's acceptance criteria are checked by tools/verify_ticket.py
 #    and the report is posted as a PR comment. Ticking a manual criterion in the PR description re-runs it.
 #  * Pushes to main run the full backend (and, once it exists, frontend) checks.
+#  * Every run also checks that the committed frontend API types match contract/openapi.json (BE-02): the other
+#    frontend steps regenerate them first, so without this a forgotten `npm run gen:api` would never show up.
 name: CI
 
 on:
@@ -141,3 +143,15 @@ jobs:
           npm run typecheck
           npm run build
           npm run test:unit
+
+      # Runs even when the earlier checks failed, so both problems show up in one run.
+      - name: Frontend API types match the contract
+        if: ${{ !cancelled() && env.HAS_FRONTEND == 'true' }}
+        working-directory: frontend
+        run: |
+          npm run gen:api
+          if ! git diff --quiet -- src/api/schema.d.ts; then
+            echo "::error::frontend/src/api/schema.d.ts is out of date with contract/openapi.json. Run 'npm run gen:api' in frontend/ and commit it."
+            git diff --stat -- src/api/schema.d.ts
+            exit 1
+          fi

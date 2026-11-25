@@ -46,7 +46,8 @@ Each issue has numbered acceptance criteria (`**AC1**`, `**AC2**`, …).
 ```bash
 # backend (needs Postgres: docker compose up -d db s3)
 cd backend && uv sync && uv run python scripts/migrate.py && uv run pytest && uv run ruff check .
-uv run python scripts/export_openapi.py     # after any API change
+uv run python scripts/export_openapi.py     # after any API change, then `npm run gen:api` in frontend/
+                                            # and commit both files (CI fails if schema.d.ts is stale)
 
 # verify a ticket (repo root; needs gh CLI logged in)
 python tools/verify_ticket.py BE-31
