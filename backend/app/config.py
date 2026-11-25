@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     jwt_ttl_minutes: int = 15
     refresh_ttl_days: int = 30
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:4173"]
+    # Where the PWA is served: public receipt links are {public_app_url}/receipt/<token> (BE-31, BE-35).
+    public_app_url: str = "http://localhost:5173"
     # true only when the API runs behind our own reverse proxy, which sets X-Forwarded-For. Then the client IP
     # (rate limits, the IP stored on onboarding requests) is the last address that proxy appended. Never turn it
     # on when clients reach the API directly: they could send any X-Forwarded-For.

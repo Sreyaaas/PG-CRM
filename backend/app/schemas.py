@@ -968,6 +968,63 @@ class ResidentLedger(BaseModel):
     entries: list[LedgerEntry] = Field(description="Oldest first")
 
 
+PaymentMethod = Literal["cash", "upi", "bank_transfer"]
+PaymentStatus = Literal["recorded", "provisional", "verified", "flagged"]
+
+
+class PaymentCreate(BaseModel):
+    """Who received it, when, and the status are set by the database, never by the client."""
+
+    model_config = {"extra": "forbid"}
+
+    resident_id: UUID
+    invoice_id: UUID | None = Field(default=None, description="Optional: dues are per resident, not per invoice")
+    amount_paise: Rent
+    method: PaymentMethod
+    utr_number: str | None = Field(
+        default=None,
+        description="12-digit UPI/bank reference. Required for upi and bank_transfer, not allowed for cash. "
+        "Spaces are removed",
+    )
+    notes: Annotated[str, StringConstraints(max_length=500, strip_whitespace=True)] | None = None
+
+    @model_validator(mode="after")
+    def _utr(self):
+        if self.utr_number is not None:
+            self.utr_number = "".join(self.utr_number.split()) or None
+        if self.method == "cash":
+            if self.utr_number is not None:
+                raise ValueError("Cash payments have no UTR")
+        else:
+            if self.utr_number is None:
+                raise ValueError("UPI and bank payments need the 12-digit UTR")
+            if not (len(self.utr_number) == 12 and self.utr_number.isdigit()):
+                raise ValueError("The UTR must be exactly 12 digits")
+        return self
+
+
+class Payment(BaseModel):
+    id: UUID
+    property_id: UUID
+    resident_id: UUID
+    resident_name: str
+    invoice_id: UUID | None
+    amount_paise: Paise
+    method: PaymentMethod
+    utr_number: str | None
+    status: PaymentStatus = Field(description="recorded (cash) or provisional (UPI/bank) until verified")
+    received_by: UUID
+    received_by_name: str
+    received_at: datetime
+    notes: str | None
+    verified_at: datetime | None
+    voided_at: datetime | None
+    void_reason: str | None
+    public_token: str
+    receipt_url: str = Field(description="Public receipt page for the resident")
+    whatsapp_url: str = Field(description="wa.me link with the receipt message, ready to send")
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str
