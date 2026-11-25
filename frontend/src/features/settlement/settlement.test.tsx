@@ -131,6 +131,21 @@ describe('Settlement', () => {
     ])
   })
 
+  test('[FE-50/AC1] live net is the API suggested net minus typed deductions, and flips to owes when negative', async () => {
+    mockApi({ posts: [], postResponse: { status: 201, body: CREATED } })
+    renderAt(PATH)
+
+    const input = await screen.findByLabelText('Other deductions (optional)')
+    const tile = () => screen.getByText(/Refund after deductions|Resident owes/, { selector: 'span' }).parentElement!
+    expect(tile().textContent).toContain('₹12,265.50')
+    fireEvent.change(input, { target: { value: '500.25' } })
+    expect(tile().textContent).toContain('Refund after deductions')
+    expect(tile().textContent).toContain('₹11,765.25')
+    fireEvent.change(input, { target: { value: '13000' } })
+    expect(tile().textContent).toContain('Resident owes')
+    expect(tile().textContent).toContain('₹734.50')
+  })
+
   test('[FE-50/AC2] other deductions above zero require a note', async () => {
     const state: State = { posts: [], postResponse: { status: 201, body: CREATED } }
     mockApi(state)

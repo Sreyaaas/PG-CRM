@@ -114,6 +114,18 @@ export function SettlementPage() {
 
   const name = residentQuery.data?.full_name
 
+  // Display only: the server computes the stored net. Integer paise, no floats.
+  let liveNet: number | null = null
+  if (preview) {
+    let typed = 0
+    try {
+      typed = otherAmount.trim() ? parseRupeesToPaise(otherAmount) : 0
+    } catch {
+      typed = 0
+    }
+    liveNet = preview.suggested_net_refund_paise - typed
+  }
+
   return (
     <div className="flex max-w-2xl flex-col gap-5 pb-8">
       <PageHeader
@@ -255,6 +267,14 @@ export function SettlementPage() {
                       onChange={(e) => setUtr(e.target.value)}
                     />
                   </Field>
+                )}
+                {liveNet !== null && (
+                  <StatTile
+                    label={liveNet < 0 ? 'Resident owes' : 'Refund after deductions'}
+                    value={<Money paise={Math.abs(liveNet)} />}
+                    foot="Preview only. The final amount is calculated when you confirm."
+                    highlight
+                  />
                 )}
                 <Button type="submit" variant="brand" size="lg" block disabled={settle.isPending}>
                   {settle.isPending ? 'Recording…' : 'Confirm settlement'}
