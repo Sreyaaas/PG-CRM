@@ -23,6 +23,7 @@ from app.schemas import (
     LedgerEntry,
     OneOffInvoiceCreate,
     ResidentLedger,
+    VoidRequest,
 )
 
 router = APIRouter(tags=["invoices"])
@@ -248,3 +249,22 @@ def resident_ledger(resident_id: UUID, ctx: Org) -> ResidentLedger:
     if ledger is None:
         raise HTTPException(404, "Resident not found")
     return ledger
+
+
+# ---- Void (BE-44) -------------------------------------------------------------------------------------------------
+
+
+@router.post("/invoices/{invoice_id}/void", response_model=Invoice, responses=_NOT_FOUND)
+def void_invoice(invoice_id: UUID, body: VoidRequest, ctx: Org) -> Invoice:
+    """Owner only. Final: a void invoice can't be changed or un-voided (409). `app.invoices_guard` records who and
+    when; the invoice drops out of dues and the ledger balance."""
+    with ctx.tx() as cur:
+        require_owner(cur, "Only the owner can void an invoice.")
+        cur.execute(
+            f"UPDATE invoices SET voided_at = now(), void_reason = %s WHERE id = %s RETURNING {_INVOICE_COLUMNS}",
+            (body.reason, invoice_id),
+        )
+        row = cur.fetchone()
+    if row is None:
+        raise HTTPException(404, "Invoice not found")
+    return Invoice(**row)

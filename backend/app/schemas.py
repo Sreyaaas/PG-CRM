@@ -2,7 +2,7 @@
 frontend turns into TypeScript types. Money is always integer paise."""
 
 from datetime import date, datetime
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field, StringConstraints, model_validator
@@ -1024,6 +1024,7 @@ class Payment(BaseModel):
     received_at: datetime
     notes: str | None
     verified_at: datetime | None
+    flag_reason: str | None = Field(description="The owner's reason when they flagged it (BE-44)")
     voided_at: datetime | None
     void_reason: str | None
     public_token: str
@@ -1128,6 +1129,42 @@ class CsvImportRow(BaseModel):
     resident_id: UUID | None
     resident_name: str | None
     raw: dict[str, str] = Field(description="The original row, column name -> value")
+
+
+# ---- Voids, verification and the audit log (BE-44) ----
+
+Reason = Annotated[str, StringConstraints(min_length=3, max_length=500, strip_whitespace=True)]
+
+
+class VoidRequest(BaseModel):
+    """Who voided it and when are set by the database. A void is final."""
+
+    model_config = {"extra": "forbid"}
+
+    reason: Reason
+
+
+class FlagRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    reason: Reason
+
+
+class AuditLogEntry(BaseModel):
+    id: int
+    created_at: datetime
+    actor_id: UUID | None
+    actor_name: str | None = Field(description="None for changes made by the system")
+    entity_type: str = Field(description="Table name, e.g. payments, invoices, stays")
+    entity_id: UUID | None
+    action: Literal["insert", "update"]
+    old_value: dict[str, Any] | None = Field(description="The row before the change (update only)")
+    new_value: dict[str, Any] | None = Field(description="The row after the change")
+
+
+class AuditLogPage(BaseModel):
+    items: list[AuditLogEntry] = Field(description="Newest first")
+    next_cursor: int | None = Field(description="Pass as `cursor` for the next (older) page. None on the last page")
 
 
 class ErrorDetail(BaseModel):
