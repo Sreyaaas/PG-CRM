@@ -51,6 +51,7 @@ export function useBoards(orgId: string, properties: Pick<Property, 'id' | 'name
     queries: properties.map((p) => ({
       queryKey: ['bed-board', orgId, p.id],
       enabled: Boolean(orgId),
+      refetchOnWindowFocus: true,
       retry: false,
       queryFn: async () => {
         const { data } = await apiClient.GET('/api/v1/properties/{property_id}/bed-board', {
@@ -77,11 +78,33 @@ export function useBoards(orgId: string, properties: Pick<Property, 'id' | 'name
 }
 
 const IST_HOUR = new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Asia/Kolkata' })
+const IST_DATE = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' })
 
 export function greeting(name: string | undefined, now = new Date()): string {
   const hour = Number(IST_HOUR.format(now))
   const part = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const first = name?.trim().split(/\s+/)[0]
   return first ? `${part}, ${first}` : part
+}
+
+/** Whole calendar days from today (IST) until an ISO date (YYYY-MM-DD). Negative means overdue. */
+export function daysUntilIST(isoDate: string, now = new Date()): number {
+  const todayStr = IST_DATE.format(now)
+  const [ty, tm, td] = todayStr.split('-').map(Number)
+  const [vy, vm, vd] = isoDate.slice(0, 10).split('-').map(Number)
+  const todayMs = Date.UTC(ty, tm - 1, td)
+  const vacateMs = Date.UTC(vy, vm - 1, vd)
+  return Math.round((vacateMs - todayMs) / 86_400_000)
+}
+
+export function formatDaysLeft(isoDate: string, now = new Date()): { label: string; tone: 'danger' | 'warning' | 'neutral' } {
+  const diff = daysUntilIST(isoDate, now)
+  if (diff < 0) {
+    const abs = Math.abs(diff)
+    return { label: `${abs} ${abs === 1 ? 'day' : 'days'} overdue`, tone: 'danger' }
+  }
+  if (diff === 0) return { label: 'Today', tone: 'warning' }
+  if (diff === 1) return { label: '1 day left', tone: 'warning' }
+  return { label: `${diff} days left`, tone: diff <= 7 ? 'warning' : 'neutral' }
 }
 

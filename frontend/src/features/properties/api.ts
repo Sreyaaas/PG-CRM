@@ -18,6 +18,7 @@ export function usePropertiesQuery() {
   return useQuery({
     queryKey: ['properties', orgId],
     enabled: Boolean(orgId),
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data } = await apiClient.GET('/api/v1/properties', {
         params: { header: { 'x-org-id': orgId } },
