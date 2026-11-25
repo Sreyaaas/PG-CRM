@@ -1282,6 +1282,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/documents/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Document
+         * @description One payment receipt, invoice or exit settlement by its 64-character link token (`type` says which).
+         *     No sign-in; 60 requests per IP per minute. Unknown and malformed tokens get the same 404 through the same path
+         *     (the database function answers both), so the response doesn't reveal which tokens exist.
+         */
+        get: operations["document_api_v1_public_documents__token__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3290,6 +3312,151 @@ export interface components {
             notice_deadline_day?: number;
             /** Name */
             name?: string;
+        };
+        /** PublicExitSettlement */
+        PublicExitSettlement: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "exit_settlement";
+            /** Resident Name */
+            resident_name: string;
+            /** Property Name */
+            property_name: string;
+            /**
+             * Check In Date
+             * Format: date
+             */
+            check_in_date: string;
+            /** Vacate Date */
+            vacate_date: string | null;
+            /** Deposit Paise */
+            deposit_paise: number;
+            /** Exit Deduction Paise */
+            exit_deduction_paise: number;
+            /** Other Deductions Paise */
+            other_deductions_paise: number;
+            /** Other Deductions Note */
+            other_deductions_note: string | null;
+            /** Pending Dues Paise */
+            pending_dues_paise: number;
+            /**
+             * Net Refund Paise
+             * @description Positive: refunded to the resident. Negative: the resident still owes
+             */
+            net_refund_paise: number;
+            /** Refund Method */
+            refund_method: ("cash" | "upi" | "bank_transfer") | null;
+            /** Refund Utr */
+            refund_utr: string | null;
+            /**
+             * Settled At
+             * Format: date-time
+             */
+            settled_at: string;
+        };
+        /** PublicInvoice */
+        PublicInvoice: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "invoice";
+            /** Invoice No */
+            invoice_no: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "rent" | "short_term" | "deposit" | "maintenance_charge" | "exit_deduction" | "other";
+            /** Amount Paise */
+            amount_paise: number;
+            /**
+             * Paid Paise
+             * @description Non-void payments logged against this invoice
+             */
+            paid_paise: number;
+            /**
+             * Outstanding Paise
+             * @description Still due: max(0, amount - paid); 0 once void
+             */
+            outstanding_paise: number;
+            /**
+             * Due Date
+             * Format: date
+             */
+            due_date: string;
+            /** Period Start */
+            period_start: string | null;
+            /** Period End */
+            period_end: string | null;
+            /**
+             * Status
+             * @description "void" for a voided invoice, otherwise null
+             */
+            status: "void" | null;
+            /** Resident Name */
+            resident_name: string;
+            /** Property Name */
+            property_name: string;
+            /** Upi Vpa */
+            upi_vpa: string | null;
+            /** Upi Payee Name */
+            upi_payee_name: string | null;
+            /** Upi Mcc */
+            upi_mcc: string | null;
+            /** Fallback Upi Id */
+            fallback_upi_id: string | null;
+            /** Bank Details */
+            bank_details: string | null;
+            /**
+             * Upi Uri
+             * @description Dynamic UPI payload for outstanding_paise (BE-33). Null when the property has no UPI ID or nothing is due: show fallback_upi_id / bank_details
+             */
+            upi_uri: string | null;
+        };
+        /** PublicPaymentReceipt */
+        PublicPaymentReceipt: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "payment_receipt";
+            /**
+             * Receipt No
+             * @description First 8 characters of the payment id
+             */
+            receipt_no: string;
+            /** Amount Paise */
+            amount_paise: number;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "cash" | "upi" | "bank_transfer";
+            /** Utr Number */
+            utr_number: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "recorded" | "provisional" | "verified" | "flagged" | "void";
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Resident Name */
+            resident_name: string;
+            /** Property Name */
+            property_name: string;
+            /** Invoice No */
+            invoice_no: string | null;
+            /** Period Start */
+            period_start: string | null;
+            /** Period End */
+            period_end: string | null;
         };
         /** PublicUploadRequest */
         PublicUploadRequest: {
@@ -9387,6 +9554,78 @@ export interface operations {
                 };
             };
             /** @description Too many uploads */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    document_api_v1_public_documents__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicPaymentReceipt"] | components["schemas"]["PublicInvoice"] | components["schemas"]["PublicExitSettlement"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unknown or malformed token */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many requests */
             429: {
                 headers: {
                     [name: string]: unknown;

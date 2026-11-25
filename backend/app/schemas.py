@@ -1040,6 +1040,70 @@ class Payment(BaseModel):
     whatsapp_url: str = Field(description="wa.me link with the receipt message, ready to send")
 
 
+# ---- Public documents (BE-34) ----
+# /public/documents/{token}: what a resident sees from a receipt / invoice / settlement link. Built by
+# api.public_get_document. Never add phone, email, KYC or other residents' data here.
+
+
+class PublicPaymentReceipt(BaseModel):
+    type: Literal["payment_receipt"]
+    receipt_no: str = Field(description="First 8 characters of the payment id")
+    amount_paise: int
+    method: PaymentMethod
+    utr_number: str | None
+    status: Literal["recorded", "provisional", "verified", "flagged", "void"]
+    received_at: datetime
+    resident_name: str
+    property_name: str
+    invoice_no: str | None
+    period_start: date | None
+    period_end: date | None
+
+
+class PublicInvoice(BaseModel):
+    type: Literal["invoice"]
+    invoice_no: str
+    kind: InvoiceKind
+    amount_paise: int
+    paid_paise: int = Field(description="Non-void payments logged against this invoice")
+    outstanding_paise: int = Field(description="Still due: max(0, amount - paid); 0 once void")
+    due_date: date
+    period_start: date | None
+    period_end: date | None
+    status: Literal["void"] | None = Field(description='"void" for a voided invoice, otherwise null')
+    resident_name: str
+    property_name: str
+    upi_vpa: str | None
+    upi_payee_name: str | None
+    upi_mcc: str | None
+    fallback_upi_id: str | None
+    bank_details: str | None
+    upi_uri: str | None = Field(
+        description="Dynamic UPI payload for outstanding_paise (BE-33). Null when the property has no UPI ID or "
+        "nothing is due: show fallback_upi_id / bank_details"
+    )
+
+
+class PublicExitSettlement(BaseModel):
+    type: Literal["exit_settlement"]
+    resident_name: str
+    property_name: str
+    check_in_date: date
+    vacate_date: date | None
+    deposit_paise: int
+    exit_deduction_paise: int
+    other_deductions_paise: int
+    other_deductions_note: str | None
+    pending_dues_paise: int
+    net_refund_paise: int = Field(description="Positive: refunded to the resident. Negative: the resident still owes")
+    refund_method: PaymentMethod | None
+    refund_utr: str | None
+    settled_at: datetime
+
+
+PublicDocument = Annotated[PublicPaymentReceipt | PublicInvoice | PublicExitSettlement, Field(discriminator="type")]
+
+
 # ---- Caretaker cash (BE-41) ----
 
 
