@@ -21,6 +21,7 @@ from app.routers import (
     public,
     rooms,
     staff,
+    stays,
 )
 from app.schemas import ErrorResponse
 
@@ -97,6 +98,7 @@ def create_app() -> FastAPI:
         activity.router,
         discounts.router,
         onboarding.router,
+        stays.router,
         expenses.router,
         complaints.router,
         files.router,
