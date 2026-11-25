@@ -304,6 +304,8 @@ describe('Log expense (caretaker)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Save expense' }))
     expect(await screen.findByText('Network hiccup, try again')).toBeInTheDocument()
+    // The button stays disabled until the failed save has finished; clicking before that is ignored.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save expense' })).toBeEnabled())
     fireEvent.click(screen.getByRole('button', { name: 'Save expense' }))
 
     await waitFor(() => expect(state.posts).toHaveLength(2))
