@@ -573,6 +573,81 @@ class OnboardingReject(BaseModel):
     note: Annotated[str, StringConstraints(min_length=1, max_length=500, strip_whitespace=True)]
 
 
+ExpenseCategory = Literal[
+    "water_tanker",
+    "electricity_bescom",
+    "groceries",
+    "gas_lpg",
+    "maintenance_repairs",
+    "cleaning",
+    "internet",
+    "staff_salary",
+    "security",
+    "lease_rent",
+    "other",
+]
+
+
+class ExpenseCreate(BaseModel):
+    """`no_bill` needs a note (>= 5 chars), a live photo uploaded in the last 15 minutes, its capture time and GPS.
+    Caretakers: paid from their cash, dated within the last 3 days, never lease rent. The database enforces it."""
+
+    model_config = {"extra": "forbid"}
+
+    property_id: UUID
+    category: ExpenseCategory
+    amount_paise: Rent
+    quantity: Annotated[float, Field(gt=0, le=99_999_999)] | None = Field(
+        default=None, description="e.g. 3 (tankers), so the owner sees the price per unit"
+    )
+    unit: Annotated[str, StringConstraints(min_length=1, max_length=20, strip_whitespace=True)] | None = Field(
+        default=None, description="e.g. 'tanker'"
+    )
+    expense_date: date
+    vendor_name: Annotated[str, StringConstraints(min_length=1, max_length=120, strip_whitespace=True)] | None = None
+    notes: Annotated[str, StringConstraints(max_length=1000, strip_whitespace=True)] | None = None
+    bill_mode: Literal["has_bill", "no_bill"]
+    proof_path: str = Field(description="object_key from POST /uploads (kind expense_proof) for this property")
+    proof_captured_at: datetime | None = None
+    proof_lat: Annotated[float, Field(ge=-90, le=90)] | None = None
+    proof_lng: Annotated[float, Field(ge=-180, le=180)] | None = None
+    paid_from: Literal["caretaker_cash", "owner_direct"]
+
+
+class ExpenseReview(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    note: Annotated[str, StringConstraints(max_length=1000, strip_whitespace=True)] | None = None
+
+
+class Expense(BaseModel):
+    id: UUID
+    property_id: UUID
+    category: ExpenseCategory
+    amount_paise: Paise
+    quantity: float | None
+    unit: str | None
+    expense_date: date
+    vendor_name: str | None
+    notes: str | None
+    bill_mode: Literal["has_bill", "no_bill"]
+    proof_path: str = Field(description="View it with GET /files/url?key=...")
+    proof_captured_at: datetime | None
+    proof_lat: float | None
+    proof_lng: float | None
+    paid_from: Literal["caretaker_cash", "owner_direct"]
+    owner_only: bool
+    flagged_for_review: bool
+    reviewed_by: UUID | None
+    reviewed_at: datetime | None
+    review_note: str | None
+    created_by: UUID
+    created_at: datetime
+    voided_at: datetime | None
+    voided_by: UUID | None
+    void_reason: str | None
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str
