@@ -21,6 +21,7 @@ import { BedBoardPage } from '@/features/beds/BedBoardPage'
 import { ResidentDetailPage } from '@/features/residents/ResidentDetailPage'
 import { MyCashPage } from '@/features/cash/MyCashPage'
 import { OwnerCaretakerCashPage, OwnerCashPage } from '@/features/cash/OwnerCashPage'
+import { ReceiptPage } from '@/features/receipt/ReceiptPage'
 import { SignupPage } from './SignupPage'
 import { DuesPage } from '@/features/dues/DuesPage'
 import { LedgerPage } from '@/features/dues/LedgerPage'
@@ -33,6 +34,7 @@ export function AppRouter() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/select-org" element={<OrgPickerPage />} />
       <Route path="/join/:slug" element={<JoinPage />} />
+      <Route path="/receipt/:token" element={<ReceiptPage />} />
       <Route path="/dev/ui" element={<DevUiPage />} />
 
       <Route path="/owner" element={<OwnerLayoutRoute />}>
