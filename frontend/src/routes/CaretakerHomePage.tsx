@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
+import { BedDouble } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
 import { Money } from '@/components/Money'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Badge, type Tone } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardList } from '@/components/ui/card'
-import { EmptyState, ListRow, LoadingRows, PageHeader, Skeleton, StatTile } from '@/components/ui/misc'
+import { EmptyState, ListRow, LoadingRows, PageHeader, ROW_LINK, Skeleton, StatTile } from '@/components/ui/misc'
 import { useMyDiscountRequests } from '@/features/approvals/useDiscountRequests'
 import { useAuth } from '@/features/auth/AuthContext'
 import { DateLine, DaysLeftBadge, QuietEmptySection } from '@/features/home/parts'
@@ -96,6 +99,14 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
             Issues · {selectedPropName ?? (properties.length === 1 ? properties[0].name : membership?.organization_name)} · Caretaker workspace
           </>
         }
+        actions={
+          <Button asChild variant="secondary" size="sm">
+            <Link to="/caretaker/beds">
+              <BedDouble aria-hidden="true" />
+              Bed board
+            </Link>
+          </Button>
+        }
       />
 
       {multi && (
@@ -164,8 +175,8 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
                 <LoadingRows label="Loading notices…" rows={2} />
               ) : (
                 <CardList>
-                  {movingOut.map((b) => (
-                    <li key={b.id}>
+                  {movingOut.map((b) => {
+                    const row = (
                       <ListRow
                         title={
                           <>
@@ -194,8 +205,19 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
                           )
                         }
                       />
-                    </li>
-                  ))}
+                    )
+                    return (
+                      <li key={b.id}>
+                        {b.stay ? (
+                          <Link to={`/caretaker/residents/${b.stay.resident.id}`} className={ROW_LINK}>
+                            {row}
+                          </Link>
+                        ) : (
+                          row
+                        )}
+                      </li>
+                    )
+                  })}
                 </CardList>
               )}
             </Card>

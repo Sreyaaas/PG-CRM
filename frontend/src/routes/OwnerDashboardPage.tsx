@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Building2, CheckCircle2, Plus, UserPlus } from 'lucide-react'
+import { BedDouble, Building2, CheckCircle2, Plus, UserPlus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -52,6 +52,12 @@ export function OwnerDashboardPage({ section = 'Today' }: { section?: string }) 
           isHome && (
             <>
               <Button asChild variant="secondary" size="sm">
+                <Link to="/owner/beds">
+                  <BedDouble aria-hidden="true" />
+                  Bed board
+                </Link>
+              </Button>
+              <Button asChild variant="secondary" size="sm">
                 <Link to="/owner/properties/new">
                   <Plus aria-hidden="true" />
                   Add property
@@ -93,7 +99,7 @@ export function OwnerDashboardPage({ section = 'Today' }: { section?: string }) 
       )}
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-        <div className="flex flex-col gap-6">
+        <div className="flex min-w-0 flex-col gap-6">
           <Card className="overflow-hidden" aria-label="Occupancy">
             <CardHeader
               title="Occupancy"
@@ -169,8 +175,8 @@ export function OwnerDashboardPage({ section = 'Today' }: { section?: string }) 
                   <LoadingRows label="Loading move-outs…" rows={2} />
                 ) : (
                   <CardList>
-                    {movingOutSoon.map((b) => (
-                      <li key={b.id}>
+                    {movingOutSoon.map((b) => {
+                      const row = (
                         <ListRow
                           title={
                             <>
@@ -199,8 +205,19 @@ export function OwnerDashboardPage({ section = 'Today' }: { section?: string }) 
                             )
                           }
                         />
-                      </li>
-                    ))}
+                      )
+                      return (
+                        <li key={b.id}>
+                          {b.stay ? (
+                            <Link to={`/owner/residents/${b.stay.resident.id}`} className={ROW_LINK}>
+                              {row}
+                            </Link>
+                          ) : (
+                            row
+                          )}
+                        </li>
+                      )
+                    })}
                   </CardList>
                 )}
               </Card>
