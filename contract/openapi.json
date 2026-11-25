@@ -4018,6 +4018,427 @@
         }
       }
     },
+    "/api/v1/invoices/generate-due": {
+      "post": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Generate Due",
+        "description": "Create this month's (or `month`'s) rent invoices for every open monthly stay in the buildings the caller can\naccess. Safe to run any number of times: a month already invoiced creates 0.",
+        "operationId": "generate_due_api_v1_invoices_generate_due_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateDueRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateDueResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        }
+      }
+    },
+    "/api/v1/invoices": {
+      "post": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Create One Off",
+        "description": "Owner only (the database also refuses caretakers' `other` invoices).",
+        "operationId": "create_one_off_api_v1_invoices_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OneOffInvoiceCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/dues": {
+      "get": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Dues",
+        "description": "Residents who owe money, most overdue first (RLS: caretakers see their buildings only).",
+        "operationId": "dues_api_v1_dues_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "property_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Property Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DueRow"
+                  },
+                  "title": "Response Dues Api V1 Dues Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        }
+      }
+    },
+    "/api/v1/residents/{resident_id}/ledger": {
+      "get": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Resident Ledger",
+        "description": "Invoices and payments, oldest first, with the running balance (void entries listed but not counted).",
+        "operationId": "resident_ledger_api_v1_residents__resident_id__ledger_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "resident_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Resident Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentLedger"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/expenses": {
       "post": {
         "tags": [
@@ -6496,6 +6917,62 @@
         ],
         "title": "DiscountRequestCreate"
       },
+      "DueRow": {
+        "properties": {
+          "resident_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Resident Id"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "bed_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bed Label",
+            "description": "Current bed; null after move-out"
+          },
+          "outstanding_paise": {
+            "type": "integer",
+            "title": "Outstanding Paise",
+            "description": "Non-void invoices minus non-void payments"
+          },
+          "oldest_due_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Oldest Due Date",
+            "description": "Due date of the oldest invoice not yet covered by payments"
+          },
+          "days_overdue": {
+            "type": "integer",
+            "title": "Days Overdue",
+            "description": "max(0, today (IST) - oldest_due_date). 0 on the due day itself"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resident_id",
+          "full_name",
+          "phone",
+          "bed_label",
+          "outstanding_paise",
+          "oldest_due_date",
+          "days_overdue"
+        ],
+        "title": "DueRow"
+      },
       "ErrorDetail": {
         "properties": {
           "code": {
@@ -6984,6 +7461,212 @@
         ],
         "title": "FileUrl"
       },
+      "GenerateDueRequest": {
+        "properties": {
+          "month": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Month",
+            "description": "YYYY-MM; default the current month (IST)"
+          },
+          "property_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Id",
+            "description": "Default: every building the caller can access"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "GenerateDueRequest"
+      },
+      "GenerateDueResult": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+            "title": "Month"
+          },
+          "created": {
+            "type": "integer",
+            "title": "Created",
+            "description": "New rent invoices. 0 when the month was already generated (safe to re-run)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "created"
+        ],
+        "title": "GenerateDueResult"
+      },
+      "Invoice": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "invoice_no": {
+            "type": "string",
+            "title": "Invoice No",
+            "description": "INV-000123, per organization (set by the database)"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "rent",
+              "short_term",
+              "deposit",
+              "maintenance_charge",
+              "exit_deduction",
+              "other"
+            ],
+            "title": "Kind"
+          },
+          "property_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Property Id"
+          },
+          "resident_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Resident Id"
+          },
+          "stay_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stay Id"
+          },
+          "period_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period Start"
+          },
+          "period_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Amount Paise",
+            "description": "Amount in paise (\u20b91 = 100)"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Due Date"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "voided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voided At"
+          },
+          "void_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Void Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "invoice_no",
+          "kind",
+          "property_id",
+          "resident_id",
+          "stay_id",
+          "period_start",
+          "period_end",
+          "amount_paise",
+          "due_date",
+          "notes",
+          "created_by",
+          "created_at",
+          "voided_at",
+          "void_reason"
+        ],
+        "title": "Invoice"
+      },
       "JoinInfo": {
         "properties": {
           "property_name": {
@@ -7094,6 +7777,65 @@
           "notice_deadline_day"
         ],
         "title": "JoinInfo"
+      },
+      "LedgerEntry": {
+        "properties": {
+          "entry_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Entry Date",
+            "description": "Invoice due date, or the day a payment was received (IST)"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "invoice",
+              "payment"
+            ],
+            "title": "Type"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference",
+            "description": "Invoice number, or the payment method and UTR"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise",
+            "description": "Invoices positive, payments negative"
+          },
+          "voided": {
+            "type": "boolean",
+            "title": "Voided",
+            "description": "Void entries are listed for the record but don't change the balance"
+          },
+          "balance_paise": {
+            "type": "integer",
+            "title": "Balance Paise",
+            "description": "Running balance after this entry"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entry_date",
+          "type",
+          "id",
+          "reference",
+          "description",
+          "amount_paise",
+          "voided",
+          "balance_paise"
+        ],
+        "title": "LedgerEntry"
       },
       "LoginRequest": {
         "properties": {
@@ -8002,6 +8744,43 @@
         ],
         "title": "OnboardingSuggested",
         "description": "Defaults for the approve form. Caretakers may raise, never lower, rent, deposit and maintenance charge."
+      },
+      "OneOffInvoiceCreate": {
+        "properties": {
+          "resident_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Resident Id"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Amount Paise",
+            "description": "Amount in paise (\u20b91 = 100)"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Due Date"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Notes",
+            "description": "What the charge is for (shown to the resident)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "resident_id",
+          "amount_paise",
+          "due_date",
+          "notes"
+        ],
+        "title": "OneOffInvoiceCreate",
+        "description": "Owner only: a one-off charge (kind `other`), e.g. a broken-furniture fee."
       },
       "Organization": {
         "properties": {
@@ -8915,6 +9694,39 @@
           "past_stays"
         ],
         "title": "Resident"
+      },
+      "ResidentLedger": {
+        "properties": {
+          "resident_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Resident Id"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "outstanding_paise": {
+            "type": "integer",
+            "title": "Outstanding Paise"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerEntry"
+            },
+            "type": "array",
+            "title": "Entries",
+            "description": "Oldest first"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resident_id",
+          "full_name",
+          "outstanding_paise",
+          "entries"
+        ],
+        "title": "ResidentLedger"
       },
       "ResidentProfileUpdate": {
         "properties": {

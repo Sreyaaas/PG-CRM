@@ -690,6 +690,87 @@ export interface paths {
         patch: operations["update_resident_profile_api_v1_residents__resident_id__profile_patch"];
         trace?: never;
     };
+    "/api/v1/invoices/generate-due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate Due
+         * @description Create this month's (or `month`'s) rent invoices for every open monthly stay in the buildings the caller can
+         *     access. Safe to run any number of times: a month already invoiced creates 0.
+         */
+        post: operations["generate_due_api_v1_invoices_generate_due_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create One Off
+         * @description Owner only (the database also refuses caretakers' `other` invoices).
+         */
+        post: operations["create_one_off_api_v1_invoices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dues
+         * @description Residents who owe money, most overdue first (RLS: caretakers see their buildings only).
+         */
+        get: operations["dues_api_v1_dues_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/residents/{resident_id}/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Resident Ledger
+         * @description Invoices and payments, oldest first, with the running balance (void entries listed but not counted).
+         */
+        get: operations["resident_ledger_api_v1_residents__resident_id__ledger_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/expenses": {
         parameters: {
             query?: never;
@@ -1312,6 +1393,39 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** DueRow */
+        DueRow: {
+            /**
+             * Resident Id
+             * Format: uuid
+             */
+            resident_id: string;
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone: string;
+            /**
+             * Bed Label
+             * @description Current bed; null after move-out
+             */
+            bed_label: string | null;
+            /**
+             * Outstanding Paise
+             * @description Non-void invoices minus non-void payments
+             */
+            outstanding_paise: number;
+            /**
+             * Oldest Due Date
+             * Format: date
+             * @description Due date of the oldest invoice not yet covered by payments
+             */
+            oldest_due_date: string;
+            /**
+             * Days Overdue
+             * @description max(0, today (IST) - oldest_due_date). 0 on the due day itself
+             */
+            days_overdue: number;
+        };
         /** ErrorDetail */
         ErrorDetail: {
             /** Code */
@@ -1483,6 +1597,86 @@ export interface components {
             /** Expires In */
             expires_in: number;
         };
+        /** GenerateDueRequest */
+        GenerateDueRequest: {
+            /**
+             * Month
+             * @description YYYY-MM; default the current month (IST)
+             */
+            month?: string | null;
+            /**
+             * Property Id
+             * @description Default: every building the caller can access
+             */
+            property_id?: string | null;
+        };
+        /** GenerateDueResult */
+        GenerateDueResult: {
+            /** Month */
+            month: string;
+            /**
+             * Created
+             * @description New rent invoices. 0 when the month was already generated (safe to re-run)
+             */
+            created: number;
+        };
+        /** Invoice */
+        Invoice: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Invoice No
+             * @description INV-000123, per organization (set by the database)
+             */
+            invoice_no: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "rent" | "short_term" | "deposit" | "maintenance_charge" | "exit_deduction" | "other";
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /**
+             * Resident Id
+             * Format: uuid
+             */
+            resident_id: string;
+            /** Stay Id */
+            stay_id: string | null;
+            /** Period Start */
+            period_start: string | null;
+            /** Period End */
+            period_end: string | null;
+            /**
+             * Amount Paise
+             * @description Amount in paise (₹1 = 100)
+             */
+            amount_paise: number;
+            /**
+             * Due Date
+             * Format: date
+             */
+            due_date: string;
+            /** Notes */
+            notes: string | null;
+            /** Created By */
+            created_by: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Voided At */
+            voided_at: string | null;
+            /** Void Reason */
+            void_reason: string | null;
+        };
         /** JoinInfo */
         JoinInfo: {
             /** Property Name */
@@ -1518,6 +1712,47 @@ export interface components {
             maintenance_charge_paise: number;
             /** Notice Deadline Day */
             notice_deadline_day: number;
+        };
+        /** LedgerEntry */
+        LedgerEntry: {
+            /**
+             * Entry Date
+             * Format: date
+             * @description Invoice due date, or the day a payment was received (IST)
+             */
+            entry_date: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "invoice" | "payment";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Reference
+             * @description Invoice number, or the payment method and UTR
+             */
+            reference: string;
+            /** Description */
+            description: string;
+            /**
+             * Amount Paise
+             * @description Invoices positive, payments negative
+             */
+            amount_paise: number;
+            /**
+             * Voided
+             * @description Void entries are listed for the record but don't change the balance
+             */
+            voided: boolean;
+            /**
+             * Balance Paise
+             * @description Running balance after this entry
+             */
+            balance_paise: number;
         };
         /** LoginRequest */
         LoginRequest: {
@@ -1890,6 +2125,32 @@ export interface components {
              */
             first_month_rent_paise: number | null;
         };
+        /**
+         * OneOffInvoiceCreate
+         * @description Owner only: a one-off charge (kind `other`), e.g. a broken-furniture fee.
+         */
+        OneOffInvoiceCreate: {
+            /**
+             * Resident Id
+             * Format: uuid
+             */
+            resident_id: string;
+            /**
+             * Amount Paise
+             * @description Amount in paise (₹1 = 100)
+             */
+            amount_paise: number;
+            /**
+             * Due Date
+             * Format: date
+             */
+            due_date: string;
+            /**
+             * Notes
+             * @description What the charge is for (shown to the resident)
+             */
+            notes: string;
+        };
         /** Organization */
         Organization: {
             /**
@@ -2198,6 +2459,23 @@ export interface components {
              * @description Vacated stays, newest first
              */
             past_stays: components["schemas"]["Stay"][];
+        };
+        /** ResidentLedger */
+        ResidentLedger: {
+            /**
+             * Resident Id
+             * Format: uuid
+             */
+            resident_id: string;
+            /** Full Name */
+            full_name: string;
+            /** Outstanding Paise */
+            outstanding_paise: number;
+            /**
+             * Entries
+             * @description Oldest first
+             */
+            entries: components["schemas"]["LedgerEntry"][];
         };
         /**
          * ResidentProfileUpdate
@@ -5453,6 +5731,304 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Resident"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    generate_due_api_v1_invoices_generate_due_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateDueRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GenerateDueResult"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_one_off_api_v1_invoices_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OneOffInvoiceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invoice"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    dues_api_v1_dues_get: {
+        parameters: {
+            query?: {
+                property_id?: string | null;
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DueRow"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    resident_ledger_api_v1_residents__resident_id__ledger_get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                resident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResidentLedger"];
                 };
             };
             /** @description Unauthorized */
