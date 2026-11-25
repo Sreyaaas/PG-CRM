@@ -184,6 +184,16 @@ async function fillBasics(amount = '2500') {
   fireEvent.change(await screen.findByLabelText('Amount'), { target: { value: amount } })
 }
 
+/** The photo input renders after the form's data loads; wait for it instead of racing the render. */
+async function fileInput(): Promise<HTMLInputElement> {
+  let el: HTMLInputElement | null = null
+  await waitFor(() => {
+    el = document.querySelector<HTMLInputElement>('input[type="file"]')
+    expect(el).not.toBeNull()
+  })
+  return el!
+}
+
 describe('Log expense (caretaker)', () => {
   beforeEach(() => signIn(CARETAKER_ME))
   afterEach(() => {
@@ -257,7 +267,7 @@ describe('Log expense (caretaker)', () => {
     fireEvent.change(await screen.findByLabelText('Amount'), { target: { value: '2,500.50' } })
     fireEvent.change(screen.getByLabelText('Quantity'), { target: { value: '3' } })
     fireEvent.change(screen.getByLabelText(/^Vendor/), { target: { value: 'Sri Water Suppliers' } })
-    fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [photoFile()] } })
+    fireEvent.change(await fileInput(), { target: { files: [photoFile()] } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Save expense' }))
 
@@ -290,7 +300,7 @@ describe('Log expense (caretaker)', () => {
     mockApi(state)
     renderAt('/caretaker/expenses/new')
     await fillBasics('900')
-    fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [photoFile()] } })
+    fireEvent.change(await fileInput(), { target: { files: [photoFile()] } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Save expense' }))
     expect(await screen.findByText('Network hiccup, try again')).toBeInTheDocument()
@@ -307,7 +317,7 @@ describe('Log expense (caretaker)', () => {
     mockApi(state)
     renderAt('/caretaker/expenses/new')
     await fillBasics('900')
-    fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [photoFile()] } })
+    fireEvent.change(await fileInput(), { target: { files: [photoFile()] } })
     fireEvent.click(screen.getByRole('button', { name: 'Save expense' }))
     expect(await screen.findByText('The photo is too old. Take a new one.')).toBeInTheDocument()
   })
