@@ -1,3 +1,6 @@
+import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
+import { formatDaysLeft } from '@/features/home/useBoards'
 import { cn } from '@/lib/utils'
 
 const IST_LONG_DAY = new Intl.DateTimeFormat('en-GB', {
@@ -35,5 +38,25 @@ export function OccupancyBar({ occupied, total, className }: { occupied: number;
         {occupied}/{total}
       </span>
     </div>
+  )
+}
+
+/** Single quiet line for an empty home section (AC5). */
+export function QuietEmptySection({ title, message }: { title: string; message: string }) {
+  return (
+    <Card className="px-4 py-3 sm:px-5">
+      <p className="text-[13.5px] text-muted">
+        <span className="font-medium text-ink">{title}</span> · {message}
+      </p>
+    </Card>
+  )
+}
+
+export function DaysLeftBadge({ vacateDate, now }: { vacateDate: string; now?: Date }) {
+  const { label, tone } = formatDaysLeft(vacateDate, now)
+  return (
+    <Badge tone={tone} className="tabular-nums">
+      {label}
+    </Badge>
   )
 }
