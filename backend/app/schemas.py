@@ -751,6 +751,18 @@ class OrganizationUpdate(BaseModel):
         return self
 
 
+class ActivityItem(BaseModel):
+    id: int
+    at: datetime
+    actor_id: UUID | None = Field(description="null when a resident did it (Reception QR form)")
+    actor_name: str | None
+    entity_type: str = Field(description="Table the change was made in, e.g. expenses, stays, payments")
+    entity_id: UUID | None
+    action: Literal["insert", "update"]
+    property_id: UUID | None
+    summary: str = Field(description="One human-readable line. Names, labels and ₹ amounts only")
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str

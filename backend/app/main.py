@@ -9,6 +9,7 @@ from app import errors, logs, monitoring, storage
 from app.config import get_settings
 from app.db import close_pool
 from app.routers import (
+    activity,
     auth,
     complaints,
     discounts,
@@ -91,6 +92,7 @@ def create_app() -> FastAPI:
         rooms.router,
         staff.router,
         organization.router,
+        activity.router,
         discounts.router,
         onboarding.router,
         expenses.router,
