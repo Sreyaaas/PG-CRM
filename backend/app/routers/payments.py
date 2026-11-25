@@ -11,11 +11,13 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import JSONResponse
 from psycopg import Cursor, sql
 from psycopg.rows import DictRow
 
-from app import whatsapp
+from app import idempotency, whatsapp
 from app.deps import Org, require_owner
+from app.idempotency import IdempotencyKey
 from app.schemas import FlagRequest, Payment, PaymentCreate, PaymentMethod, PaymentStatus, VoidRequest
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -56,9 +58,13 @@ def _one(cur: Cursor[DictRow], payment_id: UUID) -> Payment | None:
 
 
 @router.post("", response_model=Payment, status_code=201, responses=_NOT_FOUND)
-def log_payment(body: PaymentCreate, ctx: Org) -> Payment:
-    """Owner or a caretaker of the resident's building. Returns the receipt link and a ready WhatsApp message."""
+def log_payment(body: PaymentCreate, ctx: Org, idempotency_key: IdempotencyKey = None) -> Payment | JSONResponse:
+    """Owner or a caretaker of the resident's building. Returns the receipt link and a ready WhatsApp message.
+    Send an `Idempotency-Key` so a retry after a timeout can't record the payment twice."""
+    request_hash = idempotency.hash_body(body)
     with ctx.tx() as cur:
+        if (replay := idempotency.replay(cur, idempotency_key, request_hash)) is not None:
+            return replay
         cur.execute(
             """INSERT INTO payments (org_id, property_id, resident_id, invoice_id, amount_paise, method, utr_number,
                                      notes)
@@ -69,7 +75,9 @@ def log_payment(body: PaymentCreate, ctx: Org) -> Payment:
         row = cur.fetchone()
         if row is None:
             raise HTTPException(404, "Resident not found")
-        return _one(cur, row["id"])
+        payment = _one(cur, row["id"])
+        idempotency.save(cur, idempotency_key, request_hash, 201, payment)
+        return payment
 
 
 @router.get("", response_model=list[Payment])

@@ -30,6 +30,7 @@ All the anti-theft rules are enforced **inside Postgres**, so no API bug can byp
 | `*_invoice_rules.sql` | `app.invoices_guard`: caretakers can't create `kind='other'` (one-off) invoices; everything else unchanged |
 | `*_cash_ledger.sql` | `api.cash_ledger(caretaker)`: one caretaker's cash payments (+), cash expenses (−) and handovers (−), same scope as `api.cash_balances()` (owner: any caretaker; caretaker: only themself), across all buildings so it sums to the balance |
 | `*_payment_flag_reason.sql` | `payments.flag_reason`: the owner's reason for flagging (BE-44). `app.payments_guard` clears it on insert and lets it change only together with `status = 'flagged'` (>= 3 chars); everything else unchanged |
+| `*_idempotency_keys.sql` | `idempotency_keys` (BE-32): stored responses for `Idempotency-Key` retries of POST /payments, /expenses, /cash/handovers. RLS: each user sees and inserts only their own keys in the current org (not even the owner sees others'); SELECT + INSERT only (no UPDATE / DELETE grant); `created_at` forced to `now()`. Not business data, so no audit trigger; a cleanup job may delete keys older than 7 days later |
 
 The tests in `backend/tests/test_db_rules.py` are the executable spec for these rules.
 

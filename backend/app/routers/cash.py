@@ -10,10 +10,13 @@ to the balance.
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from psycopg import Cursor
 from psycopg.rows import DictRow
 
+from app import idempotency
 from app.deps import Org, require_owner
+from app.idempotency import IdempotencyKey
 from app.money import format_inr
 from app.schemas import CashBalance, CashHandover, CashHandoverCreate, CashHandoverResult, CashLedger, CashLedgerEntry
 
@@ -56,11 +59,16 @@ def balances(ctx: Org) -> list[CashBalance]:
 
 
 @router.post("/handovers", response_model=CashHandoverResult, status_code=201)
-def record_handover(body: CashHandoverCreate, ctx: Org) -> CashHandoverResult:
+def record_handover(
+    body: CashHandoverCreate, ctx: Org, idempotency_key: IdempotencyKey = None
+) -> CashHandoverResult | JSONResponse:
     """Owner only. A handover larger than the caretaker's cash in hand is recorded (the owner may be settling an
-    advance) but comes back with a `warning`."""
+    advance) but comes back with a `warning`. Send an `Idempotency-Key` so a retry can't record it twice."""
+    request_hash = idempotency.hash_body(body)
     with ctx.tx() as cur:
         require_owner(cur, "Only the owner can record a cash handover.")
+        if (replay := idempotency.replay(cur, idempotency_key, request_hash)) is not None:
+            return replay
         cur.execute(
             """INSERT INTO cash_handovers (org_id, caretaker_user_id, amount_paise, recorded_by, notes)
                VALUES (%s, %s, %s, %s, %s) RETURNING id""",
@@ -70,13 +78,15 @@ def record_handover(body: CashHandoverCreate, ctx: Org) -> CashHandoverResult:
         cur.execute(_HANDOVERS + " WHERE h.id = %s", (handover_id,))
         handover = cur.fetchone()
         after = _balance(cur, body.caretaker_user_id)["in_hand_paise"]
-    warning = None
-    if after < 0:
-        warning = (
-            f"This is {format_inr(-after)} more than {handover['caretaker_name']} had in hand "
-            f"({format_inr(after + body.amount_paise)}). Recorded anyway."
-        )
-    return CashHandoverResult(**handover, in_hand_paise=after, warning=warning)
+        warning = None
+        if after < 0:
+            warning = (
+                f"This is {format_inr(-after)} more than {handover['caretaker_name']} had in hand "
+                f"({format_inr(after + body.amount_paise)}). Recorded anyway."
+            )
+        result = CashHandoverResult(**handover, in_hand_paise=after, warning=warning)
+        idempotency.save(cur, idempotency_key, request_hash, 201, result)
+    return result
 
 
 @router.get("/handovers", response_model=list[CashHandover])
