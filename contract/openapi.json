@@ -4435,6 +4435,110 @@
         }
       }
     },
+    "/api/v1/invoices/{invoice_id}/upi": {
+      "get": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Invoice Upi",
+        "description": "The dynamic UPI payload for what is still due on this invoice, paid straight to the property's own UPI ID.\nOwner or a caretaker of the building (RLS).",
+        "operationId": "invoice_upi_api_v1_invoices__invoice_id__upi_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Invoice Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceUpi"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/dues": {
       "get": {
         "tags": [
@@ -10790,6 +10894,33 @@
           "whatsapp_url"
         ],
         "title": "Invoice"
+      },
+      "InvoiceUpi": {
+        "properties": {
+          "upi_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upi Uri",
+            "description": "upi://pay?pa=..&pn=..&mc=..&am=..&tn=<invoice_no>&cu=INR for a dynamic QR. Null when the property has no UPI ID or nothing is left to pay: show the fallback UPI ID / bank details instead"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise",
+            "description": "Still due on this invoice: amount minus non-void payments against it"
+          }
+        },
+        "type": "object",
+        "required": [
+          "upi_uri",
+          "amount_paise"
+        ],
+        "title": "InvoiceUpi"
       },
       "JoinInfo": {
         "properties": {

@@ -13,13 +13,14 @@ from fastapi import APIRouter, HTTPException
 from psycopg import Cursor
 from psycopg.rows import DictRow
 
-from app import billing, whatsapp
+from app import billing, upi, whatsapp
 from app.deps import Org, require_owner
 from app.schemas import (
     DueRow,
     GenerateDueRequest,
     GenerateDueResult,
     Invoice,
+    InvoiceUpi,
     LedgerEntry,
     OneOffInvoiceCreate,
     ResidentLedger,
@@ -118,6 +119,34 @@ def create_one_off(body: OneOffInvoiceCreate, ctx: Org) -> Invoice:
             raise HTTPException(404, "Resident not found")
         cur.execute(INVOICE_SELECT + " WHERE i.id = %s", (row["id"],))
         return invoice_out(cur.fetchone())
+
+
+# Still due on one invoice: its amount minus the non-void payments logged against it (0 once voided).
+INVOICE_UPI = """
+  SELECT i.invoice_no, p.upi_vpa, p.upi_payee_name, p.upi_mcc,
+         CASE WHEN i.voided_at IS NOT NULL THEN 0
+              ELSE greatest(0, i.amount_paise - coalesce((SELECT sum(x.amount_paise) FROM payments x
+                                                           WHERE x.invoice_id = i.id AND x.voided_at IS NULL), 0))
+         END::bigint AS outstanding_paise
+    FROM invoices i
+    JOIN properties p ON p.id = i.property_id
+   WHERE i.id = %s
+"""
+
+
+@router.get("/invoices/{invoice_id}/upi", response_model=InvoiceUpi, responses=_NOT_FOUND)
+def invoice_upi(invoice_id: UUID, ctx: Org) -> InvoiceUpi:
+    """The dynamic UPI payload for what is still due on this invoice, paid straight to the property's own UPI ID.
+    Owner or a caretaker of the building (RLS)."""
+    with ctx.tx() as cur:
+        cur.execute(INVOICE_UPI, (invoice_id,))
+        row = cur.fetchone()
+    if row is None:
+        raise HTTPException(404, "Invoice not found")
+    return InvoiceUpi(
+        upi_uri=upi.build_upi_uri(row, row["outstanding_paise"], row["invoice_no"]),
+        amount_paise=row["outstanding_paise"],
+    )
 
 
 _DUES = """

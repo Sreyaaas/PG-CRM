@@ -751,6 +751,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/invoices/{invoice_id}/upi": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Invoice Upi
+         * @description The dynamic UPI payload for what is still due on this invoice, paid straight to the property's own UPI ID.
+         *     Owner or a caretaker of the building (RLS).
+         */
+        get: operations["invoice_upi_api_v1_invoices__invoice_id__upi_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dues": {
         parameters: {
             query?: never;
@@ -2469,6 +2490,19 @@ export interface components {
              * @description wa.me link with the invoice message, ready to send
              */
             whatsapp_url: string;
+        };
+        /** InvoiceUpi */
+        InvoiceUpi: {
+            /**
+             * Upi Uri
+             * @description upi://pay?pa=..&pn=..&mc=..&am=..&tn=<invoice_no>&cu=INR for a dynamic QR. Null when the property has no UPI ID or nothing is left to pay: show the fallback UPI ID / bank details instead
+             */
+            upi_uri: string | null;
+            /**
+             * Amount Paise
+             * @description Still due on this invoice: amount minus non-void payments against it
+             */
+            amount_paise: number;
         };
         /** JoinInfo */
         JoinInfo: {
@@ -6878,6 +6912,83 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Invoice"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    invoice_upi_api_v1_invoices__invoice_id__upi_get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                invoice_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceUpi"];
                 };
             };
             /** @description Unauthorized */
