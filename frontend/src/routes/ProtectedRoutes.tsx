@@ -3,6 +3,7 @@ import { CaretakerShell } from '@/components/shells/CaretakerShell'
 import { OwnerShell } from '@/components/shells/OwnerShell'
 import { usePendingApprovalsCount } from '@/features/approvals/useDiscountRequests'
 import { useAuth } from '@/features/auth/AuthContext'
+import { usePendingOnboardingCount } from '@/features/checkins/useCheckins'
 
 export function RoleRedirect() {
   const { session, membership } = useAuth()
@@ -49,6 +50,7 @@ export function OwnerLayoutRoute() {
 export function CaretakerLayoutRoute() {
   const { session, membership, logout } = useAuth()
   const navigate = useNavigate()
+  const checkInsCount = usePendingOnboardingCount()
 
   if (!session) {
     return <Navigate to="/login" replace />
@@ -68,6 +70,7 @@ export function CaretakerLayoutRoute() {
       userName={session.me.full_name}
       onLogout={logout}
       onSwitchOrg={switchOrg}
+      badges={{ '/caretaker/check-ins': checkInsCount }}
     >
       <Outlet />
     </CaretakerShell>
