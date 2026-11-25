@@ -14,6 +14,7 @@ import { PropertyDetailPage } from '@/features/properties/PropertyDetailPage'
 import { PropertyCreatePage, PropertyEditPage } from '@/features/properties/PropertyFormPage'
 import { RoomsPage } from '@/features/rooms/RoomsPage'
 import { PosterPage } from '@/features/poster/PosterPage'
+import { JoinPage } from '@/features/join/JoinPage'
 import { SignupPage } from './SignupPage'
 
 export function AppRouter() {
@@ -23,6 +24,7 @@ export function AppRouter() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/select-org" element={<OrgPickerPage />} />
+      <Route path="/join/:slug" element={<JoinPage />} />
       <Route path="/dev/ui" element={<DevUiPage />} />
 
       <Route path="/owner" element={<OwnerLayoutRoute />}>
