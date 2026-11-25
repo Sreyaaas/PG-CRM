@@ -78,6 +78,7 @@ use a superuser connection to prove the triggers hold even when RLS is bypassed.
 | `PGCRM_DATABASE_URL` | `postgresql://pgcrm_api:…@host:port/pgcrm` (via the provider's **transaction pooler** if it has one; the API needs no prepared statements) |
 | `PGCRM_JWT_SECRET` | long random value. Prod refuses the dev default |
 | `PGCRM_CORS_ORIGINS` | `["https://<frontend>"]`. Prod refuses `*`, `http://` and `localhost` |
+| `PGCRM_PUBLIC_APP_URL` | `https://<frontend>`: receipt links in WhatsApp messages are `<this>/receipt/<token>` |
 | `PGCRM_S3_ENDPOINT` / `_BUCKET` / `_ACCESS_KEY` / `_SECRET_KEY` / `_REGION` | the private bucket. Prod refuses the dev secret |
 | `PGCRM_SENTRY_DSN`, `PGCRM_SENTRY_TRACES_SAMPLE_RATE` | error + performance monitoring (BE-51; PII is scrubbed) |
 | `PGCRM_TRUST_FORWARDED_FOR` | `true` only behind our own reverse proxy, so per-IP rate limits see the real client |

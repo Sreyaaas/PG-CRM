@@ -771,6 +771,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Payments
+         * @description Newest first, in the buildings the caller can access (RLS).
+         */
+        get: operations["list_payments_api_v1_payments_get"];
+        put?: never;
+        /**
+         * Log Payment
+         * @description Owner or a caretaker of the resident's building. Returns the receipt link and a ready WhatsApp message.
+         */
+        post: operations["log_payment_api_v1_payments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payments/{payment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Payment */
+        get: operations["get_payment_api_v1_payments__payment_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/expenses": {
         parameters: {
             query?: never;
@@ -2195,6 +2236,111 @@ export interface components {
             whatsapp_language?: "en" | "kn" | "hi" | "ta" | "te";
             /** Receipt Footer */
             receipt_footer?: string | null;
+        };
+        /** Payment */
+        Payment: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /**
+             * Resident Id
+             * Format: uuid
+             */
+            resident_id: string;
+            /** Resident Name */
+            resident_name: string;
+            /** Invoice Id */
+            invoice_id: string | null;
+            /**
+             * Amount Paise
+             * @description Amount in paise (₹1 = 100)
+             */
+            amount_paise: number;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "cash" | "upi" | "bank_transfer";
+            /** Utr Number */
+            utr_number: string | null;
+            /**
+             * Status
+             * @description recorded (cash) or provisional (UPI/bank) until verified
+             * @enum {string}
+             */
+            status: "recorded" | "provisional" | "verified" | "flagged";
+            /**
+             * Received By
+             * Format: uuid
+             */
+            received_by: string;
+            /** Received By Name */
+            received_by_name: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Notes */
+            notes: string | null;
+            /** Verified At */
+            verified_at: string | null;
+            /** Voided At */
+            voided_at: string | null;
+            /** Void Reason */
+            void_reason: string | null;
+            /** Public Token */
+            public_token: string;
+            /**
+             * Receipt Url
+             * @description Public receipt page for the resident
+             */
+            receipt_url: string;
+            /**
+             * Whatsapp Url
+             * @description wa.me link with the receipt message, ready to send
+             */
+            whatsapp_url: string;
+        };
+        /**
+         * PaymentCreate
+         * @description Who received it, when, and the status are set by the database, never by the client.
+         */
+        PaymentCreate: {
+            /**
+             * Resident Id
+             * Format: uuid
+             */
+            resident_id: string;
+            /**
+             * Invoice Id
+             * @description Optional: dues are per resident, not per invoice
+             */
+            invoice_id?: string | null;
+            /**
+             * Amount Paise
+             * @description Amount in paise (₹1 = 100)
+             */
+            amount_paise: number;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "cash" | "upi" | "bank_transfer";
+            /**
+             * Utr Number
+             * @description 12-digit UPI/bank reference. Required for upi and bank_transfer, not allowed for cash. Spaces are removed
+             */
+            utr_number?: string | null;
+            /** Notes */
+            notes?: string | null;
         };
         /** Property */
         Property: {
@@ -6029,6 +6175,238 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResidentLedger"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_payments_api_v1_payments_get: {
+        parameters: {
+            query?: {
+                property_id?: string | null;
+                /** @description Received on or after (IST) */
+                from?: string | null;
+                /** @description Received on or before (IST) */
+                to?: string | null;
+                status?: ("recorded" | "provisional" | "verified" | "flagged") | null;
+                method?: ("cash" | "upi" | "bank_transfer") | null;
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    log_payment_api_v1_payments_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_payment_api_v1_payments__payment_id__get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                payment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Payment"];
                 };
             };
             /** @description Unauthorized */
