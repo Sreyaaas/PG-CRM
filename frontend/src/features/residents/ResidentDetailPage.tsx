@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { ExternalLink, Phone, X, ZoomIn } from 'lucide-react'
+import { Check, ExternalLink, MessageCircle, Phone, X, ZoomIn } from 'lucide-react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
 import { Money } from '@/components/Money'
@@ -10,7 +10,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardBody, CardHeader } from '@/components/ui/card'
 import { EmptyState, LoadingRows, Notice, PageHeader } from '@/components/ui/misc'
 import { useAuth } from '@/features/auth/AuthContext'
-import { usePropertyQuery } from '@/features/properties/api'
+import { useLedgerQuery } from '@/features/dues/api'
+import { useReminders } from '@/features/dues/reminders'
+import { useOrgId, usePropertyQuery } from '@/features/properties/api'
 import {
   getErrorMessage,
   useCheckInMutation,
@@ -86,6 +88,10 @@ export function ResidentDetailPage() {
   const resident = query.data
   const propertyQuery = usePropertyQuery(resident?.property_id)
   const checkInMutation = useCheckInMutation(residentId)
+  const ledger = useLedgerQuery(residentId)
+  const reminders = useReminders(useOrgId())
+  const reminderUrl = ledger.data && ledger.data.outstanding_paise > 0 ? ledger.data.whatsapp_url : null
+  const reminded = residentId ? reminders.isRemindedToday(residentId) : false
 
   const [noticeOpen, setNoticeOpen] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
@@ -143,6 +149,12 @@ export function ResidentDetailPage() {
                   Call
                 </a>
               </Button>
+              {reminderUrl && residentId && (
+                <Button type="button" variant="secondary" onClick={() => reminders.send(residentId, reminderUrl)}>
+                  {reminded ? <Check aria-hidden="true" /> : <MessageCircle aria-hidden="true" />}
+                  {reminded ? 'Reminded today' : 'Send reminder'}
+                </Button>
+              )}
               <Button asChild variant="secondary">
                 <a href={buildWhatsappUrl(resident.phone)} target="_blank" rel="noopener noreferrer">
                   <ExternalLink aria-hidden="true" />

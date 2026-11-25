@@ -29,6 +29,7 @@ const DUES = [
     outstanding_paise: 1250050,
     oldest_due_date: '2026-11-05',
     days_overdue: 12,
+    whatsapp_url: 'https://wa.me/919111111111?text=api-text-asha',
   },
   {
     resident_id: 'res-2',
@@ -38,6 +39,7 @@ const DUES = [
     outstanding_paise: 800000,
     oldest_due_date: '2026-12-05',
     days_overdue: 0,
+    whatsapp_url: 'https://wa.me/919222222222?text=api-text-bala',
   },
 ]
 
@@ -45,6 +47,7 @@ const LEDGER = {
   resident_id: 'res-1',
   full_name: 'Asha Rao',
   outstanding_paise: 600000,
+  whatsapp_url: 'https://wa.me/919111111111?text=api-ledger-asha',
   entries: [
     {
       entry_date: '2026-10-05',
@@ -197,5 +200,92 @@ describe('Resident ledger', () => {
     expect(within(rows[2]).getByText('Cash').className).toContain('line-through')
     expect(within(rows[2]).getByText('Void')).toBeInTheDocument()
     expect(within(rows[1]).getByText('Payment', { selector: 'span.inline-flex' })).toBeInTheDocument()
+  })
+})
+
+describe('Rent reminders', () => {
+  beforeEach(() => signIn('caretaker'))
+
+  test('[FE-33/AC1] Send reminder opens the API whatsapp_url in a new tab', async () => {
+    mockApi({ dues: DUES, generated: [], generateResponse: { status: 200, body: {} } })
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    renderAt('/caretaker/payments')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Send reminder to Asha Rao' }))
+    expect(open).toHaveBeenCalledTimes(1)
+    expect(open).toHaveBeenCalledWith('https://wa.me/919111111111?text=api-text-asha', '_blank', 'noopener,noreferrer')
+    expect(screen.getByRole('button', { name: 'Remind again Asha Rao' })).toHaveTextContent('Reminded')
+  })
+
+  test('[FE-33/AC2] Remind all overdue lists overdue residents and marks each as sent', async () => {
+    mockApi({ dues: DUES, generated: [], generateResponse: { status: 200, body: {} } })
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    renderAt('/caretaker/payments')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remind all overdue' }))
+    const dialog = await screen.findByRole('dialog')
+    const rows = within(dialog).getAllByTestId('remind-row')
+    expect(rows).toHaveLength(1)
+    expect(within(rows[0]).getByText('Asha Rao')).toBeInTheDocument()
+    expect(rows[0].dataset.sent).toBe('false')
+
+    fireEvent.click(within(rows[0]).getByRole('button', { name: 'Send reminder to Asha Rao' }))
+    expect(open).toHaveBeenCalledWith('https://wa.me/919111111111?text=api-text-asha', '_blank', 'noopener,noreferrer')
+    expect(rows[0].dataset.sent).toBe('true')
+    expect(within(rows[0]).getByRole('button')).toHaveTextContent('Sent')
+    expect(within(dialog).getByText(/1 of 1 sent/)).toBeInTheDocument()
+  })
+
+  test('a resident reminded earlier today shows as reminded after reload', async () => {
+    mockApi({ dues: DUES, generated: [], generateResponse: { status: 200, body: {} } })
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())
+    window.localStorage.setItem('pgcrm_reminded:org-1:res-1', today)
+    renderAt('/caretaker/payments')
+
+    expect(await screen.findByRole('button', { name: 'Remind again Asha Rao' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Send reminder to Bala Kumar' })).toBeInTheDocument()
+  })
+})
+
+describe('Reminder on resident detail', () => {
+  beforeEach(() => signIn('caretaker'))
+
+  function mockResident(ledger: unknown) {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = (input as Request).url
+      if (url.includes('/ledger')) return jsonResponse(ledger)
+      if (url.includes('/residents/res-1'))
+        return jsonResponse({
+          id: 'res-1',
+          full_name: 'Asha Rao',
+          phone: '9111111111',
+          property_id: 'prop-1',
+          current_stay: null,
+          past_stays: [],
+        })
+      return jsonResponse({})
+    })
+  }
+
+  test('[FE-33/AC1] Send reminder on resident detail opens the ledger whatsapp_url and then shows Reminded today', async () => {
+    mockResident(LEDGER)
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    renderAt('/caretaker/residents/res-1')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Send reminder' }))
+    expect(open).toHaveBeenCalledWith(
+      'https://wa.me/919111111111?text=api-ledger-asha',
+      '_blank',
+      'noopener,noreferrer',
+    )
+    expect(screen.getByRole('button', { name: 'Reminded today' })).toBeInTheDocument()
+  })
+
+  test('the reminder button is hidden when the resident owes nothing', async () => {
+    mockResident({ ...LEDGER, outstanding_paise: 0, whatsapp_url: null })
+    renderAt('/caretaker/residents/res-1')
+
+    await screen.findByText('Asha Rao', { selector: 'h1' })
+    await waitFor(() => expect(screen.queryByRole('button', { name: /reminder|reminded/i })).not.toBeInTheDocument())
   })
 })
