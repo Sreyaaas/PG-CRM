@@ -6357,6 +6357,128 @@
         }
       }
     },
+    "/api/v1/dashboard": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Dashboard",
+        "description": "Owner only. P&L for the period, occupancy now, and the counts that need the owner's attention now.",
+        "operationId": "dashboard_api_v1_dashboard_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "First day (IST). Default: 1st of the month",
+              "title": "From"
+            },
+            "description": "First day (IST). Default: 1st of the month"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Last day (IST), inclusive. Default: last day of this month",
+              "title": "To"
+            },
+            "description": "Last day (IST), inclusive. Default: last day of this month"
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dashboard"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "description": "`from` is after `to`"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        }
+      }
+    },
     "/api/v1/expenses": {
       "post": {
         "tags": [
@@ -9484,6 +9606,185 @@
           "raw"
         ],
         "title": "CsvImportRow"
+      },
+      "Dashboard": {
+        "properties": {
+          "pnl": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardPnl"
+            },
+            "type": "array",
+            "title": "Pnl"
+          },
+          "occupancy": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardOccupancy"
+            },
+            "type": "array",
+            "title": "Occupancy"
+          },
+          "attention": {
+            "$ref": "#/components/schemas/DashboardAttention"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pnl",
+          "occupancy",
+          "attention"
+        ],
+        "title": "Dashboard"
+      },
+      "DashboardAttention": {
+        "properties": {
+          "pending_onboarding": {
+            "type": "integer",
+            "title": "Pending Onboarding",
+            "description": "GET /onboarding-requests?status=pending"
+          },
+          "pending_discounts": {
+            "type": "integer",
+            "title": "Pending Discounts",
+            "description": "GET /discount-requests?status=pending"
+          },
+          "flagged_expenses_unreviewed": {
+            "type": "integer",
+            "title": "Flagged Expenses Unreviewed",
+            "description": "GET /expenses?flagged=true"
+          },
+          "provisional_payments_older_than_3_days": {
+            "type": "integer",
+            "title": "Provisional Payments Older Than 3 Days",
+            "description": "GET /reconciliation/unverified-payments?older_than_days=3"
+          },
+          "flagged_payments": {
+            "type": "integer",
+            "title": "Flagged Payments",
+            "description": "GET /payments?status=flagged"
+          },
+          "cash_in_hand_total_paise": {
+            "type": "integer",
+            "title": "Cash In Hand Total Paise",
+            "description": "Sum of in_hand_paise from GET /cash/balances"
+          },
+          "overstaying_residents": {
+            "type": "integer",
+            "title": "Overstaying Residents",
+            "description": "Residents on notice whose expected vacate date is before today (IST) and who haven't moved out"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pending_onboarding",
+          "pending_discounts",
+          "flagged_expenses_unreviewed",
+          "provisional_payments_older_than_3_days",
+          "flagged_payments",
+          "cash_in_hand_total_paise",
+          "overstaying_residents"
+        ],
+        "title": "DashboardAttention",
+        "description": "Each count equals the length of the list the dashboard links to."
+      },
+      "DashboardOccupancy": {
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Property Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "beds_total": {
+            "type": "integer",
+            "title": "Beds Total"
+          },
+          "vacant": {
+            "type": "integer",
+            "title": "Vacant"
+          },
+          "reserved": {
+            "type": "integer",
+            "title": "Reserved"
+          },
+          "occupied": {
+            "type": "integer",
+            "title": "Occupied"
+          },
+          "on_notice": {
+            "type": "integer",
+            "title": "On Notice"
+          }
+        },
+        "type": "object",
+        "required": [
+          "property_id",
+          "name",
+          "beds_total",
+          "vacant",
+          "reserved",
+          "occupied",
+          "on_notice"
+        ],
+        "title": "DashboardOccupancy",
+        "description": "Active beds of one building by status."
+      },
+      "DashboardPnl": {
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Property Id"
+          },
+          "property_name": {
+            "type": "string",
+            "title": "Property Name"
+          },
+          "collected_verified_paise": {
+            "type": "integer",
+            "title": "Collected Verified Paise",
+            "description": "UPI / bank payments verified (statement match or by the owner)"
+          },
+          "collected_cash_paise": {
+            "type": "integer",
+            "title": "Collected Cash Paise",
+            "description": "Cash payments"
+          },
+          "provisional_paise": {
+            "type": "integer",
+            "title": "Provisional Paise",
+            "description": "UPI / bank payments not yet seen in a statement"
+          },
+          "flagged_paise": {
+            "type": "integer",
+            "title": "Flagged Paise",
+            "description": "Flagged payments (statement amount mismatch or flagged by the owner)"
+          },
+          "expenses_paise": {
+            "type": "integer",
+            "title": "Expenses Paise"
+          },
+          "net_paise": {
+            "type": "integer",
+            "title": "Net Paise",
+            "description": "verified + cash - expenses (provisional and flagged are not counted)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "property_id",
+          "property_name",
+          "collected_verified_paise",
+          "collected_cash_paise",
+          "provisional_paise",
+          "flagged_paise",
+          "expenses_paise",
+          "net_paise"
+        ],
+        "title": "DashboardPnl",
+        "description": "One `api.owner_pnl(from, to)` row: payments by IST received date, expenses by expense date, voids left out."
       },
       "DiscountDecision": {
         "properties": {

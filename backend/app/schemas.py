@@ -1161,6 +1161,56 @@ class AuditLogPage(BaseModel):
     next_cursor: int | None = Field(description="Pass as `cursor` for the next (older) page. None on the last page")
 
 
+# ---- Owner dashboard (BE-43) ----
+
+
+class DashboardPnl(BaseModel):
+    """One `api.owner_pnl(from, to)` row: payments by IST received date, expenses by expense date, voids left out."""
+
+    property_id: UUID
+    property_name: str
+    collected_verified_paise: int = Field(description="UPI / bank payments verified (statement match or by the owner)")
+    collected_cash_paise: int = Field(description="Cash payments")
+    provisional_paise: int = Field(description="UPI / bank payments not yet seen in a statement")
+    flagged_paise: int = Field(description="Flagged payments (statement amount mismatch or flagged by the owner)")
+    expenses_paise: int
+    net_paise: int = Field(description="verified + cash - expenses (provisional and flagged are not counted)")
+
+
+class DashboardOccupancy(BaseModel):
+    """Active beds of one building by status."""
+
+    property_id: UUID
+    name: str
+    beds_total: int
+    vacant: int
+    reserved: int
+    occupied: int
+    on_notice: int
+
+
+class DashboardAttention(BaseModel):
+    """Each count equals the length of the list the dashboard links to."""
+
+    pending_onboarding: int = Field(description="GET /onboarding-requests?status=pending")
+    pending_discounts: int = Field(description="GET /discount-requests?status=pending")
+    flagged_expenses_unreviewed: int = Field(description="GET /expenses?flagged=true")
+    provisional_payments_older_than_3_days: int = Field(
+        description="GET /reconciliation/unverified-payments?older_than_days=3"
+    )
+    flagged_payments: int = Field(description="GET /payments?status=flagged")
+    cash_in_hand_total_paise: int = Field(description="Sum of in_hand_paise from GET /cash/balances")
+    overstaying_residents: int = Field(
+        description="Residents on notice whose expected vacate date is before today (IST) and who haven't moved out"
+    )
+
+
+class Dashboard(BaseModel):
+    pnl: list[DashboardPnl]
+    occupancy: list[DashboardOccupancy]
+    attention: DashboardAttention
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str
