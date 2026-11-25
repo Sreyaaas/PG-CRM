@@ -38,8 +38,9 @@ function BedTile({ bed, isOwner }: { bed: BoardBed; isOwner: boolean }) {
 
   const content = (
     <div className="flex h-full flex-col justify-between gap-2.5">
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-[15px] font-semibold text-ink tabular-nums">{bed.label}</span>
+      {/* The badge wraps under the label on narrow tiles; the label itself never breaks ("101-A", not "101-" / "A"). */}
+      <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
+        <span className="whitespace-nowrap text-[15px] font-semibold text-ink tabular-nums">{bed.label}</span>
         <StatusBadge kind="bed" value={bed.status} />
       </div>
 
