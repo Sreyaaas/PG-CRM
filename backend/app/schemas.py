@@ -720,6 +720,37 @@ class Complaint(BaseModel):
     resolution_note: str | None
 
 
+Gstin = Annotated[str, StringConstraints(pattern=r"^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$")]
+MessageLanguage = Literal["en", "kn", "hi", "ta", "te"]
+
+
+class Organization(BaseModel):
+    id: UUID
+    name: str = Field(description="Business name shown on receipts and the Reception poster")
+    gstin: str | None
+    whatsapp_language: MessageLanguage = Field(description="Language of WhatsApp messages (BE-35 templates)")
+    receipt_footer: str | None
+    created_at: datetime
+
+
+class OrganizationUpdate(BaseModel):
+    """Owner only. Partial update: only the fields sent change. Send null to clear gstin / receipt_footer."""
+
+    model_config = {"extra": "forbid"}
+
+    name: Annotated[str, StringConstraints(min_length=1, max_length=120, strip_whitespace=True)] = _optional()
+    gstin: Gstin | None = None
+    whatsapp_language: MessageLanguage = _optional()
+    receipt_footer: Annotated[str, StringConstraints(max_length=300, strip_whitespace=True)] | None = None
+
+    @model_validator(mode="after")
+    def _not_null(self):
+        for name in ("name", "whatsapp_language"):
+            if name in self.model_fields_set and getattr(self, name) is None:
+                raise ValueError(f"{name} may not be null")
+        return self
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str
