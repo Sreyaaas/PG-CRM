@@ -3,6 +3,11 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { configureApiHandlers, configureAuthGetter } from '@/api/client'
 import { useToast } from '@/components/Toast'
+import { Button } from '@/components/ui/button'
+import { Sheet } from '@/components/ui/sheet'
+import { discardOfflineData } from '@/offline/discard'
+import { useQueueItems } from '@/offline/hooks'
+import { retryQueue } from '@/offline/transport'
 import {
   clearStoredSession,
   getSelectedMembership,
@@ -40,6 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { showToast } = useToast()
+  const queuedCount = useQueueItems().length
+  const [logoutWarningOpen, setLogoutWarningOpen] = useState(false)
 
   const clearAuthAndCache = useCallback(() => {
     clearStoredSession()
@@ -102,10 +109,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  const logout = useCallback(() => {
+  // Logging out wipes the offline cache and the retry queue (FE-51), so warn first if writes are still waiting.
+  const discardAndLogout = useCallback(() => {
+    setLogoutWarningOpen(false)
     clearAuthAndCache()
+    void discardOfflineData()
     navigate('/login', { replace: true })
   }, [clearAuthAndCache, navigate])
+
+  const logout = useCallback(() => {
+    if (retryQueue.getSnapshot().length > 0) {
+      setLogoutWarningOpen(true)
+      return
+    }
+    discardAndLogout()
+  }, [discardAndLogout])
 
   const membership = getSelectedMembership(session)
 
@@ -121,6 +139,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      <Sheet
+        open={logoutWarningOpen}
+        onClose={() => setLogoutWarningOpen(false)}
+        title="Entries not synced yet"
+        description={`${queuedCount} ${queuedCount === 1 ? 'entry is' : 'entries are'} still waiting to sync. If you log out now, ${queuedCount === 1 ? 'it' : 'they'} will be lost and never recorded.`}
+        footer={
+          <>
+            <Button type="button" variant="secondary" onClick={() => setLogoutWarningOpen(false)}>
+              Stay signed in
+            </Button>
+            <Button type="button" variant="danger" onClick={discardAndLogout}>
+              Log out and discard
+            </Button>
+          </>
+        }
+      >
+        <p className="text-[14px] text-muted">Go back online and let them sync first if you can.</p>
+      </Sheet>
     </AuthContext.Provider>
   )
 }
