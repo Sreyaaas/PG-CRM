@@ -86,7 +86,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins,  # prod: only the real https frontend (enforced in config)
         allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "X-Org-Id", "X-Request-ID"],
+        allow_headers=["Authorization", "Content-Type", "X-Org-Id", "X-Request-ID", "Idempotency-Key"],
         expose_headers=["X-Request-ID", "Retry-After"],
     )
     errors.install(app)
