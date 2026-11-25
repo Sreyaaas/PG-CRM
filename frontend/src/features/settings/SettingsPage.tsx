@@ -19,6 +19,7 @@ import { ApiError, apiClient } from '@/api/client'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
 import { OrgDetailsCard } from './OrgDetailsCard'
+import { PalettePicker } from './PalettePicker'
 import { Card, CardBody, CardHeader, CardList } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -380,6 +381,7 @@ export function SettingsPage() {
             ]}
             onChange={(value) => update('theme', value)}
           />
+          <PalettePicker value={prefs.palette} onChange={(value) => update('palette', value)} />
           <SegmentedPair<DensityChoice>
             label="Density"
             value={prefs.density}

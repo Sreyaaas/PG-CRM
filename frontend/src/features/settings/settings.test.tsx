@@ -10,7 +10,9 @@ import {
   DENSITY_STORAGE_KEY,
   RADIUS_STORAGE_KEY,
   THEME_STORAGE_KEY,
+  PALETTE_STORAGE_KEY,
   initAppearance,
+  resetAppearanceForTest,
 } from './appearance'
 import { resetInstallPromptForTest } from './installPrompt'
 
@@ -235,6 +237,46 @@ describe('Settings (FE-05)', () => {
     expect(document.documentElement.dataset.theme).toBe('dark')
     expect(document.documentElement.dataset.density).toBe('compact')
     expect(document.documentElement.dataset.radius).toBe('sharp')
+  })
+
+  test('[FE-05/AC3] a colour palette applies to the whole app at once and survives a reload', () => {
+    resetAppearanceForTest()
+    mockDefaultFetch()
+    seedSession(OWNER_ME)
+    renderApp(['/owner/settings'])
+
+    const group = screen.getByRole('radiogroup', { name: 'Colour palette' })
+    expect(within(group).getByRole('radio', { name: /Marigold/ })).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(within(group).getByRole('radio', { name: /Lagoon/ }))
+
+    expect(document.documentElement.dataset.palette).toBe('lagoon')
+    expect(within(group).getByRole('radio', { name: /Lagoon/ })).toHaveAttribute('aria-checked', 'true')
+    expect(window.localStorage.getItem(PALETTE_STORAGE_KEY)).toBe('lagoon')
+
+    delete document.documentElement.dataset.palette
+    initAppearance()
+    expect(document.documentElement.dataset.palette).toBe('lagoon')
+
+    // Marigold is the default and needs no attribute.
+    fireEvent.click(within(group).getByRole('radio', { name: /Marigold/ }))
+    expect(document.documentElement.dataset.palette).toBeUndefined()
+  })
+
+  test('[FE-05/AC3] the top-bar toggle switches light and dark, and Settings shows the same choice', () => {
+    resetAppearanceForTest()
+    window.localStorage.setItem(THEME_STORAGE_KEY, 'light')
+    mockDefaultFetch()
+    seedSession(OWNER_ME)
+    renderApp(['/owner/settings'])
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to dark mode' }))
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark')
+    expect(screen.getByRole('button', { name: 'Dark' })).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to light mode' }))
+    expect(document.documentElement.dataset.theme).toBe('light')
+    expect(screen.getByRole('button', { name: 'Light' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   test('[FE-05/AC4] Install section shows iOS steps, Install button on beforeinstallprompt, and nothing when standalone', async () => {
