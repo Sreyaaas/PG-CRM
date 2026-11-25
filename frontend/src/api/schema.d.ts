@@ -1887,6 +1887,11 @@ export interface components {
              * @description max(0, today (IST) - oldest_due_date). 0 on the due day itself
              */
             days_overdue: number;
+            /**
+             * Whatsapp Url
+             * @description wa.me link with the rent reminder (outstanding, oldest due date, link to that invoice)
+             */
+            whatsapp_url: string;
         };
         /** ErrorDetail */
         ErrorDetail: {
@@ -2138,6 +2143,16 @@ export interface components {
             voided_at: string | null;
             /** Void Reason */
             void_reason: string | null;
+            /**
+             * Invoice Url
+             * @description Public invoice page for the resident
+             */
+            invoice_url: string;
+            /**
+             * Whatsapp Url
+             * @description wa.me link with the invoice message, ready to send
+             */
+            whatsapp_url: string;
         };
         /** JoinInfo */
         JoinInfo: {
@@ -3043,6 +3058,11 @@ export interface components {
              * @description Oldest first
              */
             entries: components["schemas"]["LedgerEntry"][];
+            /**
+             * Whatsapp Url
+             * @description wa.me rent reminder, as on GET /dues; null when nothing is owed
+             */
+            whatsapp_url: string | null;
         };
         /**
          * ResidentProfileUpdate

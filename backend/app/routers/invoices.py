@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException
 from psycopg import Cursor
 from psycopg.rows import DictRow
 
-from app import billing
+from app import billing, whatsapp
 from app.deps import Org, require_owner
 from app.schemas import (
     DueRow,
@@ -28,10 +28,31 @@ from app.schemas import (
 router = APIRouter(tags=["invoices"])
 
 _NOT_FOUND = {404: {"description": "Not found"}}
-_INVOICE_COLUMNS = """
-  id, invoice_no, kind::text AS kind, property_id, resident_id, stay_id, period_start, period_end, amount_paise,
-  due_date, notes, created_by, created_at, voided_at, void_reason
+INVOICE_SELECT = """
+  SELECT i.id, i.invoice_no, i.kind::text AS kind, i.property_id, i.resident_id, i.stay_id, i.period_start,
+         i.period_end, i.amount_paise, i.due_date, i.notes, i.created_by, i.created_at, i.voided_at, i.void_reason,
+         i.public_token, r.full_name AS resident_name, r.phone AS resident_phone
+    FROM invoices i
+    JOIN residents r ON r.id = i.resident_id
 """
+
+
+def invoice_out(row: dict) -> Invoice:
+    """The invoice plus its public page and a ready wa.me message (BE-35 `invoice` template)."""
+    phone, name, token = row.pop("resident_phone"), row.pop("resident_name"), row.pop("public_token")
+    return Invoice(
+        **row,
+        invoice_url=whatsapp.document_url(token),
+        whatsapp_url=whatsapp.invoice_link(
+            phone=phone,
+            full_name=name,
+            invoice_no=row["invoice_no"],
+            amount_paise=row["amount_paise"],
+            due_date=row["due_date"],
+            token=token,
+        ),
+    )
+
 
 # Monthly rent for one calendar month. Eligible: monthly stays that are active or on notice, that checked in
 # before the month (the check-in month is the pro-rata invoice from BE-22), and either
@@ -86,50 +107,73 @@ def create_one_off(body: OneOffInvoiceCreate, ctx: Org) -> Invoice:
     with ctx.tx() as cur:
         require_owner(cur, "Only the owner can add a one-off charge.")
         cur.execute(
-            f"""INSERT INTO invoices (org_id, property_id, resident_id, kind, amount_paise, due_date, notes)
-                SELECT org_id, property_id, id, 'other', %s, %s, %s FROM residents WHERE id = %s
-                RETURNING {_INVOICE_COLUMNS}""",
+            """INSERT INTO invoices (org_id, property_id, resident_id, kind, amount_paise, due_date, notes)
+               SELECT org_id, property_id, id, 'other', %s, %s, %s FROM residents WHERE id = %s
+               RETURNING id""",
             (body.amount_paise, body.due_date, body.notes, body.resident_id),
         )
         row = cur.fetchone()
-    if row is None:
-        raise HTTPException(404, "Resident not found")
-    return Invoice(**row)
+        if row is None:
+            raise HTTPException(404, "Resident not found")
+        cur.execute(INVOICE_SELECT + " WHERE i.id = %s", (row["id"],))
+        return invoice_out(cur.fetchone())
 
 
 _DUES = """
   WITH billed AS (
-    SELECT resident_id, amount_paise, due_date,
+    SELECT resident_id, amount_paise, due_date, created_at, id, public_token,
            sum(amount_paise) OVER (PARTITION BY resident_id ORDER BY due_date, created_at, id) AS running
       FROM invoices WHERE voided_at IS NULL
   ),
   invoiced AS (SELECT resident_id, sum(amount_paise) AS total FROM billed GROUP BY resident_id),
   paid AS (SELECT resident_id, sum(amount_paise) AS total FROM payments WHERE voided_at IS NULL GROUP BY resident_id),
   owing AS (
-    SELECT i.resident_id, i.total - coalesce(p.total, 0) AS outstanding,
-           -- payments cover the oldest invoices first
-           (SELECT min(b.due_date) FROM billed b
-             WHERE b.resident_id = i.resident_id AND b.running > coalesce(p.total, 0)) AS oldest_due_date
-      FROM invoiced i LEFT JOIN paid p ON p.resident_id = i.resident_id
+    SELECT i.resident_id, i.total - coalesce(p.total, 0) AS outstanding, oldest.due_date AS oldest_due_date,
+           oldest.public_token AS oldest_token
+      FROM invoiced i
+      LEFT JOIN paid p ON p.resident_id = i.resident_id
+      -- payments cover the oldest invoices first: the oldest one not fully covered
+      LEFT JOIN LATERAL (SELECT b.due_date, b.public_token FROM billed b
+                          WHERE b.resident_id = i.resident_id AND b.running > coalesce(p.total, 0)
+                          ORDER BY b.due_date, b.created_at, b.id LIMIT 1) oldest ON true
   )
   SELECT r.id AS resident_id, r.full_name, r.phone, b.label AS bed_label, o.outstanding AS outstanding_paise,
-         o.oldest_due_date, greatest(0, app.today_ist() - o.oldest_due_date) AS days_overdue
+         o.oldest_due_date, greatest(0, app.today_ist() - o.oldest_due_date) AS days_overdue,
+         pr.name AS property_name, o.oldest_token
     FROM owing o
     JOIN residents r ON r.id = o.resident_id
+    JOIN properties pr ON pr.id = r.property_id
     LEFT JOIN stays s ON s.resident_id = r.id AND s.status <> 'vacated'
     LEFT JOIN beds b ON b.id = s.bed_id
    WHERE o.outstanding > 0
      AND (%(property_id)s::uuid IS NULL OR r.property_id = %(property_id)s::uuid)
+     AND (%(resident_id)s::uuid IS NULL OR r.id = %(resident_id)s::uuid)
    ORDER BY days_overdue DESC, o.outstanding DESC, r.full_name
 """
+
+
+def _reminder_link(row: dict) -> str:
+    """BE-35 `reminder`: what they owe in total, the oldest unpaid due date, and that invoice's page."""
+    return whatsapp.reminder_link(
+        phone=row["phone"],
+        full_name=row["full_name"],
+        outstanding_paise=row["outstanding_paise"],
+        property_name=row["property_name"],
+        due_date=row["oldest_due_date"],
+        token=row["oldest_token"],
+    )
+
+
+def _due_row(row: dict) -> DueRow:
+    return DueRow(**row, whatsapp_url=_reminder_link(row))
 
 
 @router.get("/dues", response_model=list[DueRow])
 def dues(ctx: Org, property_id: UUID | None = None) -> list[DueRow]:
     """Residents who owe money, most overdue first (RLS: caretakers see their buildings only)."""
     with ctx.tx() as cur:
-        cur.execute(_DUES, {"property_id": property_id})
-        return [DueRow(**r) for r in cur.fetchall()]
+        cur.execute(_DUES, {"property_id": property_id, "resident_id": None})
+        return [_due_row(r) for r in cur.fetchall()]
 
 
 _LEDGER = """
@@ -185,8 +229,14 @@ def _ledger(cur: Cursor[DictRow], resident_id: UUID) -> ResidentLedger | None:
                 balance_paise=balance,
             )
         )
+    cur.execute(_DUES, {"property_id": None, "resident_id": resident_id})
+    due = cur.fetchone()
     return ResidentLedger(
-        resident_id=resident["id"], full_name=resident["full_name"], outstanding_paise=balance, entries=entries
+        resident_id=resident["id"],
+        full_name=resident["full_name"],
+        outstanding_paise=balance,
+        entries=entries,
+        whatsapp_url=_reminder_link(due) if due else None,
     )
 
 
