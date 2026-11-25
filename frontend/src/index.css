@@ -22,10 +22,13 @@
   --muted: #6f675c;
   --subtle: #8c8a83;
 
+  /* Brand accent. Palettes (html[data-palette]) change these four; the tints below follow automatically. */
   --brand: #f5b31f;
   --on-brand: #1c1917;
-  --brand-soft: color-mix(in oklab, #f5b31f 16%, white);
-  --brand-ink: #8a5a00;
+  --brand-ink-l: #8a5a00;
+  --brand-ink-d: #f5c451;
+  --brand-soft: color-mix(in oklab, var(--brand) 16%, white);
+  --brand-ink: var(--brand-ink-l);
 
   --danger: #c2412d;
   --danger-soft: color-mix(in oklab, #c2412d 10%, white);
@@ -54,6 +57,33 @@
   --bottomnav-h: 64px;
 }
 
+/* Colour palettes: only the accent changes, and every palette works in light and dark.
+   Text on the accent keeps AA contrast (dark text on Marigold, white on the others). */
+:root[data-palette='neem'] {
+  --brand: #1f7a4d;
+  --on-brand: #ffffff;
+  --brand-ink-l: #1a6641;
+  --brand-ink-d: #6fd09d;
+}
+:root[data-palette='lagoon'] {
+  --brand: #0e7680;
+  --on-brand: #ffffff;
+  --brand-ink-l: #0b5f67;
+  --brand-ink-d: #5cc9d2;
+}
+:root[data-palette='terracotta'] {
+  --brand: #b9471b;
+  --on-brand: #ffffff;
+  --brand-ink-l: #9a3a14;
+  --brand-ink-d: #f2946a;
+}
+:root[data-palette='ocean'] {
+  --brand: #2257d6;
+  --on-brand: #ffffff;
+  --brand-ink-l: #1b46ad;
+  --brand-ink-d: #86a9ff;
+}
+
 :root[data-density='compact'] {
   --ctl-h: 38px;
   --topbar-h: 48px;
@@ -79,8 +109,8 @@
   --on-ink: #0f0e0d;
   --muted: #aaa397;
   --subtle: #7f796f;
-  --brand-soft: color-mix(in oklab, #f5b31f 18%, #171614);
-  --brand-ink: #f5c451;
+  --brand-soft: color-mix(in oklab, var(--brand) 18%, #171614);
+  --brand-ink: var(--brand-ink-d);
   --danger: #ec7a64;
   --danger-soft: color-mix(in oklab, #c2412d 24%, #171614);
   --danger-ink: #f6ae9f;
@@ -113,8 +143,8 @@
     --on-ink: #0f0e0d;
     --muted: #aaa397;
     --subtle: #7f796f;
-    --brand-soft: color-mix(in oklab, #f5b31f 18%, #171614);
-    --brand-ink: #f5c451;
+    --brand-soft: color-mix(in oklab, var(--brand) 18%, #171614);
+    --brand-ink: var(--brand-ink-d);
     --danger: #ec7a64;
     --danger-soft: color-mix(in oklab, #c2412d 24%, #171614);
     --danger-ink: #f6ae9f;

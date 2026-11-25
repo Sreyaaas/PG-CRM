@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeftRight, ChevronRight, LogOut, Plus, Settings } from 'lucide-react'
+import { ArrowLeftRight, ChevronRight, LogOut, Moon, Plus, Settings, Sun } from 'lucide-react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Avatar, BrandMark } from '@/components/ui/misc'
 import { Sheet } from '@/components/ui/sheet'
+import { resolvedTheme, useAppearance } from '@/features/settings/appearance'
 import { cn } from '@/lib/utils'
 
 export interface ShellNavItem {
@@ -172,9 +173,27 @@ export function TopBar({
           <BrandMark size="sm" />
           <span className="truncate text-[15px] font-semibold tracking-[-0.01em] text-ink">{orgName}</span>
         </Link>
+        <ThemeToggle />
         <AccountMenu account={account} />
       </div>
     </header>
+  )
+}
+
+/** One tap between light and dark. Follows the phone's setting until the first tap. */
+export function ThemeToggle() {
+  const { prefs, update } = useAppearance()
+  const dark = resolvedTheme(prefs.theme) === 'dark'
+  return (
+    <button
+      type="button"
+      onClick={() => update('theme', dark ? 'light' : 'dark')}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={dark ? 'Light mode' : 'Dark mode'}
+      className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-ink active:bg-surface-2 [&_svg]:size-5"
+    >
+      {dark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
+    </button>
   )
 }
 
