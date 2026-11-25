@@ -348,9 +348,10 @@ describe('Owner expense review', () => {
 
     const card = await screen.findByTestId('expense-card')
     expect(card.className).toContain('bg-warning-soft')
-    expect(within(card).getByText('₹2,500')).toBeInTheDocument()
+    // The card mounts before every field has rendered on a slow runner; wait for its content once.
+    expect(await within(card).findByText('₹2,500')).toBeInTheDocument()
     expect(within(card).getByText('Tanker without bill, borewell dry')).toBeInTheDocument()
-    expect(within(card).getByText(/Ravi Kumar/)).toBeInTheDocument()
+    expect(await within(card).findByText(/Ravi Kumar/)).toBeInTheDocument()
     expect(within(card).getByText('No bill: review')).toBeInTheDocument()
     expect(within(card).getByRole('link', { name: /View location on map/ })).toHaveAttribute(
       'href',
