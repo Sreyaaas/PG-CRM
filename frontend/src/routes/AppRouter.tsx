@@ -20,6 +20,8 @@ import { JoinPage } from '@/features/join/JoinPage'
 import { BedBoardPage } from '@/features/beds/BedBoardPage'
 import { ResidentDetailPage } from '@/features/residents/ResidentDetailPage'
 import { SignupPage } from './SignupPage'
+import { ExpensesPage } from '@/features/expenses/ExpensesPage'
+import { LogExpensePage } from '@/features/expenses/LogExpensePage'
 
 export function AppRouter() {
   return (
@@ -46,6 +48,8 @@ export function AppRouter() {
         <Route path="beds" element={<BedBoardPage />} />
         <Route path="residents/:residentId" element={<ResidentDetailPage />} />
         <Route path="money" element={<OwnerDashboardPage section="Money" />} />
+        <Route path="expenses" element={<ExpensesPage />} />
+        <Route path="expenses/new" element={<LogExpensePage />} />
         <Route path="more" element={<OwnerMorePage />} />
         <Route path="staff" element={<StaffPage />} />
         <Route path="settings" element={<SettingsPage />} />
@@ -58,7 +62,8 @@ export function AppRouter() {
         <Route path="check-ins" element={<CheckInsPage />} />
         <Route path="check-ins/:requestId" element={<CheckInDetailPage />} />
         <Route path="payments" element={<CaretakerHomePage section="Payments" />} />
-        <Route path="expenses" element={<CaretakerHomePage section="Expenses" />} />
+        <Route path="expenses" element={<ExpensesPage />} />
+        <Route path="expenses/new" element={<LogExpensePage />} />
         <Route path="more" element={<CaretakerMorePage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
