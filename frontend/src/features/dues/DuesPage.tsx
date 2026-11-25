@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FilePlus2 } from 'lucide-react'
+import { FilePlus2, HandCoins } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
 import { Money } from '@/components/Money'
@@ -79,10 +79,18 @@ export function DuesPage() {
         description="Residents who owe rent, most overdue first."
         actions={
           isOwner && (
-            <Button type="button" variant="secondary" disabled={generate.isPending} onClick={handleGenerate}>
-              <FilePlus2 aria-hidden="true" />
-              {generate.isPending ? 'Creating invoices…' : "Generate this month's invoices"}
-            </Button>
+            <>
+              <Button asChild variant="secondary">
+                <Link to="/owner/money/cash">
+                  <HandCoins aria-hidden="true" />
+                  Cash in hand
+                </Link>
+              </Button>
+              <Button type="button" variant="secondary" disabled={generate.isPending} onClick={handleGenerate}>
+                <FilePlus2 aria-hidden="true" />
+                {generate.isPending ? 'Creating invoices…' : "Generate this month's invoices"}
+              </Button>
+            </>
           )
         }
       />

@@ -913,6 +913,16 @@ class Invoice(BaseModel):
     created_at: datetime
     voided_at: datetime | None
     void_reason: str | None
+    invoice_url: str = Field(description="Public invoice page for the resident")
+    whatsapp_url: str = Field(description="wa.me link with the invoice message, ready to send")
+
+
+class InvoiceUpi(BaseModel):
+    upi_uri: str | None = Field(
+        description="upi://pay?pa=..&pn=..&mc=..&am=..&tn=<invoice_no>&cu=INR for a dynamic QR. Null when the "
+        "property has no UPI ID or nothing is left to pay: show the fallback UPI ID / bank details instead"
+    )
+    amount_paise: int = Field(description="Still due on this invoice: amount minus non-void payments against it")
 
 
 class GenerateDueRequest(BaseModel):
@@ -948,6 +958,9 @@ class DueRow(BaseModel):
     outstanding_paise: int = Field(description="Non-void invoices minus non-void payments")
     oldest_due_date: date = Field(description="Due date of the oldest invoice not yet covered by payments")
     days_overdue: int = Field(description="max(0, today (IST) - oldest_due_date). 0 on the due day itself")
+    whatsapp_url: str = Field(
+        description="wa.me link with the rent reminder (outstanding, oldest due date, link to that invoice)"
+    )
 
 
 class LedgerEntry(BaseModel):
@@ -966,6 +979,7 @@ class ResidentLedger(BaseModel):
     full_name: str
     outstanding_paise: int
     entries: list[LedgerEntry] = Field(description="Oldest first")
+    whatsapp_url: str | None = Field(description="wa.me rent reminder, as on GET /dues; null when nothing is owed")
 
 
 PaymentMethod = Literal["cash", "upi", "bank_transfer"]
@@ -1024,6 +1038,122 @@ class Payment(BaseModel):
     public_token: str
     receipt_url: str = Field(description="Public receipt page for the resident")
     whatsapp_url: str = Field(description="wa.me link with the receipt message, ready to send")
+
+
+# ---- Public documents (BE-34) ----
+# /public/documents/{token}: what a resident sees from a receipt / invoice / settlement link. Built by
+# api.public_get_document. Never add phone, email, KYC or other residents' data here.
+
+
+class PublicPaymentReceipt(BaseModel):
+    type: Literal["payment_receipt"]
+    receipt_no: str = Field(description="First 8 characters of the payment id")
+    amount_paise: int
+    method: PaymentMethod
+    utr_number: str | None
+    status: Literal["recorded", "provisional", "verified", "flagged", "void"]
+    received_at: datetime
+    resident_name: str
+    property_name: str
+    invoice_no: str | None
+    period_start: date | None
+    period_end: date | None
+
+
+class PublicInvoice(BaseModel):
+    type: Literal["invoice"]
+    invoice_no: str
+    kind: InvoiceKind
+    amount_paise: int
+    paid_paise: int = Field(description="Non-void payments logged against this invoice")
+    outstanding_paise: int = Field(description="Still due: max(0, amount - paid); 0 once void")
+    due_date: date
+    period_start: date | None
+    period_end: date | None
+    status: Literal["void"] | None = Field(description='"void" for a voided invoice, otherwise null')
+    resident_name: str
+    property_name: str
+    upi_vpa: str | None
+    upi_payee_name: str | None
+    upi_mcc: str | None
+    fallback_upi_id: str | None
+    bank_details: str | None
+    upi_uri: str | None = Field(
+        description="Dynamic UPI payload for outstanding_paise (BE-33). Null when the property has no UPI ID or "
+        "nothing is due: show fallback_upi_id / bank_details"
+    )
+
+
+class PublicExitSettlement(BaseModel):
+    type: Literal["exit_settlement"]
+    resident_name: str
+    property_name: str
+    check_in_date: date
+    vacate_date: date | None
+    deposit_paise: int
+    exit_deduction_paise: int
+    other_deductions_paise: int
+    other_deductions_note: str | None
+    pending_dues_paise: int
+    net_refund_paise: int = Field(description="Positive: refunded to the resident. Negative: the resident still owes")
+    refund_method: PaymentMethod | None
+    refund_utr: str | None
+    settled_at: datetime
+
+
+PublicDocument = Annotated[PublicPaymentReceipt | PublicInvoice | PublicExitSettlement, Field(discriminator="type")]
+
+
+# ---- Exit settlement (BE-50) ----
+
+
+class SettlementPreview(BaseModel):
+    deposit_held_paise: int = Field(description="Non-void payments against this stay's deposit invoices")
+    exit_deduction_paise: int = Field(
+        description="What the resident accepted on the onboarding form; the property's exit deduction if none"
+    )
+    pending_dues_paise: int = Field(
+        description="Still owed on non-deposit invoices: this stay's, plus one-off charges (they have no stay)"
+    )
+    suggested_net_refund_paise: int = Field(
+        description="deposit - exit deduction - pending dues. Negative: the resident still owes"
+    )
+
+
+SettlementNote = Annotated[str, StringConstraints(min_length=3, max_length=500, strip_whitespace=True)]
+
+
+class SettlementCreate(BaseModel):
+    """Owner only. Deposit, exit deduction and pending dues are computed by the server (as in the preview)."""
+
+    model_config = {"extra": "forbid"}
+
+    other_deductions_paise: Paise = 0
+    other_deductions_note: SettlementNote | None = Field(
+        default=None, description="Required when other_deductions_paise > 0 (e.g. Broken cupboard door)"
+    )
+    refund_method: PaymentMethod | None = None
+    refund_utr: str | None = Field(
+        default=None, description="12-digit UPI/bank reference of the refund. Spaces removed"
+    )
+
+    @model_validator(mode="after")
+    def _rules(self):
+        if self.other_deductions_paise > 0 and not self.other_deductions_note:
+            raise ValueError("Say what the other deductions are for")
+        if self.refund_utr is not None:
+            self.refund_utr = "".join(self.refund_utr.split()) or None
+        if self.refund_utr is not None and not (len(self.refund_utr) == 12 and self.refund_utr.isdigit()):
+            raise ValueError("The UTR must be exactly 12 digits")
+        return self
+
+
+class SettlementCreated(BaseModel):
+    id: UUID
+    net_refund_paise: int = Field(description="Positive: refund to the resident. Negative: the resident still owes")
+    public_token: str
+    settlement_url: str = Field(description="Public settlement page for the resident")
+    whatsapp_url: str = Field(description="wa.me link with the settlement message, ready to send")
 
 
 # ---- Caretaker cash (BE-41) ----
@@ -1159,6 +1289,56 @@ class AuditLogEntry(BaseModel):
 class AuditLogPage(BaseModel):
     items: list[AuditLogEntry] = Field(description="Newest first")
     next_cursor: int | None = Field(description="Pass as `cursor` for the next (older) page. None on the last page")
+
+
+# ---- Owner dashboard (BE-43) ----
+
+
+class DashboardPnl(BaseModel):
+    """One `api.owner_pnl(from, to)` row: payments by IST received date, expenses by expense date, voids left out."""
+
+    property_id: UUID
+    property_name: str
+    collected_verified_paise: int = Field(description="UPI / bank payments verified (statement match or by the owner)")
+    collected_cash_paise: int = Field(description="Cash payments")
+    provisional_paise: int = Field(description="UPI / bank payments not yet seen in a statement")
+    flagged_paise: int = Field(description="Flagged payments (statement amount mismatch or flagged by the owner)")
+    expenses_paise: int
+    net_paise: int = Field(description="verified + cash - expenses (provisional and flagged are not counted)")
+
+
+class DashboardOccupancy(BaseModel):
+    """Active beds of one building by status."""
+
+    property_id: UUID
+    name: str
+    beds_total: int
+    vacant: int
+    reserved: int
+    occupied: int
+    on_notice: int
+
+
+class DashboardAttention(BaseModel):
+    """Each count equals the length of the list the dashboard links to."""
+
+    pending_onboarding: int = Field(description="GET /onboarding-requests?status=pending")
+    pending_discounts: int = Field(description="GET /discount-requests?status=pending")
+    flagged_expenses_unreviewed: int = Field(description="GET /expenses?flagged=true")
+    provisional_payments_older_than_3_days: int = Field(
+        description="GET /reconciliation/unverified-payments?older_than_days=3"
+    )
+    flagged_payments: int = Field(description="GET /payments?status=flagged")
+    cash_in_hand_total_paise: int = Field(description="Sum of in_hand_paise from GET /cash/balances")
+    overstaying_residents: int = Field(
+        description="Residents on notice whose expected vacate date is before today (IST) and who haven't moved out"
+    )
+
+
+class Dashboard(BaseModel):
+    pnl: list[DashboardPnl]
+    occupancy: list[DashboardOccupancy]
+    attention: DashboardAttention
 
 
 class ErrorDetail(BaseModel):

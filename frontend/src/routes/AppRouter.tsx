@@ -19,6 +19,8 @@ import { PosterPage } from '@/features/poster/PosterPage'
 import { JoinPage } from '@/features/join/JoinPage'
 import { BedBoardPage } from '@/features/beds/BedBoardPage'
 import { ResidentDetailPage } from '@/features/residents/ResidentDetailPage'
+import { MyCashPage } from '@/features/cash/MyCashPage'
+import { OwnerCaretakerCashPage, OwnerCashPage } from '@/features/cash/OwnerCashPage'
 import { SignupPage } from './SignupPage'
 import { DuesPage } from '@/features/dues/DuesPage'
 import { LedgerPage } from '@/features/dues/LedgerPage'
@@ -48,6 +50,8 @@ export function AppRouter() {
         <Route path="beds" element={<BedBoardPage />} />
         <Route path="residents/:residentId" element={<ResidentDetailPage />} />
         <Route path="money" element={<DuesPage />} />
+        <Route path="money/cash" element={<OwnerCashPage />} />
+        <Route path="money/cash/:userId" element={<OwnerCaretakerCashPage />} />
         <Route path="residents/:residentId/ledger" element={<LedgerPage />} />
         <Route path="more" element={<OwnerMorePage />} />
         <Route path="staff" element={<StaffPage />} />
@@ -63,6 +67,7 @@ export function AppRouter() {
         <Route path="payments" element={<DuesPage />} />
         <Route path="residents/:residentId/ledger" element={<LedgerPage />} />
         <Route path="expenses" element={<CaretakerHomePage section="Expenses" />} />
+        <Route path="cash" element={<MyCashPage />} />
         <Route path="more" element={<CaretakerMorePage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>

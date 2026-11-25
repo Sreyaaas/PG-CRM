@@ -28,6 +28,11 @@ router = APIRouter(prefix="/reconciliation", tags=["reconciliation"])
 MAX_BYTES = 5 * 1024 * 1024
 _OWNER_ONLY = "Only the owner can reconcile statements."
 _NOT_FOUND = {404: {"description": "Not found"}}
+# Provisional, non-void payments (alias `pm`) logged at least %(older_than_days)s ago whose UTR no uploaded statement
+# has ever contained. Shared with the dashboard count (BE-43), so the count and this list can never drift apart.
+UNVERIFIED_WHERE = """pm.status = 'provisional' AND pm.voided_at IS NULL
+  AND pm.received_at <= now() - make_interval(days => %(older_than_days)s)
+  AND NOT EXISTS (SELECT 1 FROM csv_import_rows r WHERE r.utr_number = pm.utr_number)"""
 
 
 def _payment_for(cur: Cursor[DictRow], utr: str | None) -> dict | None:
@@ -167,11 +172,7 @@ def unverified_payments(
     with ctx.tx() as cur:
         require_owner(cur, _OWNER_ONLY)
         cur.execute(
-            PAYMENT_SELECT
-            + """ WHERE pm.status = 'provisional' AND pm.voided_at IS NULL
-                    AND pm.received_at <= now() - make_interval(days => %s)
-                    AND NOT EXISTS (SELECT 1 FROM csv_import_rows r WHERE r.utr_number = pm.utr_number)
-                  ORDER BY pm.received_at""",
-            (older_than_days,),
+            PAYMENT_SELECT + " WHERE " + UNVERIFIED_WHERE + " ORDER BY pm.received_at",
+            {"older_than_days": older_than_days},
         )
         return [payment_out(r) for r in cur.fetchall()]
