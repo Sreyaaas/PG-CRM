@@ -1,4 +1,4 @@
-import { BedDouble, MessageSquareWarning, Building2, CheckCircle2, Home, IndianRupee, Menu, Receipt, Sun, UserCheck, UserPlus, Users } from 'lucide-react'
+import { BedDouble, HandCoins, MessageSquareWarning, Building2, CheckCircle2, Home, IndianRupee, Menu, Receipt, Sun, UserCheck, UserPlus, Users } from 'lucide-react'
 import type { QuickAction, ShellNavItem } from './ShellParts'
 
 /* Caretaker: Home · Check-ins · [+] · Payments · More */
@@ -8,6 +8,8 @@ export const CARETAKER_NAV = {
   checkIns: { label: 'Check-ins', to: '/caretaker/check-ins', icon: <UserCheck /> },
   payments: { label: 'Payments', to: '/caretaker/payments', icon: <IndianRupee /> },
   expenses: { label: 'Expenses', to: '/caretaker/expenses', icon: <Receipt /> },
+  complaints: { label: 'Complaints', to: '/caretaker/complaints', icon: <MessageSquareWarning /> },
+  cash: { label: 'My cash', to: '/caretaker/cash', icon: <HandCoins /> },
   more: {
     label: 'More',
     to: '/caretaker/more',
