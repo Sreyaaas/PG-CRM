@@ -4230,6 +4230,210 @@
         }
       }
     },
+    "/api/v1/stays/{stay_id}/settlement-preview": {
+      "get": {
+        "tags": [
+          "settlements"
+        ],
+        "summary": "Settlement Preview",
+        "description": "Owner or a caretaker of the building: the numbers to explain to the resident before settling.",
+        "operationId": "settlement_preview_api_v1_stays__stay_id__settlement_preview_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "stay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Stay Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettlementPreview"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/stays/{stay_id}/settlement": {
+      "post": {
+        "tags": [
+          "settlements"
+        ],
+        "summary": "Settle",
+        "description": "Owner only. Records the settlement with the preview's numbers plus any other deductions, and returns the\npublic settlement link and a ready WhatsApp message. Final: it can't be changed afterwards.",
+        "operationId": "settle_api_v1_stays__stay_id__settlement_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "stay_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Stay Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettlementCreated"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Already settled"
+          },
+          "422": {
+            "description": "Not moved out yet"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/invoices/generate-due": {
       "post": {
         "tags": [
@@ -14016,6 +14220,132 @@
         "type": "object",
         "title": "RoomUpdate",
         "description": "Partial update: only the fields sent are changed."
+      },
+      "SettlementCreate": {
+        "properties": {
+          "other_deductions_paise": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Other Deductions Paise",
+            "description": "Amount in paise (\u20b91 = 100)",
+            "default": 0
+          },
+          "other_deductions_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Deductions Note",
+            "description": "Required when other_deductions_paise > 0 (e.g. Broken cupboard door)"
+          },
+          "refund_method": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "cash",
+                  "upi",
+                  "bank_transfer"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Method"
+          },
+          "refund_utr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Utr",
+            "description": "12-digit UPI/bank reference of the refund. Spaces removed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SettlementCreate",
+        "description": "Owner only. Deposit, exit deduction and pending dues are computed by the server (as in the preview)."
+      },
+      "SettlementCreated": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "net_refund_paise": {
+            "type": "integer",
+            "title": "Net Refund Paise",
+            "description": "Positive: refund to the resident. Negative: the resident still owes"
+          },
+          "public_token": {
+            "type": "string",
+            "title": "Public Token"
+          },
+          "settlement_url": {
+            "type": "string",
+            "title": "Settlement Url",
+            "description": "Public settlement page for the resident"
+          },
+          "whatsapp_url": {
+            "type": "string",
+            "title": "Whatsapp Url",
+            "description": "wa.me link with the settlement message, ready to send"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "net_refund_paise",
+          "public_token",
+          "settlement_url",
+          "whatsapp_url"
+        ],
+        "title": "SettlementCreated"
+      },
+      "SettlementPreview": {
+        "properties": {
+          "deposit_held_paise": {
+            "type": "integer",
+            "title": "Deposit Held Paise",
+            "description": "Non-void payments against this stay's deposit invoices"
+          },
+          "exit_deduction_paise": {
+            "type": "integer",
+            "title": "Exit Deduction Paise",
+            "description": "What the resident accepted on the onboarding form; the property's exit deduction if none"
+          },
+          "pending_dues_paise": {
+            "type": "integer",
+            "title": "Pending Dues Paise",
+            "description": "Still owed on non-deposit invoices: this stay's, plus one-off charges (they have no stay)"
+          },
+          "suggested_net_refund_paise": {
+            "type": "integer",
+            "title": "Suggested Net Refund Paise",
+            "description": "deposit - exit deduction - pending dues. Negative: the resident still owes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deposit_held_paise",
+          "exit_deduction_paise",
+          "pending_dues_paise",
+          "suggested_net_refund_paise"
+        ],
+        "title": "SettlementPreview"
       },
       "SignupRequest": {
         "properties": {

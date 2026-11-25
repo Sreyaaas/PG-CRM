@@ -26,6 +26,7 @@ from app.routers import (
     public,
     reconciliation,
     rooms,
+    settlements,
     staff,
     stays,
 )
@@ -106,6 +107,7 @@ def create_app() -> FastAPI:
         discounts.router,
         onboarding.router,
         stays.router,
+        settlements.router,
         invoices.router,
         payments.router,
         reconciliation.router,

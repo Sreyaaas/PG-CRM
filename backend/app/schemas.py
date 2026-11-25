@@ -1104,6 +1104,58 @@ class PublicExitSettlement(BaseModel):
 PublicDocument = Annotated[PublicPaymentReceipt | PublicInvoice | PublicExitSettlement, Field(discriminator="type")]
 
 
+# ---- Exit settlement (BE-50) ----
+
+
+class SettlementPreview(BaseModel):
+    deposit_held_paise: int = Field(description="Non-void payments against this stay's deposit invoices")
+    exit_deduction_paise: int = Field(
+        description="What the resident accepted on the onboarding form; the property's exit deduction if none"
+    )
+    pending_dues_paise: int = Field(
+        description="Still owed on non-deposit invoices: this stay's, plus one-off charges (they have no stay)"
+    )
+    suggested_net_refund_paise: int = Field(
+        description="deposit - exit deduction - pending dues. Negative: the resident still owes"
+    )
+
+
+SettlementNote = Annotated[str, StringConstraints(min_length=3, max_length=500, strip_whitespace=True)]
+
+
+class SettlementCreate(BaseModel):
+    """Owner only. Deposit, exit deduction and pending dues are computed by the server (as in the preview)."""
+
+    model_config = {"extra": "forbid"}
+
+    other_deductions_paise: Paise = 0
+    other_deductions_note: SettlementNote | None = Field(
+        default=None, description="Required when other_deductions_paise > 0 (e.g. Broken cupboard door)"
+    )
+    refund_method: PaymentMethod | None = None
+    refund_utr: str | None = Field(
+        default=None, description="12-digit UPI/bank reference of the refund. Spaces removed"
+    )
+
+    @model_validator(mode="after")
+    def _rules(self):
+        if self.other_deductions_paise > 0 and not self.other_deductions_note:
+            raise ValueError("Say what the other deductions are for")
+        if self.refund_utr is not None:
+            self.refund_utr = "".join(self.refund_utr.split()) or None
+        if self.refund_utr is not None and not (len(self.refund_utr) == 12 and self.refund_utr.isdigit()):
+            raise ValueError("The UTR must be exactly 12 digits")
+        return self
+
+
+class SettlementCreated(BaseModel):
+    id: UUID
+    net_refund_paise: int = Field(description="Positive: refund to the resident. Negative: the resident still owes")
+    public_token: str
+    settlement_url: str = Field(description="Public settlement page for the resident")
+    whatsapp_url: str = Field(description="wa.me link with the settlement message, ready to send")
+
+
 # ---- Caretaker cash (BE-41) ----
 
 

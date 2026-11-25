@@ -710,6 +710,47 @@ export interface paths {
         patch: operations["update_resident_profile_api_v1_residents__resident_id__profile_patch"];
         trace?: never;
     };
+    "/api/v1/stays/{stay_id}/settlement-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Settlement Preview
+         * @description Owner or a caretaker of the building: the numbers to explain to the resident before settling.
+         */
+        get: operations["settlement_preview_api_v1_stays__stay_id__settlement_preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stays/{stay_id}/settlement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Settle
+         * @description Owner only. Records the settlement with the preview's numbers plus any other deductions, and returns the
+         *     public settlement link and a ready WhatsApp message. Final: it can't be changed afterwards.
+         */
+        post: operations["settle_api_v1_stays__stay_id__settlement_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/invoices/generate-due": {
         parameters: {
             query?: never;
@@ -3680,6 +3721,78 @@ export interface components {
             is_ac?: boolean;
             /** Area Sqft */
             area_sqft?: number | null;
+        };
+        /**
+         * SettlementCreate
+         * @description Owner only. Deposit, exit deduction and pending dues are computed by the server (as in the preview).
+         */
+        SettlementCreate: {
+            /**
+             * Other Deductions Paise
+             * @description Amount in paise (₹1 = 100)
+             * @default 0
+             */
+            other_deductions_paise: number;
+            /**
+             * Other Deductions Note
+             * @description Required when other_deductions_paise > 0 (e.g. Broken cupboard door)
+             */
+            other_deductions_note?: string | null;
+            /** Refund Method */
+            refund_method?: ("cash" | "upi" | "bank_transfer") | null;
+            /**
+             * Refund Utr
+             * @description 12-digit UPI/bank reference of the refund. Spaces removed
+             */
+            refund_utr?: string | null;
+        };
+        /** SettlementCreated */
+        SettlementCreated: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Net Refund Paise
+             * @description Positive: refund to the resident. Negative: the resident still owes
+             */
+            net_refund_paise: number;
+            /** Public Token */
+            public_token: string;
+            /**
+             * Settlement Url
+             * @description Public settlement page for the resident
+             */
+            settlement_url: string;
+            /**
+             * Whatsapp Url
+             * @description wa.me link with the settlement message, ready to send
+             */
+            whatsapp_url: string;
+        };
+        /** SettlementPreview */
+        SettlementPreview: {
+            /**
+             * Deposit Held Paise
+             * @description Non-void payments against this stay's deposit invoices
+             */
+            deposit_held_paise: number;
+            /**
+             * Exit Deduction Paise
+             * @description What the resident accepted on the onboarding form; the property's exit deduction if none
+             */
+            exit_deduction_paise: number;
+            /**
+             * Pending Dues Paise
+             * @description Still owed on non-deposit invoices: this stay's, plus one-off charges (they have no stay)
+             */
+            pending_dues_paise: number;
+            /**
+             * Suggested Net Refund Paise
+             * @description deposit - exit deduction - pending dues. Negative: the resident still owes
+             */
+            suggested_net_refund_paise: number;
         };
         /** SignupRequest */
         SignupRequest: {
@@ -6972,6 +7085,160 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    settlement_preview_api_v1_stays__stay_id__settlement_preview_get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                stay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettlementPreview"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    settle_api_v1_stays__stay_id__settlement_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path: {
+                stay_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettlementCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettlementCreated"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Already settled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not moved out yet */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Too Many Requests */
             429: {
