@@ -1045,6 +1045,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dashboard
+         * @description Owner only. P&L for the period, occupancy now, and the counts that need the owner's attention now.
+         */
+        get: operations["dashboard_api_v1_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/expenses": {
         parameters: {
             query?: never;
@@ -1937,6 +1957,118 @@ export interface components {
             raw: {
                 [key: string]: string;
             };
+        };
+        /** Dashboard */
+        Dashboard: {
+            /** Pnl */
+            pnl: components["schemas"]["DashboardPnl"][];
+            /** Occupancy */
+            occupancy: components["schemas"]["DashboardOccupancy"][];
+            attention: components["schemas"]["DashboardAttention"];
+        };
+        /**
+         * DashboardAttention
+         * @description Each count equals the length of the list the dashboard links to.
+         */
+        DashboardAttention: {
+            /**
+             * Pending Onboarding
+             * @description GET /onboarding-requests?status=pending
+             */
+            pending_onboarding: number;
+            /**
+             * Pending Discounts
+             * @description GET /discount-requests?status=pending
+             */
+            pending_discounts: number;
+            /**
+             * Flagged Expenses Unreviewed
+             * @description GET /expenses?flagged=true
+             */
+            flagged_expenses_unreviewed: number;
+            /**
+             * Provisional Payments Older Than 3 Days
+             * @description GET /reconciliation/unverified-payments?older_than_days=3
+             */
+            provisional_payments_older_than_3_days: number;
+            /**
+             * Flagged Payments
+             * @description GET /payments?status=flagged
+             */
+            flagged_payments: number;
+            /**
+             * Cash In Hand Total Paise
+             * @description Sum of in_hand_paise from GET /cash/balances
+             */
+            cash_in_hand_total_paise: number;
+            /**
+             * Overstaying Residents
+             * @description Residents on notice whose expected vacate date is before today (IST) and who haven't moved out
+             */
+            overstaying_residents: number;
+        };
+        /**
+         * DashboardOccupancy
+         * @description Active beds of one building by status.
+         */
+        DashboardOccupancy: {
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /** Name */
+            name: string;
+            /** Beds Total */
+            beds_total: number;
+            /** Vacant */
+            vacant: number;
+            /** Reserved */
+            reserved: number;
+            /** Occupied */
+            occupied: number;
+            /** On Notice */
+            on_notice: number;
+        };
+        /**
+         * DashboardPnl
+         * @description One `api.owner_pnl(from, to)` row: payments by IST received date, expenses by expense date, voids left out.
+         */
+        DashboardPnl: {
+            /**
+             * Property Id
+             * Format: uuid
+             */
+            property_id: string;
+            /** Property Name */
+            property_name: string;
+            /**
+             * Collected Verified Paise
+             * @description UPI / bank payments verified (statement match or by the owner)
+             */
+            collected_verified_paise: number;
+            /**
+             * Collected Cash Paise
+             * @description Cash payments
+             */
+            collected_cash_paise: number;
+            /**
+             * Provisional Paise
+             * @description UPI / bank payments not yet seen in a statement
+             */
+            provisional_paise: number;
+            /**
+             * Flagged Paise
+             * @description Flagged payments (statement amount mismatch or flagged by the owner)
+             */
+            flagged_paise: number;
+            /** Expenses Paise */
+            expenses_paise: number;
+            /**
+             * Net Paise
+             * @description verified + cash - expenses (provisional and flagged are not counted)
+             */
+            net_paise: number;
         };
         /** DiscountDecision */
         DiscountDecision: {
@@ -8053,6 +8185,77 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    dashboard_api_v1_dashboard_get: {
+        parameters: {
+            query?: {
+                /** @description First day (IST). Default: 1st of the month */
+                from?: string | null;
+                /** @description Last day (IST), inclusive. Default: last day of this month */
+                to?: string | null;
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Dashboard"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description `from` is after `to` */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Too Many Requests */
             429: {
