@@ -368,11 +368,11 @@ def test_each_count_equals_the_list_it_links_to(w, scenario: Scenario):
     attention = _get(w).json()["attention"]
     assert attention["pending_onboarding"] == len(_list(w, "/onboarding-requests", status="pending"))
     assert attention["pending_discounts"] == len(_list(w, "/discount-requests", status="pending"))
-    assert attention["flagged_expenses_unreviewed"] == len(_list(w, "/expenses", flagged="true"))
+    assert attention["flagged_expenses_unreviewed"] == len(_list(w, "/expenses", flagged="true", voided="false"))
     assert attention["provisional_payments_older_than_3_days"] == len(
         _list(w, "/reconciliation/unverified-payments", older_than_days=3)
     )
-    assert attention["flagged_payments"] == len(_list(w, "/payments", status="flagged"))
+    assert attention["flagged_payments"] == len(_list(w, "/payments", status="flagged", voided="false"))
     assert attention["cash_in_hand_total_paise"] == sum(b["in_hand_paise"] for b in _list(w, "/cash/balances"))
     # No list endpoint for overstaying residents yet: compare with the equivalent query.
     with as_user(w.owner, w.org) as cur:
@@ -390,14 +390,14 @@ def test_counts_follow_the_lists_when_items_are_handled(w, scenario: Scenario):
     """Approve / review / reconcile items and the counts drop exactly as the lists shrink."""
     for d in _list(w, "/discount-requests", status="pending"):
         client.post(f"/api/v1/discount-requests/{d['id']}/decide", json={"decision": "rejected"}, headers=w.owner_h)
-    for e in _list(w, "/expenses", flagged="true"):
+    for e in _list(w, "/expenses", flagged="true", voided="false"):
         client.post(f"/api/v1/expenses/{e['id']}/review", json={}, headers=w.owner_h)
     old = _list(w, "/reconciliation/unverified-payments", older_than_days=3)
     with as_user(w.owner, w.org) as cur:
         cur.execute("UPDATE payments SET status = 'verified' WHERE id = %s", (old[0]["id"],))
     attention = _get(w).json()["attention"]
     assert attention["pending_discounts"] == len(_list(w, "/discount-requests", status="pending")) == 0
-    assert attention["flagged_expenses_unreviewed"] == len(_list(w, "/expenses", flagged="true")) == 0
+    assert attention["flagged_expenses_unreviewed"] == len(_list(w, "/expenses", flagged="true", voided="false")) == 0
     assert attention["provisional_payments_older_than_3_days"] == 0
     assert attention["provisional_payments_older_than_3_days"] == len(
         _list(w, "/reconciliation/unverified-payments", older_than_days=3)
@@ -406,24 +406,32 @@ def test_counts_follow_the_lists_when_items_are_handled(w, scenario: Scenario):
 
 @pytest.mark.ac("BE-43", "AC3")
 def test_counts_still_equal_the_lists_after_voids(w, scenario: Scenario):
-    """BE-44 voids: whatever the lists do with a void row, the counts do the same."""
-    flagged = _list(w, "/payments", status="flagged")[0]
+    """BE-44 voids: a void payment or expense needs no attention, so the counts drop, and they still equal the
+    lists they link to (`voided=false`). The lists keep void rows by default and `voided=true` finds them."""
+    before = _get(w).json()["attention"]
+    flagged = _list(w, "/payments", status="flagged", voided="false")[0]
     r = client.post(f"/api/v1/payments/{flagged['id']}/void", json={"reason": "Duplicate entry"}, headers=w.owner_h)
     assert r.status_code == 200, r.text
     old = _list(w, "/reconciliation/unverified-payments", older_than_days=3)[0]
     r = client.post(f"/api/v1/payments/{old['id']}/void", json={"reason": "Never paid"}, headers=w.owner_h)
     assert r.status_code == 200, r.text
-    expense = _list(w, "/expenses", flagged="true")[0]
+    expense = _list(w, "/expenses", flagged="true", voided="false")[0]
     r = client.post(f"/api/v1/expenses/{expense['id']}/void", json={"reason": "Fake bill"}, headers=w.owner_h)
     assert r.status_code == 200, r.text
 
     attention = _get(w).json()["attention"]
-    assert attention["flagged_payments"] == len(_list(w, "/payments", status="flagged"))
+    assert attention["flagged_payments"] == len(_list(w, "/payments", status="flagged", voided="false"))
     assert attention["provisional_payments_older_than_3_days"] == len(
         _list(w, "/reconciliation/unverified-payments", older_than_days=3)
     )
-    assert attention["flagged_expenses_unreviewed"] == len(_list(w, "/expenses", flagged="true"))
+    assert attention["flagged_expenses_unreviewed"] == len(_list(w, "/expenses", flagged="true", voided="false"))
     assert attention["cash_in_hand_total_paise"] == sum(b["in_hand_paise"] for b in _list(w, "/cash/balances"))
+    assert attention["flagged_payments"] == before["flagged_payments"] - 1
+    assert attention["flagged_expenses_unreviewed"] == before["flagged_expenses_unreviewed"] - 1
+
+    assert flagged["id"] in {p["id"] for p in _list(w, "/payments", status="flagged")}  # still in the ledger
+    assert [p["id"] for p in _list(w, "/payments", status="flagged", voided="true")] == [flagged["id"]]
+    assert [e["id"] for e in _list(w, "/expenses", flagged="true", voided="true")] == [expense["id"]]
 
 
 # ---- AC4 --------------------------------------------------------------------------------------------
