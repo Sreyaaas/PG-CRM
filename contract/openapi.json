@@ -10049,6 +10049,11 @@
             "type": "integer",
             "title": "Days Overdue",
             "description": "max(0, today (IST) - oldest_due_date). 0 on the due day itself"
+          },
+          "whatsapp_url": {
+            "type": "string",
+            "title": "Whatsapp Url",
+            "description": "wa.me link with the rent reminder (outstanding, oldest due date, link to that invoice)"
           }
         },
         "type": "object",
@@ -10059,7 +10064,8 @@
           "bed_label",
           "outstanding_paise",
           "oldest_due_date",
-          "days_overdue"
+          "days_overdue",
+          "whatsapp_url"
         ],
         "title": "DueRow"
       },
@@ -10751,6 +10757,16 @@
               }
             ],
             "title": "Void Reason"
+          },
+          "invoice_url": {
+            "type": "string",
+            "title": "Invoice Url",
+            "description": "Public invoice page for the resident"
+          },
+          "whatsapp_url": {
+            "type": "string",
+            "title": "Whatsapp Url",
+            "description": "wa.me link with the invoice message, ready to send"
           }
         },
         "type": "object",
@@ -10769,7 +10785,9 @@
           "created_by",
           "created_at",
           "voided_at",
-          "void_reason"
+          "void_reason",
+          "invoice_url",
+          "whatsapp_url"
         ],
         "title": "Invoice"
       },
@@ -13075,6 +13093,18 @@
             "type": "array",
             "title": "Entries",
             "description": "Oldest first"
+          },
+          "whatsapp_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp Url",
+            "description": "wa.me rent reminder, as on GET /dues; null when nothing is owed"
           }
         },
         "type": "object",
@@ -13082,7 +13112,8 @@
           "resident_id",
           "full_name",
           "outstanding_paise",
-          "entries"
+          "entries",
+          "whatsapp_url"
         ],
         "title": "ResidentLedger"
       },

@@ -913,6 +913,8 @@ class Invoice(BaseModel):
     created_at: datetime
     voided_at: datetime | None
     void_reason: str | None
+    invoice_url: str = Field(description="Public invoice page for the resident")
+    whatsapp_url: str = Field(description="wa.me link with the invoice message, ready to send")
 
 
 class GenerateDueRequest(BaseModel):
@@ -948,6 +950,9 @@ class DueRow(BaseModel):
     outstanding_paise: int = Field(description="Non-void invoices minus non-void payments")
     oldest_due_date: date = Field(description="Due date of the oldest invoice not yet covered by payments")
     days_overdue: int = Field(description="max(0, today (IST) - oldest_due_date). 0 on the due day itself")
+    whatsapp_url: str = Field(
+        description="wa.me link with the rent reminder (outstanding, oldest due date, link to that invoice)"
+    )
 
 
 class LedgerEntry(BaseModel):
@@ -966,6 +971,7 @@ class ResidentLedger(BaseModel):
     full_name: str
     outstanding_paise: int
     entries: list[LedgerEntry] = Field(description="Oldest first")
+    whatsapp_url: str | None = Field(description="wa.me rent reminder, as on GET /dues; null when nothing is owed")
 
 
 PaymentMethod = Literal["cash", "upi", "bank_transfer"]
