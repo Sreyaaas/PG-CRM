@@ -39,6 +39,7 @@ export function OwnerMorePage() {
       <PageHeader title="More" description={<>{membership?.organization_name} · Owner workspace</>} />
       <MoreList
         links={[
+          OWNER_NAV.beds,
           OWNER_NAV.staff,
           OWNER_NAV.money,
           { label: 'Settings', to: '/owner/settings', icon: <Settings /> },
@@ -55,6 +56,7 @@ export function CaretakerMorePage() {
       <PageHeader title="More" description={<>{membership?.organization_name} · Caretaker</>} />
       <MoreList
         links={[
+          CARETAKER_NAV.beds,
           CARETAKER_NAV.expenses,
           { label: 'Settings', to: '/caretaker/settings', icon: <Settings /> },
         ]}

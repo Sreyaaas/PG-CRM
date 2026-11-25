@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { BedDouble, ChevronRight, Pencil, QrCode } from 'lucide-react'
+import { BedDouble, ChevronRight, LayoutGrid, Pencil, QrCode } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '@/api/client'
 import { Money } from '@/components/Money'
@@ -80,6 +80,9 @@ export function PropertyDetailPage() {
 
       <Card className="overflow-hidden">
         <CardList>
+          <NavRow to={`/owner/properties/${p.id}/beds`} icon={<LayoutGrid />}>
+            Bed board
+          </NavRow>
           <NavRow to={`/owner/properties/${p.id}/rooms`} icon={<BedDouble />}>
             Rooms &amp; beds
           </NavRow>

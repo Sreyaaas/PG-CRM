@@ -17,6 +17,8 @@ import { PropertyCreatePage, PropertyEditPage } from '@/features/properties/Prop
 import { RoomsPage } from '@/features/rooms/RoomsPage'
 import { PosterPage } from '@/features/poster/PosterPage'
 import { JoinPage } from '@/features/join/JoinPage'
+import { BedBoardPage } from '@/features/beds/BedBoardPage'
+import { ResidentDetailPage } from '@/features/residents/ResidentDetailPage'
 import { SignupPage } from './SignupPage'
 
 export function AppRouter() {
@@ -39,7 +41,10 @@ export function AppRouter() {
         <Route path="properties/:propertyId" element={<PropertyDetailPage />} />
         <Route path="properties/:propertyId/edit" element={<PropertyEditPage />} />
         <Route path="properties/:propertyId/rooms" element={<RoomsPage />} />
+        <Route path="properties/:propertyId/beds" element={<BedBoardPage />} />
         <Route path="properties/:propertyId/poster" element={<PosterPage />} />
+        <Route path="beds" element={<BedBoardPage />} />
+        <Route path="residents/:residentId" element={<ResidentDetailPage />} />
         <Route path="money" element={<OwnerDashboardPage section="Money" />} />
         <Route path="more" element={<OwnerMorePage />} />
         <Route path="staff" element={<StaffPage />} />
@@ -48,6 +53,8 @@ export function AppRouter() {
 
       <Route path="/caretaker" element={<CaretakerLayoutRoute />}>
         <Route index element={<CaretakerHomePage section="Home" />} />
+        <Route path="beds" element={<BedBoardPage />} />
+        <Route path="residents/:residentId" element={<ResidentDetailPage />} />
         <Route path="check-ins" element={<CheckInsPage />} />
         <Route path="check-ins/:requestId" element={<CheckInDetailPage />} />
         <Route path="payments" element={<CaretakerHomePage section="Payments" />} />
