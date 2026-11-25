@@ -917,6 +917,14 @@ class Invoice(BaseModel):
     whatsapp_url: str = Field(description="wa.me link with the invoice message, ready to send")
 
 
+class InvoiceUpi(BaseModel):
+    upi_uri: str | None = Field(
+        description="upi://pay?pa=..&pn=..&mc=..&am=..&tn=<invoice_no>&cu=INR for a dynamic QR. Null when the "
+        "property has no UPI ID or nothing is left to pay: show the fallback UPI ID / bank details instead"
+    )
+    amount_paise: int = Field(description="Still due on this invoice: amount minus non-void payments against it")
+
+
 class GenerateDueRequest(BaseModel):
     model_config = {"extra": "forbid"}
 
