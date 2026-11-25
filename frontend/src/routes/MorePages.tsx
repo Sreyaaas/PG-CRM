@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ChevronRight, Settings } from 'lucide-react'
+import { ChevronRight, HandCoins, Settings } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { CARETAKER_NAV, OWNER_NAV } from '@/components/shells/navConfig'
 import { Card, CardList } from '@/components/ui/card'
@@ -42,6 +42,7 @@ export function OwnerMorePage() {
           OWNER_NAV.beds,
           OWNER_NAV.staff,
           OWNER_NAV.money,
+          { label: 'Cash in hand', to: '/owner/money/cash', icon: <HandCoins /> },
           { label: 'Settings', to: '/owner/settings', icon: <Settings /> },
         ]}
       />
@@ -58,6 +59,7 @@ export function CaretakerMorePage() {
         links={[
           CARETAKER_NAV.beds,
           CARETAKER_NAV.expenses,
+          { label: 'My cash', to: '/caretaker/cash', icon: <HandCoins /> },
           { label: 'Settings', to: '/caretaker/settings', icon: <Settings /> },
         ]}
       />
