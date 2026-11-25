@@ -11,6 +11,7 @@ from app.db import close_pool
 from app.routers import (
     activity,
     auth,
+    cash,
     complaints,
     discounts,
     expenses,
@@ -105,6 +106,7 @@ def create_app() -> FastAPI:
         invoices.router,
         payments.router,
         reconciliation.router,
+        cash.router,
         expenses.router,
         complaints.router,
         files.router,

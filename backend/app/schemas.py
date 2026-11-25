@@ -1025,6 +1025,63 @@ class Payment(BaseModel):
     whatsapp_url: str = Field(description="wa.me link with the receipt message, ready to send")
 
 
+# ---- Caretaker cash (BE-41) ----
+
+
+class CashBalance(BaseModel):
+    user_id: UUID
+    full_name: str
+    collected_paise: int = Field(description="Cash payments received (non-void)")
+    spent_paise: int = Field(description="Expenses paid from caretaker cash (non-void)")
+    handed_over_paise: int = Field(description="Cash handed to the owner")
+    in_hand_paise: int = Field(description="collected - spent - handed over. Negative if the owner was overpaid")
+
+
+class CashHandoverCreate(BaseModel):
+    """Who recorded it and when are set by the database."""
+
+    model_config = {"extra": "forbid"}
+
+    caretaker_user_id: UUID
+    amount_paise: Rent
+    notes: Annotated[str, StringConstraints(max_length=500, strip_whitespace=True)] | None = None
+
+
+class CashHandover(BaseModel):
+    id: UUID
+    caretaker_user_id: UUID
+    caretaker_name: str
+    amount_paise: int
+    handed_over_at: datetime
+    recorded_by: UUID
+    recorded_by_name: str
+    notes: str | None
+
+
+class CashHandoverResult(CashHandover):
+    in_hand_paise: int = Field(description="The caretaker's cash in hand after this handover")
+    warning: str | None = Field(description="Set when the handover is more than the cash in hand. Still recorded")
+
+
+class CashLedgerEntry(BaseModel):
+    entry_at: datetime
+    type: Literal["payment", "expense", "handover"]
+    id: UUID
+    property_name: str | None
+    description: str
+    notes: str | None
+    amount_paise: int = Field(description="+ cash in (payment), - cash out (expense, handover)")
+    voided: bool = Field(description="Void entries are listed but don't change the balance")
+    balance_paise: int = Field(description="Cash in hand after this entry")
+
+
+class CashLedger(BaseModel):
+    user_id: UUID
+    full_name: str
+    in_hand_paise: int
+    entries: list[CashLedgerEntry] = Field(description="Oldest first")
+
+
 # ---- Statement reconciliation (BE-40) ----
 
 CsvSource = Literal["paytm_business", "phonepe_business", "bank_statement", "other"]

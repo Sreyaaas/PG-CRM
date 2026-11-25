@@ -256,6 +256,37 @@ def test_cash_in_hand_ledger(world: World):
         assert [r["user_id"] for r in cur.fetchall()] == [world.caretaker_a]
 
 
+def test_cash_ledger_is_scoped_like_cash_balances(world: World):
+    """BE-41: api.cash_ledger: owner reads any caretaker's ledger, a caretaker only their own; it sums to the
+    balance; handovers stay immutable."""
+    with as_user(world.caretaker_a, world.org) as cur:
+        _pay(cur, world, 500_000, "cash")
+    with as_user(world.owner, world.org) as cur:
+        cur.execute(
+            "INSERT INTO cash_handovers (org_id, caretaker_user_id, amount_paise, recorded_by) "
+            "VALUES (%s, %s, 200000, %s) RETURNING id",
+            (world.org, world.caretaker_a, world.owner),
+        )
+        handover = cur.fetchone()["id"]
+        cur.execute("SELECT entry_type, amount_paise FROM api.cash_ledger(%s)", (world.caretaker_a,))
+        assert [(r["entry_type"], r["amount_paise"]) for r in cur.fetchall()] == [
+            ("payment", 500_000),
+            ("handover", -200_000),
+        ]
+        cur.execute("SELECT count(*) AS n FROM api.cash_ledger(%s)", (world.owner,))  # not a caretaker
+        assert cur.fetchone()["n"] == 0
+    with as_user(world.caretaker_b, world.org) as cur:
+        cur.execute("SELECT count(*) AS n FROM api.cash_ledger(%s)", (world.caretaker_a,))
+        assert cur.fetchone()["n"] == 0
+    with as_user(world.caretaker_a, world.org) as cur:
+        cur.execute("SELECT sum(amount_paise) AS s FROM api.cash_ledger(%s) WHERE NOT voided", (world.caretaker_a,))
+        total = cur.fetchone()["s"]
+        cur.execute("SELECT in_hand_paise FROM api.cash_balances()")
+        assert total == cur.fetchone()["in_hand_paise"] == 300_000
+    with raises_sqlstate("PC001", "42501"), as_user(world.owner, world.org) as cur:
+        cur.execute("UPDATE cash_handovers SET amount_paise = 1 WHERE id = %s", (handover,))
+
+
 # --------------------------------------------------------------------------
 # Threat #6: no-bill expenses + owner-only categories
 # --------------------------------------------------------------------------
