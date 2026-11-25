@@ -19,6 +19,7 @@ import { PosterPage } from '@/features/poster/PosterPage'
 import { JoinPage } from '@/features/join/JoinPage'
 import { BedBoardPage } from '@/features/beds/BedBoardPage'
 import { ResidentDetailPage } from '@/features/residents/ResidentDetailPage'
+import { ReconcilePage } from '@/features/reconciliation/ReconcilePage'
 import { MyCashPage } from '@/features/cash/MyCashPage'
 import { OwnerCaretakerCashPage, OwnerCashPage } from '@/features/cash/OwnerCashPage'
 import { SignupPage } from './SignupPage'
@@ -52,6 +53,7 @@ export function AppRouter() {
         <Route path="beds" element={<BedBoardPage />} />
         <Route path="residents/:residentId" element={<ResidentDetailPage />} />
         <Route path="money" element={<DuesPage />} />
+        <Route path="money/reconcile" element={<ReconcilePage />} />
         <Route path="money/cash" element={<OwnerCashPage />} />
         <Route path="money/cash/:userId" element={<OwnerCaretakerCashPage />} />
         <Route path="residents/:residentId/ledger" element={<LedgerPage />} />
