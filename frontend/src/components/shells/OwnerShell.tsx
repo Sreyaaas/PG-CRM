@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { OWNER_NAV as NAV, OWNER_QUICK_ACTIONS } from './navConfig'
 import { BottomNav, CountBadge, QuickActionsSheet, TopBar, useIsActive, type ShellAccount } from './ShellParts'
 
-const SIDEBAR_ITEMS = [NAV.today, NAV.beds, NAV.approvals, NAV.properties, NAV.money, NAV.staff]
+const SIDEBAR_ITEMS = [NAV.today, NAV.beds, NAV.approvals, NAV.complaints, NAV.properties, NAV.money, NAV.expenses, NAV.staff]
 
 export interface OwnerShellProps {
   orgName?: string

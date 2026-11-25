@@ -184,6 +184,16 @@ async function fillBasics(amount = '2500') {
   fireEvent.change(await screen.findByLabelText('Amount'), { target: { value: amount } })
 }
 
+/** The photo input renders after the form's data loads; wait for it instead of racing the render. */
+async function fileInput(): Promise<HTMLInputElement> {
+  let el: HTMLInputElement | null = null
+  await waitFor(() => {
+    el = document.querySelector<HTMLInputElement>('input[type="file"]')
+    expect(el).not.toBeNull()
+  })
+  return el!
+}
+
 describe('Log expense (caretaker)', () => {
   beforeEach(() => signIn(CARETAKER_ME))
   afterEach(() => {
@@ -257,7 +267,7 @@ describe('Log expense (caretaker)', () => {
     fireEvent.change(await screen.findByLabelText('Amount'), { target: { value: '2,500.50' } })
     fireEvent.change(screen.getByLabelText('Quantity'), { target: { value: '3' } })
     fireEvent.change(screen.getByLabelText(/^Vendor/), { target: { value: 'Sri Water Suppliers' } })
-    fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [photoFile()] } })
+    fireEvent.change(await fileInput(), { target: { files: [photoFile()] } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Save expense' }))
 
@@ -290,10 +300,12 @@ describe('Log expense (caretaker)', () => {
     mockApi(state)
     renderAt('/caretaker/expenses/new')
     await fillBasics('900')
-    fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [photoFile()] } })
+    fireEvent.change(await fileInput(), { target: { files: [photoFile()] } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Save expense' }))
     expect(await screen.findByText('Network hiccup, try again')).toBeInTheDocument()
+    // The button stays disabled until the failed save has finished; clicking before that is ignored.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save expense' })).toBeEnabled())
     fireEvent.click(screen.getByRole('button', { name: 'Save expense' }))
 
     await waitFor(() => expect(state.posts).toHaveLength(2))
@@ -307,7 +319,7 @@ describe('Log expense (caretaker)', () => {
     mockApi(state)
     renderAt('/caretaker/expenses/new')
     await fillBasics('900')
-    fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [photoFile()] } })
+    fireEvent.change(await fileInput(), { target: { files: [photoFile()] } })
     fireEvent.click(screen.getByRole('button', { name: 'Save expense' }))
     expect(await screen.findByText('The photo is too old. Take a new one.')).toBeInTheDocument()
   })
@@ -336,9 +348,10 @@ describe('Owner expense review', () => {
 
     const card = await screen.findByTestId('expense-card')
     expect(card.className).toContain('bg-warning-soft')
-    expect(within(card).getByText('₹2,500')).toBeInTheDocument()
+    // The card mounts before every field has rendered on a slow runner; wait for its content once.
+    expect(await within(card).findByText('₹2,500')).toBeInTheDocument()
     expect(within(card).getByText('Tanker without bill, borewell dry')).toBeInTheDocument()
-    expect(within(card).getByText(/Ravi Kumar/)).toBeInTheDocument()
+    expect(await within(card).findByText(/Ravi Kumar/)).toBeInTheDocument()
     expect(within(card).getByText('No bill: review')).toBeInTheDocument()
     expect(within(card).getByRole('link', { name: /View location on map/ })).toHaveAttribute(
       'href',

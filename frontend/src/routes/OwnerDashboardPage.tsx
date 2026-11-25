@@ -1,3 +1,5 @@
+import { RecentActivityCard } from '@/features/dashboard/RecentActivityCard'
+import { OpenComplaintsCard } from '@/features/complaints/OpenComplaintsCard'
 import { useEffect, useMemo, useState } from 'react'
 import {
   BedDouble,
@@ -405,6 +407,8 @@ export function OwnerDashboardPage({
 
         <div className="flex min-w-0 flex-col gap-6">
         {isHome && dashboard && <AttentionCard attention={dashboard.attention} />}
+        {isHome && <OpenComplaintsCard base="/owner" showProperty={(properties?.length ?? 0) > 1} />}
+        {isHome && <RecentActivityCard />}
         {isHome &&
           (!pendingQuery.isLoading && pending.length === 0 ? (
             <QuietEmptySection

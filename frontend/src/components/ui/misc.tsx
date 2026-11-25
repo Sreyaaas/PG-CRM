@@ -87,7 +87,7 @@ export function StatTile({
   return (
     <div
       className={cn(
-        'flex min-w-0 flex-col gap-1 rounded-card border px-4 py-3 shadow-xs sm:px-[18px] sm:py-4',
+        '@container flex min-w-0 flex-col gap-1 rounded-card border px-4 py-3 shadow-xs sm:px-[18px] sm:py-4',
         highlight
           ? 'border-[color-mix(in_oklab,var(--brand)_45%,var(--line))] bg-brand-soft'
           : 'border-line bg-surface',
@@ -103,7 +103,7 @@ export function StatTile({
         {icon}
         {label}
       </span>
-      <span className="truncate text-[22px] font-bold leading-tight tracking-[-0.02em] text-ink tabular-nums sm:text-[24px]">
+      <span className="whitespace-nowrap text-[clamp(15px,14cqi,24px)] font-bold leading-tight tracking-[-0.02em] text-ink tabular-nums [overflow-wrap:anywhere]">
         {value}
       </span>
       {foot && <span className="text-[12px] text-muted">{foot}</span>}

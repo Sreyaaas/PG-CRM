@@ -10,6 +10,7 @@ import { Card, CardHeader, CardList } from '@/components/ui/card'
 import { EmptyState, ListRow, LoadingRows, PageHeader, ROW_LINK, Skeleton, StatTile } from '@/components/ui/misc'
 import { useMyDiscountRequests } from '@/features/approvals/useDiscountRequests'
 import { useAuth } from '@/features/auth/AuthContext'
+import { OpenComplaintsCard } from '@/features/complaints/OpenComplaintsCard'
 import { DateLine, DaysLeftBadge, QuietEmptySection } from '@/features/home/parts'
 import { addCounts, greeting, useBoards, type BoardBedWithRoom } from '@/features/home/useBoards'
 import { usePropertiesQuery } from '@/features/properties/api'
@@ -158,6 +159,11 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
 
       {(loading || properties.length > 0) && (
         <>
+          <OpenComplaintsCard
+            base="/caretaker"
+            propertyId={effectivePropertyId === 'all' ? null : effectivePropertyId}
+            showProperty={showPropertyInMeta}
+          />
           {!loading && movingOut.length === 0 ? (
             <QuietEmptySection title="Notices and move-outs" message="Nobody is on notice." />
           ) : (

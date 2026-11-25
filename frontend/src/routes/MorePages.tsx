@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ChevronRight, FileCheck2, HandCoins, Receipt, Settings } from 'lucide-react'
+import { ChevronRight, FileCheck2, HandCoins, MessageSquareWarning, Receipt, Settings } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { CARETAKER_NAV, OWNER_NAV } from '@/components/shells/navConfig'
 import { Card, CardList } from '@/components/ui/card'
@@ -42,6 +42,7 @@ export function OwnerMorePage() {
           OWNER_NAV.beds,
           OWNER_NAV.staff,
           OWNER_NAV.money,
+          { label: 'Complaints', to: '/owner/complaints', icon: <MessageSquareWarning /> },
           { label: 'Expenses', to: '/owner/expenses', icon: <Receipt /> },
           { label: 'Reconcile statements', to: '/owner/money/reconcile', icon: <FileCheck2 /> },
           { label: 'Cash in hand', to: '/owner/money/cash', icon: <HandCoins /> },
@@ -61,6 +62,7 @@ export function CaretakerMorePage() {
         links={[
           CARETAKER_NAV.beds,
           CARETAKER_NAV.expenses,
+          { label: 'Complaints', to: '/caretaker/complaints', icon: <MessageSquareWarning /> },
           { label: 'My cash', to: '/caretaker/cash', icon: <HandCoins /> },
           { label: 'Settings', to: '/caretaker/settings', icon: <Settings /> },
         ]}
