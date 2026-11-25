@@ -31,6 +31,8 @@ export const OWNER_NAV = {
   properties: { label: 'Properties', to: '/owner/properties', icon: <Building2 /> },
   money: { label: 'Money', to: '/owner/money', icon: <IndianRupee /> },
   staff: { label: 'Staff', to: '/owner/staff', icon: <Users /> },
+  complaints: { label: 'Complaints', to: '/owner/complaints', icon: <MessageSquareWarning /> },
+  expenses: { label: 'Expenses', to: '/owner/expenses', icon: <Receipt /> },
   more: {
     label: 'More',
     to: '/owner/more',
