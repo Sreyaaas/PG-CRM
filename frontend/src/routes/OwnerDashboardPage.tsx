@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   BedDouble,
   Building2,
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
+import { Money } from '@/components/Money'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
@@ -28,6 +29,15 @@ import {
   usePendingDiscounts,
 } from '@/features/approvals/useDiscountRequests'
 import { useAuth } from '@/features/auth/AuthContext'
+import {
+  isDashboard,
+  monthPeriod,
+  sumPnl,
+  useDashboardQuery,
+  type PeriodKind,
+} from '@/features/dashboard/api'
+import { AttentionCard, PnlCard, PeriodSwitcher } from '@/features/dashboard/DashboardParts'
+import { useDuesQuery } from '@/features/dues/api'
 import {
   DateLine,
   DaysLeftBadge,
@@ -59,8 +69,43 @@ export function OwnerDashboardPage({
   const decide = useDecideDiscount((msg) => showToast(msg, 'error'))
   const [decidingId, setDecidingId] = useState<string | null>(null)
 
-  const loading = propertiesQuery.isLoading || boardsLoading
   const isHome = section === 'Today'
+
+  const [periodKind, setPeriodKind] = useState<PeriodKind>('this')
+  const [custom, setCustom] = useState(() => monthPeriod('this'))
+  const customInvalid = periodKind === 'custom' && (!custom.from || !custom.to || custom.from > custom.to)
+  const period = useMemo(
+    () => (periodKind === 'custom' ? (customInvalid ? null : custom) : monthPeriod(periodKind)),
+    [periodKind, custom, customInvalid],
+  )
+  const dashboardQuery = useDashboardQuery(isHome ? period : null)
+  const dashboard = isDashboard(dashboardQuery.data) ? dashboardQuery.data : null
+  const dashboardError = dashboardQuery.error
+  useEffect(() => {
+    if (dashboardError) showToast(dashboardError.message, 'error')
+  }, [dashboardError, showToast])
+  const dashLoading = dashboardQuery.isLoading
+  const totalsPnl = useMemo(() => sumPnl(dashboard?.pnl ?? []), [dashboard])
+  const duesQuery = useDuesQuery(null)
+  const duesTotal = Array.isArray(duesQuery.data)
+    ? duesQuery.data.reduce((n, d) => n + d.outstanding_paise, 0)
+    : null
+
+  // Bed counts: the dashboard's occupancy replaces the client-side tally when it is available.
+  const occupancyByProperty = new Map((dashboard?.occupancy ?? []).map((o) => [o.property_id, o]))
+  const bedTotals = dashboard
+    ? dashboard.occupancy.reduce(
+        (a, o) => ({
+          total: a.total + o.beds_total,
+          occupied: a.occupied + o.occupied,
+          vacant: a.vacant + o.vacant,
+          onNotice: a.onNotice + o.on_notice,
+        }),
+        { total: 0, occupied: 0, vacant: 0, onNotice: 0 },
+      )
+    : totals
+  const pendingApprovals = dashboard ? dashboard.attention.pending_discounts : pending.length
+  const loading = propertiesQuery.isLoading || (dashboard ? false : boardsLoading)
   const stat = (v: number) => (loading ? <Skeleton className="h-7 w-10" /> : v)
 
   const movingOutSoon = useMemo(() => {
@@ -141,10 +186,10 @@ export function OwnerDashboardPage({
               )
             }
           />
-          <StatTile label="Total beds" value={stat(totals.total)} />
-          <StatTile label="Occupied" value={stat(totals.occupied)} />
-          <StatTile label="Vacant" value={stat(totals.vacant)} />
-          <StatTile label="On notice" value={stat(totals.onNotice)} />
+          <StatTile label="Total beds" value={stat(bedTotals.total)} />
+          <StatTile label="Occupied" value={stat(bedTotals.occupied)} />
+          <StatTile label="Vacant" value={stat(bedTotals.vacant)} />
+          <StatTile label="On notice" value={stat(bedTotals.onNotice)} />
           <Link
             to="/owner/approvals"
             className="rounded-card active:opacity-80"
@@ -152,21 +197,48 @@ export function OwnerDashboardPage({
             <StatTile
               label="Pending approvals"
               value={
-                pendingQuery.isLoading ? (
+                pendingQuery.isLoading && !dashboard ? (
                   <Skeleton className="h-7 w-10" />
                 ) : (
-                  pending.length
+                  pendingApprovals
                 )
               }
-              highlight={pending.length > 0}
+              highlight={pendingApprovals > 0}
               className="h-full"
             />
           </Link>
         </section>
       )}
 
+      {isHome && (
+        <section aria-label="Money" className="flex flex-col gap-3">
+          <PeriodSwitcher
+            kind={periodKind}
+            onKind={setPeriodKind}
+            custom={custom}
+            onCustom={setCustom}
+            invalid={customInvalid}
+          />
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+            <StatTile label="Collected" value={moneyStat(dashLoading, dashboard && totalsPnl.collected)} />
+            <StatTile label="Provisional" value={moneyStat(dashLoading, dashboard && totalsPnl.provisional)} />
+            <StatTile label="Flagged" value={moneyStat(dashLoading, dashboard && totalsPnl.flagged)} />
+            <StatTile label="Expenses" value={moneyStat(dashLoading, dashboard && totalsPnl.expenses)} />
+            <StatTile label="Net profit" value={moneyStat(dashLoading, dashboard && totalsPnl.net)} highlight />
+            <Link to="/owner/money" className="rounded-card active:opacity-80">
+              <StatTile
+                label="Dues outstanding"
+                value={moneyStat(duesQuery.isLoading, duesTotal)}
+                className="h-full"
+              />
+            </Link>
+          </div>
+        </section>
+      )}
+
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         <div className="flex min-w-0 flex-col gap-6">
+          {isHome && dashboard && <PnlCard rows={dashboard.pnl} />}
           <Card className="overflow-hidden" aria-label="Occupancy">
             <CardHeader
               title="Occupancy"
@@ -192,7 +264,12 @@ export function OwnerDashboardPage({
             )}
             {properties.length > 0 && (
               <CardList>
-                {boards.map(({ property: p, counts, isLoading }) => {
+                {boards.map(({ property: p, counts: boardCounts, isLoading: boardLoading }) => {
+                  const occ = occupancyByProperty.get(p.id)
+                  const counts = occ
+                    ? { total: occ.beds_total, vacant: occ.vacant, occupied: occ.occupied, onNotice: occ.on_notice }
+                    : boardCounts
+                  const isLoading = occ ? false : boardLoading
                   const full = properties.find((x) => x.id === p.id)
                   return (
                     <li key={p.id}>
@@ -326,6 +403,8 @@ export function OwnerDashboardPage({
             ))}
         </div>
 
+        <div className="flex min-w-0 flex-col gap-6">
+        {isHome && dashboard && <AttentionCard attention={dashboard.attention} />}
         {isHome &&
           (!pendingQuery.isLoading && pending.length === 0 ? (
             <QuietEmptySection
@@ -373,7 +452,13 @@ export function OwnerDashboardPage({
               )}
             </Card>
           ))}
+        </div>
       </div>
     </div>
   )
+}
+
+function moneyStat(loading: boolean, paise: number | null | undefined) {
+  if (loading) return <Skeleton className="h-7 w-20" />
+  return typeof paise === 'number' ? <Money paise={paise} /> : '–'
 }
