@@ -457,7 +457,7 @@ def test_caretaker_maintenance_charge_cannot_be_below_property_value(world: Worl
         invoice(cur, "maintenance_charge", 99999)
     with as_user(world.caretaker_a, world.org) as cur:
         assert invoice(cur, "maintenance_charge", 100000)
-        assert invoice(cur, "other", 500)  # only the maintenance charge has this floor
+        assert invoice(cur, "deposit", 500)  # only the maintenance charge has this floor ("other" is owner-only, BE-30)
     with as_user(world.owner, world.org) as cur:
         assert invoice(cur, "maintenance_charge", 100)
 
@@ -613,3 +613,21 @@ def test_complaint_history_fields_are_immutable(world: World):
     ):
         with raises_sqlstate("PC001", "42501"), as_user(world.owner, world.org) as cur:
             cur.execute(f"UPDATE complaints SET {change} WHERE id = %s", (c["id"],))
+
+
+# --------------------------------------------------------------------------
+# BE-30: one-off invoices are the owner's call
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.ac("BE-30", "AC8")
+def test_caretaker_cannot_create_one_off_invoices(world: World):
+    sql = """INSERT INTO invoices (org_id, property_id, resident_id, kind, amount_paise, due_date, notes)
+             VALUES (%s, %s, %s, %s, 50000, app.today_ist(), 'Extra charge')"""
+    args = (world.org, world.prop_a, world.resident_a)
+    with raises_sqlstate("PC002"), as_user(world.caretaker_a, world.org) as cur:
+        cur.execute(sql, (*args, "other"))
+    with as_user(world.owner, world.org) as cur:
+        cur.execute(sql, (*args, "other"))  # the owner can
+    with as_user(world.caretaker_a, world.org) as cur:
+        cur.execute(sql, (*args, "deposit"))  # check-in charges still work for caretakers

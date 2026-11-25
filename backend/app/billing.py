@@ -46,3 +46,18 @@ def notice_last_day(notice_date: date, deadline_day: int) -> date:
         return month_end(notice_date)
     next_month = month_end(notice_date) + timedelta(days=1)
     return month_end(next_month)
+
+
+def month_start(d: date) -> date:
+    return d.replace(day=1)
+
+
+def parse_month(value: str) -> date:
+    """'2026-12' -> 1 Dec 2026."""
+    year, month = value.split("-")
+    return date(int(year), int(month), 1)
+
+
+def rent_due_date(period_start: date, rent_due_day: int) -> date:
+    """Rent for a calendar month is due on the property's rent_due_day of that month (1-28, exists every month)."""
+    return period_start.replace(day=rent_due_day)

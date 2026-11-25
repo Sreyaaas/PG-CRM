@@ -893,6 +893,81 @@ class ResidentProfileUpdate(BaseModel):
         return self
 
 
+InvoiceKind = Literal["rent", "short_term", "deposit", "maintenance_charge", "exit_deduction", "other"]
+Month = Annotated[str, StringConstraints(pattern=r"^[0-9]{4}-(0[1-9]|1[0-2])$")]
+
+
+class Invoice(BaseModel):
+    id: UUID
+    invoice_no: str = Field(description="INV-000123, per organization (set by the database)")
+    kind: InvoiceKind
+    property_id: UUID
+    resident_id: UUID
+    stay_id: UUID | None
+    period_start: date | None
+    period_end: date | None
+    amount_paise: Paise
+    due_date: date
+    notes: str | None
+    created_by: UUID | None
+    created_at: datetime
+    voided_at: datetime | None
+    void_reason: str | None
+
+
+class GenerateDueRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    month: Month | None = Field(default=None, description="YYYY-MM; default the current month (IST)")
+    property_id: UUID | None = Field(default=None, description="Default: every building the caller can access")
+
+
+class GenerateDueResult(BaseModel):
+    month: Month
+    created: int = Field(description="New rent invoices. 0 when the month was already generated (safe to re-run)")
+
+
+class OneOffInvoiceCreate(BaseModel):
+    """Owner only: a one-off charge (kind `other`), e.g. a broken-furniture fee."""
+
+    model_config = {"extra": "forbid"}
+
+    resident_id: UUID
+    amount_paise: Rent
+    due_date: date
+    notes: Annotated[str, StringConstraints(min_length=3, max_length=500, strip_whitespace=True)] = Field(
+        description="What the charge is for (shown to the resident)"
+    )
+
+
+class DueRow(BaseModel):
+    resident_id: UUID
+    full_name: str
+    phone: str
+    bed_label: str | None = Field(description="Current bed; null after move-out")
+    outstanding_paise: int = Field(description="Non-void invoices minus non-void payments")
+    oldest_due_date: date = Field(description="Due date of the oldest invoice not yet covered by payments")
+    days_overdue: int = Field(description="max(0, today (IST) - oldest_due_date). 0 on the due day itself")
+
+
+class LedgerEntry(BaseModel):
+    entry_date: date = Field(description="Invoice due date, or the day a payment was received (IST)")
+    type: Literal["invoice", "payment"]
+    id: UUID
+    reference: str = Field(description="Invoice number, or the payment method and UTR")
+    description: str
+    amount_paise: int = Field(description="Invoices positive, payments negative")
+    voided: bool = Field(description="Void entries are listed for the record but don't change the balance")
+    balance_paise: int = Field(description="Running balance after this entry")
+
+
+class ResidentLedger(BaseModel):
+    resident_id: UUID
+    full_name: str
+    outstanding_paise: int
+    entries: list[LedgerEntry] = Field(description="Oldest first")
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str
