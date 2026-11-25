@@ -877,6 +877,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cash/balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Balances
+         * @description Owner: every caretaker. Caretaker: only themself.
+         */
+        get: operations["balances_api_v1_cash_balances_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cash/handovers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Handovers
+         * @description Newest first. Caretakers see only their own (RLS).
+         */
+        get: operations["list_handovers_api_v1_cash_handovers_get"];
+        put?: never;
+        /**
+         * Record Handover
+         * @description Owner only. A handover larger than the caretaker's cash in hand is recorded (the owner may be settling an
+         *     advance) but comes back with a `warning`.
+         */
+        post: operations["record_handover_api_v1_cash_handovers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cash/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ledger
+         * @description One caretaker's cash payments (+), cash expenses (-) and handovers (-), oldest first, with the running
+         *     balance. Defaults to the caller. A caretaker can only see their own.
+         */
+        get: operations["ledger_api_v1_cash_ledger_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/expenses": {
         parameters: {
             query?: never;
@@ -1262,6 +1328,182 @@ export interface components {
              * @enum {string}
              */
             source: "paytm_business" | "phonepe_business" | "bank_statement" | "other";
+        };
+        /** CashBalance */
+        CashBalance: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Full Name */
+            full_name: string;
+            /**
+             * Collected Paise
+             * @description Cash payments received (non-void)
+             */
+            collected_paise: number;
+            /**
+             * Spent Paise
+             * @description Expenses paid from caretaker cash (non-void)
+             */
+            spent_paise: number;
+            /**
+             * Handed Over Paise
+             * @description Cash handed to the owner
+             */
+            handed_over_paise: number;
+            /**
+             * In Hand Paise
+             * @description collected - spent - handed over. Negative if the owner was overpaid
+             */
+            in_hand_paise: number;
+        };
+        /** CashHandover */
+        CashHandover: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Caretaker User Id
+             * Format: uuid
+             */
+            caretaker_user_id: string;
+            /** Caretaker Name */
+            caretaker_name: string;
+            /** Amount Paise */
+            amount_paise: number;
+            /**
+             * Handed Over At
+             * Format: date-time
+             */
+            handed_over_at: string;
+            /**
+             * Recorded By
+             * Format: uuid
+             */
+            recorded_by: string;
+            /** Recorded By Name */
+            recorded_by_name: string;
+            /** Notes */
+            notes: string | null;
+        };
+        /**
+         * CashHandoverCreate
+         * @description Who recorded it and when are set by the database.
+         */
+        CashHandoverCreate: {
+            /**
+             * Caretaker User Id
+             * Format: uuid
+             */
+            caretaker_user_id: string;
+            /**
+             * Amount Paise
+             * @description Amount in paise (₹1 = 100)
+             */
+            amount_paise: number;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** CashHandoverResult */
+        CashHandoverResult: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Caretaker User Id
+             * Format: uuid
+             */
+            caretaker_user_id: string;
+            /** Caretaker Name */
+            caretaker_name: string;
+            /** Amount Paise */
+            amount_paise: number;
+            /**
+             * Handed Over At
+             * Format: date-time
+             */
+            handed_over_at: string;
+            /**
+             * Recorded By
+             * Format: uuid
+             */
+            recorded_by: string;
+            /** Recorded By Name */
+            recorded_by_name: string;
+            /** Notes */
+            notes: string | null;
+            /**
+             * In Hand Paise
+             * @description The caretaker's cash in hand after this handover
+             */
+            in_hand_paise: number;
+            /**
+             * Warning
+             * @description Set when the handover is more than the cash in hand. Still recorded
+             */
+            warning: string | null;
+        };
+        /** CashLedger */
+        CashLedger: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Full Name */
+            full_name: string;
+            /** In Hand Paise */
+            in_hand_paise: number;
+            /**
+             * Entries
+             * @description Oldest first
+             */
+            entries: components["schemas"]["CashLedgerEntry"][];
+        };
+        /** CashLedgerEntry */
+        CashLedgerEntry: {
+            /**
+             * Entry At
+             * Format: date-time
+             */
+            entry_at: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "payment" | "expense" | "handover";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Property Name */
+            property_name: string | null;
+            /** Description */
+            description: string;
+            /** Notes */
+            notes: string | null;
+            /**
+             * Amount Paise
+             * @description + cash in (payment), - cash out (expense, handover)
+             */
+            amount_paise: number;
+            /**
+             * Voided
+             * @description Void entries are listed but don't change the balance
+             */
+            voided: boolean;
+            /**
+             * Balance Paise
+             * @description Cash in hand after this entry
+             */
+            balance_paise: number;
         };
         /** ChangePasswordRequest */
         ChangePasswordRequest: {
@@ -6905,6 +7147,293 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    balances_api_v1_cash_balances_get: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashBalance"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_handovers_api_v1_cash_handovers_get: {
+        parameters: {
+            query?: {
+                caretaker_user_id?: string | null;
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashHandover"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    record_handover_api_v1_cash_handovers_post: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CashHandoverCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashHandoverResult"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ledger_api_v1_cash_ledger_get: {
+        parameters: {
+            query?: {
+                caretaker_user_id?: string | null;
+            };
+            header: {
+                /** @description Organization the request acts on */
+                "x-org-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashLedger"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Conflict */
             409: {

@@ -5244,6 +5244,423 @@
         }
       }
     },
+    "/api/v1/cash/balances": {
+      "get": {
+        "tags": [
+          "cash"
+        ],
+        "summary": "Balances",
+        "description": "Owner: every caretaker. Caretaker: only themself.",
+        "operationId": "balances_api_v1_cash_balances_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CashBalance"
+                  },
+                  "title": "Response Balances Api V1 Cash Balances Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        }
+      }
+    },
+    "/api/v1/cash/handovers": {
+      "post": {
+        "tags": [
+          "cash"
+        ],
+        "summary": "Record Handover",
+        "description": "Owner only. A handover larger than the caretaker's cash in hand is recorded (the owner may be settling an\nadvance) but comes back with a `warning`.",
+        "operationId": "record_handover_api_v1_cash_handovers_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashHandoverCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashHandoverResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "cash"
+        ],
+        "summary": "List Handovers",
+        "description": "Newest first. Caretakers see only their own (RLS).",
+        "operationId": "list_handovers_api_v1_cash_handovers_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "caretaker_user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Caretaker User Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CashHandover"
+                  },
+                  "title": "Response List Handovers Api V1 Cash Handovers Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        }
+      }
+    },
+    "/api/v1/cash/ledger": {
+      "get": {
+        "tags": [
+          "cash"
+        ],
+        "summary": "Ledger",
+        "description": "One caretaker's cash payments (+), cash expenses (-) and handovers (-), oldest first, with the running\nbalance. Defaults to the caller. A caretaker can only see their own.",
+        "operationId": "ledger_api_v1_cash_ledger_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "caretaker_user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Caretaker User Id"
+            }
+          },
+          {
+            "name": "x-org-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Organization the request acts on",
+              "title": "X-Org-Id"
+            },
+            "description": "Organization the request acts on"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashLedger"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/expenses": {
       "post": {
         "tags": [
@@ -7048,6 +7465,331 @@
           "source"
         ],
         "title": "Body_upload_statement_api_v1_reconciliation_imports_post"
+      },
+      "CashBalance": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "collected_paise": {
+            "type": "integer",
+            "title": "Collected Paise",
+            "description": "Cash payments received (non-void)"
+          },
+          "spent_paise": {
+            "type": "integer",
+            "title": "Spent Paise",
+            "description": "Expenses paid from caretaker cash (non-void)"
+          },
+          "handed_over_paise": {
+            "type": "integer",
+            "title": "Handed Over Paise",
+            "description": "Cash handed to the owner"
+          },
+          "in_hand_paise": {
+            "type": "integer",
+            "title": "In Hand Paise",
+            "description": "collected - spent - handed over. Negative if the owner was overpaid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "full_name",
+          "collected_paise",
+          "spent_paise",
+          "handed_over_paise",
+          "in_hand_paise"
+        ],
+        "title": "CashBalance"
+      },
+      "CashHandover": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "caretaker_user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Caretaker User Id"
+          },
+          "caretaker_name": {
+            "type": "string",
+            "title": "Caretaker Name"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise"
+          },
+          "handed_over_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Handed Over At"
+          },
+          "recorded_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Recorded By"
+          },
+          "recorded_by_name": {
+            "type": "string",
+            "title": "Recorded By Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "caretaker_user_id",
+          "caretaker_name",
+          "amount_paise",
+          "handed_over_at",
+          "recorded_by",
+          "recorded_by_name",
+          "notes"
+        ],
+        "title": "CashHandover"
+      },
+      "CashHandoverCreate": {
+        "properties": {
+          "caretaker_user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Caretaker User Id"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Amount Paise",
+            "description": "Amount in paise (\u20b91 = 100)"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "caretaker_user_id",
+          "amount_paise"
+        ],
+        "title": "CashHandoverCreate",
+        "description": "Who recorded it and when are set by the database."
+      },
+      "CashHandoverResult": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "caretaker_user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Caretaker User Id"
+          },
+          "caretaker_name": {
+            "type": "string",
+            "title": "Caretaker Name"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise"
+          },
+          "handed_over_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Handed Over At"
+          },
+          "recorded_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Recorded By"
+          },
+          "recorded_by_name": {
+            "type": "string",
+            "title": "Recorded By Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "in_hand_paise": {
+            "type": "integer",
+            "title": "In Hand Paise",
+            "description": "The caretaker's cash in hand after this handover"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning",
+            "description": "Set when the handover is more than the cash in hand. Still recorded"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "caretaker_user_id",
+          "caretaker_name",
+          "amount_paise",
+          "handed_over_at",
+          "recorded_by",
+          "recorded_by_name",
+          "notes",
+          "in_hand_paise",
+          "warning"
+        ],
+        "title": "CashHandoverResult"
+      },
+      "CashLedger": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "in_hand_paise": {
+            "type": "integer",
+            "title": "In Hand Paise"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/CashLedgerEntry"
+            },
+            "type": "array",
+            "title": "Entries",
+            "description": "Oldest first"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "full_name",
+          "in_hand_paise",
+          "entries"
+        ],
+        "title": "CashLedger"
+      },
+      "CashLedgerEntry": {
+        "properties": {
+          "entry_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Entry At"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "payment",
+              "expense",
+              "handover"
+            ],
+            "title": "Type"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "property_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise",
+            "description": "+ cash in (payment), - cash out (expense, handover)"
+          },
+          "voided": {
+            "type": "boolean",
+            "title": "Voided",
+            "description": "Void entries are listed but don't change the balance"
+          },
+          "balance_paise": {
+            "type": "integer",
+            "title": "Balance Paise",
+            "description": "Cash in hand after this entry"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entry_at",
+          "type",
+          "id",
+          "property_name",
+          "description",
+          "notes",
+          "amount_paise",
+          "voided",
+          "balance_paise"
+        ],
+        "title": "CashLedgerEntry"
       },
       "ChangePasswordRequest": {
         "properties": {
