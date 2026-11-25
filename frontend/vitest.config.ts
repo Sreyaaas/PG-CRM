@@ -12,6 +12,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // Above the 5 s async query wait in src/test/setup.ts, so a slow find fails with its own message, not a timeout.
+    testTimeout: 15_000,
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['e2e/**', 'node_modules/**', 'dist/**'],

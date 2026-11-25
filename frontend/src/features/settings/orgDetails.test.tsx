@@ -116,7 +116,7 @@ describe('Business details, resident profile, activity', () => {
   test('[FE-06/AC5] editing a resident profile saves police verification with a date, food and vehicle', async () => {
     const patches = mockApi()
     renderAt('/owner/residents/res-1')
-    const details = await screen.findByRole('region', { name: 'Resident details' }).catch(() => screen.findByLabelText('Resident details'))
+    const details = await screen.findByLabelText('Resident details')
     fireEvent.click(within(details).getByRole('button', { name: 'Edit' }))
     const dialog = await screen.findByRole('dialog', { name: 'Edit profile' })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Verified' }))
