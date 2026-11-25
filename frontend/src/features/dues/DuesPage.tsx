@@ -12,6 +12,7 @@ import { Avatar, EmptyState, ListRow, LoadingRows, Notice, PageHeader, ROW_LINK,
 import { useAuth } from '@/features/auth/AuthContext'
 import { useOrgId, usePropertiesQuery } from '@/features/properties/api'
 import { getErrorMessage } from '@/features/residents/api'
+import { LogPaymentSheet } from '@/features/payments/LogPaymentSheet'
 import { useDuesQuery, useGenerateInvoices, type DueRow } from './api'
 import { useReminders } from './reminders'
 
@@ -24,16 +25,18 @@ function DueRowItem({
   base,
   reminded,
   onRemind,
+  onLog,
 }: {
   row: DueRow
   base: string
   reminded: boolean
   onRemind: (row: DueRow) => void
+  onLog: (row: DueRow) => void
 }) {
   const overdue = row.days_overdue > 0
   return (
-    <li data-testid="due-row" className="flex items-center pr-3 sm:pr-4">
-      <Link to={`${base}/residents/${row.resident_id}/ledger`} className={`${ROW_LINK} min-w-0 flex-1`}>
+    <li data-testid="due-row">
+      <Link to={`${base}/residents/${row.resident_id}/ledger`} className={ROW_LINK}>
         <ListRow
           leading={<Avatar name={row.full_name} />}
           title={row.full_name}
@@ -57,16 +60,27 @@ function DueRowItem({
           }
         />
       </Link>
-      <Button
-        type="button"
-        size="sm"
-        variant="secondary"
-        aria-label={`${reminded ? 'Remind again' : 'Send reminder to'} ${row.full_name}`}
-        onClick={() => onRemind(row)}
-      >
-        {reminded ? <Check aria-hidden="true" /> : <MessageCircle aria-hidden="true" />}
-        {reminded ? 'Reminded' : 'Remind'}
-      </Button>
+      <div className="-mt-1 flex justify-end gap-2 px-4 pb-3 sm:px-5">
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          aria-label={`${reminded ? 'Remind again' : 'Send reminder to'} ${row.full_name}`}
+          onClick={() => onRemind(row)}
+        >
+          {reminded ? <Check aria-hidden="true" /> : <MessageCircle aria-hidden="true" />}
+          {reminded ? 'Reminded' : 'Remind'}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="primary"
+          aria-label={`Log payment for ${row.full_name}`}
+          onClick={() => onLog(row)}
+        >
+          Log payment
+        </Button>
+      </div>
     </li>
   )
 }
@@ -139,6 +153,7 @@ export function DuesPage() {
   const { showToast } = useToast()
   const [propertyId, setPropertyId] = useState<string | null>(null)
   const [remindAllOpen, setRemindAllOpen] = useState(false)
+  const [logFor, setLogFor] = useState<DueRow | null>(null)
   const orgId = useOrgId()
   const reminders = useReminders(orgId)
   const base = pathname.startsWith('/owner') ? '/owner' : '/caretaker'
@@ -225,6 +240,7 @@ export function DuesPage() {
                 base={base}
                 reminded={reminders.isRemindedToday(r.resident_id)}
                 onRemind={(row) => reminders.send(row.resident_id, row.whatsapp_url)}
+                onLog={setLogFor}
               />
             ))}
           </CardList>
@@ -238,6 +254,14 @@ export function DuesPage() {
         isReminded={reminders.isRemindedToday}
         onRemind={(row) => reminders.send(row.resident_id, row.whatsapp_url)}
       />
+      {logFor && (
+        <LogPaymentSheet
+          residentId={logFor.resident_id}
+          residentName={logFor.full_name}
+          outstandingPaise={logFor.outstanding_paise}
+          onClose={() => setLogFor(null)}
+        />
+      )}
     </div>
   )
 }
