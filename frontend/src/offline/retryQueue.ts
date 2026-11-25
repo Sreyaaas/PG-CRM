@@ -48,6 +48,12 @@ export interface SubmitSpec {
   label: string
   body: Record<string, unknown>
   photo?: Omit<PhotoUpload, 'objectKey'>
+  /**
+   * The key a form already sent with a failed attempt. Pass it when handing a write over to the queue after a
+   * network error: the first request may have reached the server, and only the same key keeps the retry from
+   * recording the money twice.
+   */
+  idempotencyKey?: string
 }
 
 export type SubmitResult = { status: 'sent'; data: unknown } | { status: 'queued'; item: QueueItem }
@@ -180,7 +186,7 @@ export class RetryQueue {
       id: this.deps.newKey(),
       kind: spec.kind,
       label: spec.label,
-      idempotencyKey: this.deps.newKey(),
+      idempotencyKey: spec.idempotencyKey ?? this.deps.newKey(),
       body: { ...spec.body },
       photo: spec.photo ? { ...spec.photo } : undefined,
       userId,

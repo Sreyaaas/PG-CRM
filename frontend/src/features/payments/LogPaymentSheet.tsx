@@ -12,7 +12,9 @@ import { Notice } from '@/components/ui/misc'
 import { Sheet } from '@/components/ui/sheet'
 import { useLedgerQuery } from '@/features/dues/api'
 import { getErrorMessage } from '@/features/residents/api'
-import { parseRupeesToPaise } from '@/lib/money'
+import { formatINR, parseRupeesToPaise } from '@/lib/money'
+import { isNetworkError } from '@/offline/retryQueue'
+import { retryQueue } from '@/offline/transport'
 import { useLogPayment, type Payment, type PaymentMethod } from './api'
 
 const METHODS: { value: PaymentMethod; label: string }[] = [
@@ -20,6 +22,7 @@ const METHODS: { value: PaymentMethod; label: string }[] = [
   { value: 'upi', label: 'UPI' },
   { value: 'bank_transfer', label: 'Bank transfer' },
 ]
+const METHOD_LABEL = Object.fromEntries(METHODS.map((m) => [m.value, m.label])) as Record<PaymentMethod, string>
 
 const UTR_LENGTH = 12
 
@@ -65,6 +68,7 @@ export function LogPaymentSheet({ residentId, residentName, outstandingPaise, on
   const [notes, setNotes] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
   const [done, setDone] = useState<Payment | null>(null)
+  const [queued, setQueued] = useState(false)
 
   const ledger = useLedgerQuery(residentId)
   const invoices = (ledger.data?.entries ?? []).filter((e) => e.type === 'invoice' && !e.voided)
@@ -99,7 +103,32 @@ export function LogPaymentSheet({ residentId, residentName, outstandingPaise, on
     inFlight.current = true
     try {
       setDone(await log.mutateAsync({ ...vars, idempotencyKey: attempt.current.key }))
-    } catch (err) {
+    } catch (caught) {
+      let err: unknown = caught
+      if (isNetworkError(err)) {
+        // No signal at the desk: keep the payment on this phone and send it (same key) when back online.
+        const notesTrim = notes.trim()
+        try {
+          const result = await retryQueue.submit({
+            kind: 'payment',
+            label: `${METHOD_LABEL[method]} ${formatINR(paise)} from ${residentName}`,
+            idempotencyKey: attempt.current.key,
+            body: {
+              resident_id: residentId,
+              amount_paise: paise,
+              method,
+              utr_number: needsUtr ? utr : null,
+              invoice_id: invoiceId || null,
+              notes: notesTrim ? notesTrim : null,
+            },
+          })
+          if (result.status === 'sent') setDone(result.data as Payment)
+          else setQueued(true)
+          return
+        } catch (queueErr) {
+          err = queueErr
+        }
+      }
       const message = getErrorMessage(err, 'Unable to log the payment. Please try again.')
       setFormError(message)
       showToast(message, 'error')
@@ -115,6 +144,30 @@ export function LogPaymentSheet({ residentId, residentName, outstandingPaise, on
     } catch {
       showToast('Unable to copy the link.', 'error')
     }
+  }
+
+  if (queued) {
+    return (
+      <Sheet
+        open
+        onClose={onClose}
+        title="Saved on this phone"
+        description={residentName}
+        footer={
+          <Button type="button" variant="secondary" size="lg" onClick={onClose}>
+            Done
+          </Button>
+        }
+      >
+        <div className="flex flex-col gap-3 py-1">
+          <Money paise={paise ?? 0} className="text-[22px] font-semibold text-ink" />
+          <Notice tone="warning">
+            No connection. This payment will be sent automatically when the phone is back online. Don't log it again.
+          </Notice>
+          <p className="text-[13.5px] text-muted">You can see it under Pending sync until then.</p>
+        </div>
+      </Sheet>
+    )
   }
 
   if (done) {
