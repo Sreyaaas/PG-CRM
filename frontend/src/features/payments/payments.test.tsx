@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ToastProvider } from '@/components/Toast'
 import { AuthProvider } from '@/features/auth/AuthContext'
 import { ORG_STORAGE_KEY, TOKEN_STORAGE_KEY } from '@/features/auth/session'
+import { createMemoryStore, setOfflineStoreForTest } from '@/offline/store'
+import { retryQueue } from '@/offline/transport'
 import { AppRouter } from '@/routes/AppRouter'
 
 const ME = {
@@ -254,5 +256,33 @@ describe('Log payment sheet', () => {
     fireEvent.click(btn)
     expect(await screen.findByText('Payment logged')).toBeInTheDocument()
     expect(posts).toHaveLength(1)
+  })
+  test('[FE-31/AC5] with no connection the payment is saved on the phone under the key already sent', async () => {
+    const store = createMemoryStore()
+    setOfflineStoreForTest(store)
+    // In the app <OfflineSync> (App.tsx) sets this from the session; the router alone doesn't mount it.
+    retryQueue.setContext({ userId: 'user-caretaker', orgId: 'org-1' })
+    try {
+      const posts: Posted[] = []
+      const down = () => {
+        throw new TypeError('Failed to fetch')
+      }
+      mockApi(posts, [down, down])
+      renderDues()
+
+      await openSheet()
+      fireEvent.click(submitBtn())
+      expect(await screen.findByText('Saved on this phone')).toBeInTheDocument()
+      expect(screen.getByText(/will be sent automatically when the phone is back online/)).toBeInTheDocument()
+      // The form's attempt and the queue's immediate retry both used one key, and that key is what's stored.
+      expect(posts).toHaveLength(2)
+      expect(posts[1].key).toBe(posts[0].key)
+      const queued = (await store.getAll('queue')) as { idempotencyKey: string; kind: string; status: string }[]
+      expect(queued).toHaveLength(1)
+      expect(queued[0]).toMatchObject({ kind: 'payment', idempotencyKey: posts[0].key, status: 'pending' })
+    } finally {
+      retryQueue.setContext(null)
+      setOfflineStoreForTest(null)
+    }
   })
 })

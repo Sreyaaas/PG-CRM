@@ -8,6 +8,8 @@ import { Notice } from '@/components/ui/misc'
 import { Sheet } from '@/components/ui/sheet'
 import { formatINR, parseRupeesToPaise } from '@/lib/money'
 import { errorMessage, useRecordHandover } from './useCash'
+import { isNetworkError } from '@/offline/retryQueue'
+import { retryQueue } from '@/offline/transport'
 
 function paiseToInput(paise: number): string {
   if (paise <= 0) return ''
@@ -66,7 +68,28 @@ export function HandoverSheet({ caretakerUserId, caretakerName, inHandPaise, onC
       if (res?.warning) showToast(res.warning)
       else showToast('Handover recorded', 'success')
       onClose()
-    } catch (err) {
+    } catch (caught) {
+      let err: unknown = caught
+      if (isNetworkError(err)) {
+        // No connection: keep the handover on this phone and send it with the same key once back online.
+        try {
+          const trimmed = notes.trim()
+          const result = await retryQueue.submit({
+            kind: 'handover',
+            label: `Handover ${formatINR(paise)} from ${caretakerName}`,
+            idempotencyKey,
+            body: { caretaker_user_id: caretakerUserId, amount_paise: paise, notes: trimmed ? trimmed : null },
+          })
+          showToast(
+            result.status === 'sent' ? 'Handover recorded' : 'No connection. Saved on this phone and will sync when online.',
+            result.status === 'sent' ? 'success' : 'default',
+          )
+          onClose()
+          return
+        } catch (queueErr) {
+          err = queueErr
+        }
+      }
       const message = errorMessage(err, 'Unable to record the handover. Please try again.')
       setFormError(message)
       showToast(message, 'error')
