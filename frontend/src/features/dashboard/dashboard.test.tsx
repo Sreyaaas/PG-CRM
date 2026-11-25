@@ -165,9 +165,9 @@ describe('FE-43 Owner dashboard', () => {
     const expected: [string, string, string][] = [
       ['attention-onboarding', '3', '/owner/check-ins'],
       ['attention-discounts', '2', '/owner/approvals'],
-      ['attention-expenses', '4', '/owner/expenses?flagged=true'],
-      ['attention-provisional', '5', '/owner/reconcile?older_than_days=3'],
-      ['attention-payments', '1', '/owner/payments?status=flagged'],
+      ['attention-expenses', '4', '/owner/approvals'],
+      ['attention-provisional', '5', '/owner/money/reconcile'],
+      ['attention-payments', '1', '/owner/money/reconcile'],
       ['attention-cash', '₹12,500', '/owner/money/cash'],
     ]
     for (const [id, text, href] of expected) {

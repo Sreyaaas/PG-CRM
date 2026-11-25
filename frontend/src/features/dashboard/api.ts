@@ -81,9 +81,9 @@ export function sumPnl(rows: DashboardPnl[]) {
 export const ATTENTION_LINKS = {
   onboarding: '/owner/check-ins',
   discounts: '/owner/approvals',
-  expenses: '/owner/expenses?flagged=true',
-  provisional: '/owner/reconcile?older_than_days=3',
-  payments: '/owner/payments?status=flagged',
+  expenses: '/owner/approvals',
+  provisional: '/owner/money/reconcile',
+  payments: '/owner/money/reconcile',
   cash: '/owner/money/cash',
   overstaying: '/owner/beds',
 } as const
