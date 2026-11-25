@@ -23,6 +23,7 @@ import { ReconcilePage } from '@/features/reconciliation/ReconcilePage'
 import { MyCashPage } from '@/features/cash/MyCashPage'
 import { OwnerCaretakerCashPage, OwnerCashPage } from '@/features/cash/OwnerCashPage'
 import { ReceiptPage } from '@/features/receipt/ReceiptPage'
+import { ComplaintsPage } from '@/features/complaints/ComplaintsPage'
 import { SignupPage } from './SignupPage'
 import { DuesPage } from '@/features/dues/DuesPage'
 import { LedgerPage } from '@/features/dues/LedgerPage'
@@ -45,6 +46,7 @@ export function AppRouter() {
         <Route index element={<OwnerDashboardPage section="Today" />} />
         <Route path="approvals" element={<ApprovalsPage />} />
         <Route path="check-ins" element={<CheckInsPage />} />
+        <Route path="complaints" element={<ComplaintsPage />} />
         <Route path="check-ins/:requestId" element={<CheckInDetailPage />} />
         <Route path="properties" element={<PropertiesListPage />} />
         <Route path="properties/new" element={<PropertyCreatePage />} />
@@ -73,6 +75,7 @@ export function AppRouter() {
         <Route path="beds" element={<BedBoardPage />} />
         <Route path="residents/:residentId" element={<ResidentDetailPage />} />
         <Route path="check-ins" element={<CheckInsPage />} />
+        <Route path="complaints" element={<ComplaintsPage />} />
         <Route path="check-ins/:requestId" element={<CheckInDetailPage />} />
         <Route path="payments" element={<DuesPage />} />
         <Route path="residents/:residentId/ledger" element={<LedgerPage />} />

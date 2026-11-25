@@ -18,6 +18,7 @@ import { z } from 'zod'
 import { ApiError, apiClient } from '@/api/client'
 import { useToast } from '@/components/Toast'
 import { Button } from '@/components/ui/button'
+import { OrgDetailsCard } from './OrgDetailsCard'
 import { Card, CardBody, CardHeader, CardList } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -462,6 +463,7 @@ export function SettingsPage() {
       )}
 
       {/* Organization (owner only) */}
+      {isOwner && <OrgDetailsCard />}
       {isOwner && <OwnerOrgCard orgName={membership?.organization_name} />}
 
       {/* Log out */}

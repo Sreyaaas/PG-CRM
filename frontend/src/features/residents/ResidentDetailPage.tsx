@@ -1,5 +1,6 @@
+import { ProfileEditSheet } from './ProfileEditSheet'
 import { useState, type ReactNode } from 'react'
-import { Check, ExternalLink, MessageCircle, Phone, X, ZoomIn } from 'lucide-react'
+import { Check, ExternalLink, MessageCircle, Pencil, Phone, X, ZoomIn } from 'lucide-react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
 import { Money } from '@/components/Money'
@@ -76,6 +77,7 @@ function DetailRow({ label, value }: { label: string; value: ReactNode }) {
 }
 
 export function ResidentDetailPage() {
+  const [editingProfile, setEditingProfile] = useState(false)
   const { residentId } = useParams<{ residentId: string }>()
   const { pathname } = useLocation()
   const { membership } = useAuth()
@@ -286,7 +288,15 @@ export function ResidentDetailPage() {
           )}
 
           <Card aria-label="Resident details">
-            <CardHeader title="Resident details" />
+            <CardHeader
+              title="Resident details"
+              action={
+                <Button type="button" variant="ghost" size="sm" onClick={() => setEditingProfile(true)}>
+                  <Pencil aria-hidden="true" />
+                  Edit
+                </Button>
+              }
+            />
             <CardBody className="py-1">
               <dl className="divide-y divide-line">
                 <DetailRow label="Phone" value={<span className="tabular-nums">{resident.phone}</span>} />
@@ -363,6 +373,8 @@ export function ResidentDetailPage() {
               </dl>
             </CardBody>
           </Card>
+
+          <ProfileEditSheet resident={resident} open={editingProfile} onClose={() => setEditingProfile(false)} />
 
           <Card aria-label="Stay history">
             <CardHeader title="Stay history" />
