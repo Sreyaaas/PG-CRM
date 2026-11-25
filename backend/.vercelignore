@@ -1,0 +1,9 @@
+# Not needed at runtime on Vercel (keeps the function bundle small, and never ships local secrets).
+.venv
+.env
+tests
+scripts
+Dockerfile
+**/__pycache__
+.pytest_cache
+.ruff_cache

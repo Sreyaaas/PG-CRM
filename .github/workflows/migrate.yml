@@ -1,0 +1,44 @@
+# Production/staging migrations (BE-53): the release step. Runs `scripts/migrate.py` as pgcrm_migrator whenever a
+# migration lands on main, or by hand (Actions -> "Migrate database" -> Run workflow). Vercel deploys the API from
+# main at the same time, so migrations must keep the previous API version working (see docs/DEPLOY.md).
+# Does nothing until the MIGRATOR_DATABASE_URL secret exists.
+name: Migrate database
+
+on:
+  push:
+    branches: [main]
+    paths: ["db/migrations/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migrate-database
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    env:
+      MIGRATOR_DATABASE_URL: ${{ secrets.MIGRATOR_DATABASE_URL }}
+    steps:
+      - name: Configured?
+        id: cfg
+        run: |
+          if [ -z "$MIGRATOR_DATABASE_URL" ]; then
+            echo "::notice::MIGRATOR_DATABASE_URL isn't set yet, so nothing to migrate (see docs/DEPLOY.md)."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ok == 'true'
+      - uses: astral-sh/setup-uv@v6
+        if: steps.cfg.outputs.ok == 'true'
+      - name: Apply pending migrations
+        if: steps.cfg.outputs.ok == 'true'
+        working-directory: backend
+        run: |
+          uv sync --frozen --no-dev
+          uv run python scripts/migrate.py --database-url "$MIGRATOR_DATABASE_URL"
