@@ -103,7 +103,7 @@ describe('Marigold design system', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  test('log out lives in the avatar menu with the user name and role', () => {
+  test('[FE-03/AC4] log out lives in the avatar menu with the user name and role', () => {
     let loggedOut = false
     render(
       <MemoryRouter initialEntries={['/owner']}>
