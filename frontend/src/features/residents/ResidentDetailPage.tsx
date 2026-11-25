@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { ExternalLink, Phone, X, ZoomIn } from 'lucide-react'
-import { useLocation, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
 import { Money } from '@/components/Money'
 import { StatusBadge, type BedBadgeValue } from '@/components/StatusBadge'
@@ -134,6 +134,9 @@ export function ResidentDetailPage() {
         actions={
           resident && (
             <>
+              <Button asChild variant="secondary">
+                <Link to={`${isOwner ? '/owner' : '/caretaker'}/residents/${resident.id}/ledger`}>Ledger</Link>
+              </Button>
               <Button asChild variant="secondary">
                 <a href={`tel:${resident.phone}`}>
                   <Phone aria-hidden="true" />
