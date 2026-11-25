@@ -1,6 +1,7 @@
 # Deploy runbook
 
-How the API goes to staging and production. **Hosting is not decided yet** ([BE-52](https://github.com/Sreyaaas/PG-CRM/issues/43));
+How the API goes to staging and production. **Hosting is not decided yet**: deploying staging on the chosen host and
+the restore drill are [BE-53](https://github.com/Sreyaaas/PG-CRM/issues/80);
 everything here is provider-neutral. Requirements for whatever is chosen: India region (Mumbai), managed Postgres 17
 with daily backups (+ point-in-time recovery if the owner wants it), a private S3-compatible bucket, secrets as
 environment variables.
@@ -84,7 +85,7 @@ raw paths that can contain receipt tokens; the app logs one redacted JSON line p
   ```
   (Create the roles with `db/prod/roles.sql` on the new database first.)
 
-### Restore drill (BE-52 AC4, to be done on the chosen host)
+### Restore drill (BE-53 AC2, to be done on the chosen host)
 _Not done yet: needs the hosting decision._ Record here: the date, which backup was restored, into what (a scratch
 database), how long it took, and the checks run afterwards (row counts of `properties`, `stays`, `payments`;
 sign in; open a receipt link).
