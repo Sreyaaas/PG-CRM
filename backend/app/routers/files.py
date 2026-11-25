@@ -1,7 +1,8 @@
 """Staff uploads and signed view links for private files.
 
 A signed GET URL is only issued for a key that is stored on a row the caller can read (onboarding request,
-resident or expense). RLS decides which rows those are, so a caretaker of building B never gets a selfie from A.
+resident, expense or complaint). RLS decides which rows those are, so a caretaker of building B never gets a
+selfie from A.
 """
 
 from typing import Annotated
@@ -17,7 +18,8 @@ router = APIRouter(tags=["files"])
 _REFERENCED = """
   SELECT EXISTS (SELECT 1 FROM onboarding_requests WHERE id_doc_path = %(k)s OR selfie_path = %(k)s)
       OR EXISTS (SELECT 1 FROM residents WHERE id_doc_path = %(k)s OR selfie_path = %(k)s)
-      OR EXISTS (SELECT 1 FROM expenses WHERE proof_path = %(k)s) AS ok
+      OR EXISTS (SELECT 1 FROM expenses WHERE proof_path = %(k)s)
+      OR EXISTS (SELECT 1 FROM complaints WHERE photo_path = %(k)s) AS ok
 """
 
 

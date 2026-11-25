@@ -22,7 +22,12 @@ UPLOAD_TTL = 5 * 60
 VIEW_TTL = 5 * 60
 EXTENSIONS = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "application/pdf": "pdf"}
 IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
-ALLOWED_TYPES = {"kyc_id": IMAGE_TYPES | {"application/pdf"}, "selfie": IMAGE_TYPES, "expense_proof": IMAGE_TYPES}
+ALLOWED_TYPES = {
+    "kyc_id": IMAGE_TYPES | {"application/pdf"},
+    "selfie": IMAGE_TYPES,
+    "expense_proof": IMAGE_TYPES,
+    "complaint_photo": IMAGE_TYPES,
+}
 
 
 @lru_cache
