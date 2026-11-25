@@ -36,3 +36,7 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-q"
+
+# Vercel (BE-53): the API runs as one Vercel Function. Set the Vercel project's Root Directory to `backend`.
+[tool.vercel]
+entrypoint = "app.main:app"

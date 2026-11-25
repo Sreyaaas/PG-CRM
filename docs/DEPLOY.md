@@ -1,10 +1,46 @@
 # Deploy runbook
 
-How the API goes to staging and production. **Hosting is not decided yet**: deploying staging on the chosen host and
-the restore drill are [BE-53](https://github.com/Sreyaaas/PG-CRM/issues/80);
-everything here is provider-neutral. Requirements for whatever is chosen: India region (Mumbai), managed Postgres 17
-with daily backups (+ point-in-time recovery if the owner wants it), a private S3-compatible bucket, secrets as
-environment variables.
+How the API goes to staging and production. Most of this file is provider-neutral; the stack chosen for the MVP is
+below, and deploying staging on it plus the restore drill is [BE-53](https://github.com/Sreyaaas/PG-CRM/issues/80).
+
+## MVP stack (decided 25 Nov 2026: everything free)
+
+| Piece | Where | Notes |
+|---|---|---|
+| Frontend + API | **Vercel** Hobby | The API is one Vercel Function (`backend/`, entry `app.main:app`, region `bom1` in `backend/vercel.json`). **Hobby is non-commercial only**: move to Vercel Pro (or Cloudflare Pages for the frontend) before charging owners. |
+| Database | **Supabase Free** | Postgres, 500 MB. Pauses after a week with no activity. **No backups of its own**: the nightly job below is the backup. |
+| Files | **Supabase Free Storage** | 1 GB, private bucket over the S3 protocol, so the BE-20 code works unchanged. |
+| Migrations | GitHub Actions `.github/workflows/migrate.yml` | On every push to `main` that touches `db/migrations/`, as `pgcrm_migrator`. |
+| Backups | GitHub Actions `.github/workflows/backup.yml` | Nightly 03:00 IST: `pg_dump` of our schemas, encrypted with `age`, kept 30 days as a private artifact. |
+| Errors / uptime | Sentry free plan, any free uptime checker on `/health` | |
+
+### Owner setup checklist (one time)
+
+Only the owner creates accounts and handles secrets; never paste them into the repo, an issue or a chat.
+
+1. **Backup key.** On your own computer: `age-keygen -o pgcrm-backup.key`. Keep that file offline (password
+   manager / USB): it is the only way to read backups. Copy the `age1...` public key it prints.
+2. **Supabase** (supabase.com, Free plan):
+   - New project, region **Mumbai (ap-south-1)** if offered.
+   - Run `db/prod/roles.sql` as `postgres` (the `psql` command in "One-time setup" below), with two new long
+     passwords.
+   - Project Settings, Data API: **turn it off** (the FastAPI app is the only way in). Don't enable Supabase Auth.
+   - Storage: create bucket **`pgcrm-private`, not public**. Enable the S3 protocol and create an S3 access key.
+   - Connection strings (Connect, pooler). The direct host may be IPv6-only, so use the **pooler** host for all
+     three; the pooler user name is `<role>.<project-ref>`:
+     - API: **transaction** pooler (port 6543) as `pgcrm_api.<ref>`
+     - Migrations and backups: **session** pooler (port 5432) as `pgcrm_migrator.<ref>`
+3. **GitHub** (repo, Settings, Secrets and variables, Actions):
+   - Secrets: `MIGRATOR_DATABASE_URL` and `BACKUP_DATABASE_URL` (both the session-pooler migrator URL).
+   - Variable: `BACKUP_AGE_RECIPIENT` = the `age1...` public key from step 1.
+   - Then Actions, "Migrate database", Run workflow (creates the schema); then "Nightly backup", Run workflow.
+4. **Vercel** (vercel.com, Hobby): import the GitHub repo as a project with **Root Directory `backend`**, and set the
+   environment variables from the table below (`PGCRM_ENVIRONMENT=prod`, the transaction-pooler `pgcrm_api` URL,
+   `PGCRM_S3_ENDPOINT=https://<ref>.supabase.co/storage/v1/s3`, the bucket, the S3 key pair, the project region,
+   a long random `PGCRM_JWT_SECRET`, and `PGCRM_CORS_ORIGINS=["https://<frontend>.vercel.app"]`). The frontend is a
+   second Vercel project with Root Directory `frontend`.
+5. Tell the backend dev it's done: they check `/health`, sign up, upload a photo through a presigned URL, and run
+   the restore drill (below).
 
 ## The one rule that matters
 
@@ -48,6 +84,13 @@ use a superuser connection to prove the triggers hold even when RLS is bypassed.
 
 ## Deploy (each release)
 
+**On the MVP stack:** merging to `main` is the release. GitHub Actions applies new migrations as `pgcrm_migrator`
+(`migrate.yml`) while Vercel builds and deploys the API from `main`. Because both start together, a migration must
+never break the previous API version (add columns/tables; don't rename or drop in the same release). Check
+`/health` afterwards. To roll back code, promote the previous deployment in Vercel.
+
+**On a container host:**
+
 1. **Build** the image from the repo root (it includes `db/migrations`):
    `docker build -f backend/Dockerfile -t pgcrm-api:<git-sha> .`
 2. **Release step: migrate**, as `pgcrm_migrator`, *before* the new API version starts:
@@ -76,24 +119,32 @@ raw paths that can contain receipt tokens; the app logs one redacted JSON line p
 
 ## Backups and restore
 
-- Daily automatic backups from the provider, kept at least 7 days; point-in-time recovery if enabled.
-- Object storage (KYC photos, selfies, bills): enable versioning or a daily copy, if the provider supports it.
-- Provider-independent dump, for a second copy or moving providers:
+- **MVP:** the nightly GitHub Actions job is the only backup (Supabase Free has none). It dumps the `public`,
+  `app` and `api` schemas with `pg_dump`, encrypts the file to the owner's `age` public key, and keeps it 30 days
+  as a private artifact. The same scripts work by hand:
   ```bash
-  pg_dump "$MIGRATOR_URL" -Fc --no-owner -f pgcrm-$(date +%F).dump
-  pg_restore -d "$NEW_DB_MIGRATOR_URL" --no-owner --role=pgcrm_migrator pgcrm-$(date +%F).dump
+  BACKUP_DATABASE_URL=<migrator url> BACKUP_AGE_RECIPIENT=age1... tools/backup/backup.sh
+  AGE_IDENTITY_FILE=pgcrm-backup.key RESTORE_DATABASE_URL=<empty db> tools/backup/restore.sh <file>.dump.age
   ```
-  (Create the roles with `db/prod/roles.sql` on the new database first.)
+  Restore into an **empty** database that already has the roles (`db/prod/roles.sql`), never over the live one.
+- On a paid plan, also keep the provider's daily backups (and point-in-time recovery if enabled).
+- Files (KYC photos, selfies, bills) are not in the database dump. On the free plan they live only in Supabase
+  Storage; copy the bucket now and then until a paid plan adds versioning.
 
-### Restore drill (BE-53 AC2, to be done on the chosen host)
-_Not done yet: needs the hosting decision._ Record here: the date, which backup was restored, into what (a scratch
-database), how long it took, and the checks run afterwards (row counts of `properties`, `stays`, `payments`;
-sign in; open a receipt link).
+### Restore drill
+Run `tools/backup/check.sql` against the live and the restored database and compare the output.
 
-## If the host is Supabase
+- **Local rehearsal (25 Nov 2026, local Docker Postgres 17):** `backup.sh` made a 4.3 MB encrypted file (unreadable
+  by `pg_restore` without the key); `restore.sh` restored it into a new empty database; all 15 checks were equal
+  (row counts of every main table, 22 RLS tables, 48 policies, 75 triggers). In the restored copy, `pgcrm_app`
+  with no user context saw 0 rows and `DELETE FROM payments` was refused.
+- **Staging (BE-53 AC2):** _to do once the owner has set up the stack._ Record: date, which nightly backup,
+  restored into what, how long it took, the `check.sql` comparison, and that sign-in and a receipt link work.
+
+## Supabase notes
 
 See the assessment on [BE-52](https://github.com/Sreyaaas/PG-CRM/issues/43). In short: use it as managed Postgres 17
-+ Storage only, Mumbai region; **turn off the Data API** (or revoke Supabase's default grants to `anon` /
-`authenticated`); don't use Supabase Auth; run `db/prod/roles.sql` as `postgres`; connect the API through the
-transaction pooler (port 6543); keep CI on the Docker `postgres:17` service. Daily backups need the Pro plan;
-point-in-time recovery is a paid add-on.
++ Storage only; **turn off the Data API** (or revoke Supabase's default grants to `anon` / `authenticated`); don't
+use Supabase Auth; run `db/prod/roles.sql` as `postgres`; API through the transaction pooler (6543), migrations and
+backups through the session pooler (5432); keep CI on the Docker `postgres:17` service. Still to confirm on the
+real project: presigned PUT/GET through Supabase's S3 endpoint with our boto3 settings (SigV4, path style).
