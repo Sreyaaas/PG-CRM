@@ -16,9 +16,10 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from psycopg import sql
 
-from app import storage
+from app import idempotency, storage
 from app.deps import Org, require_owner
 from app.errors import error_body
+from app.idempotency import IdempotencyKey
 from app.schemas import Expense, ExpenseCategory, ExpenseCreate, ExpenseReview, VoidRequest
 
 router = APIRouter(prefix="/expenses", tags=["expenses"])
@@ -54,9 +55,13 @@ def _proof_problem(body: ExpenseCreate, org_id: UUID) -> str | None:
 
 
 @router.post("", response_model=Expense, status_code=201, responses=_NOT_FOUND)
-def create_expense(body: ExpenseCreate, ctx: Org) -> Expense | JSONResponse:
-    """Caretaker or owner, for a building they can access. `created_by` is always the caller."""
+def create_expense(body: ExpenseCreate, ctx: Org, idempotency_key: IdempotencyKey = None) -> Expense | JSONResponse:
+    """Caretaker or owner, for a building they can access. `created_by` is always the caller. Send an
+    `Idempotency-Key` so a retry after a timeout can't record the expense twice."""
+    request_hash = idempotency.hash_body(body)
     with ctx.tx() as cur:
+        if (replay := idempotency.replay(cur, idempotency_key, request_hash)) is not None:
+            return replay
         cur.execute("SELECT 1 FROM properties WHERE id = %s", (body.property_id,))  # RLS hides other buildings
         if cur.fetchone() is None:
             raise HTTPException(404, "Property not found")
@@ -72,7 +77,9 @@ def create_expense(body: ExpenseCreate, ctx: Org) -> Expense | JSONResponse:
             ),
             values,
         )
-        return Expense(**cur.fetchone())
+        expense = Expense(**cur.fetchone())
+        idempotency.save(cur, idempotency_key, request_hash, 201, expense)
+        return expense
 
 
 @router.get("", response_model=list[Expense])

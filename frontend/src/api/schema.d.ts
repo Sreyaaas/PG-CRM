@@ -828,6 +828,7 @@ export interface paths {
         /**
          * Log Payment
          * @description Owner or a caretaker of the resident's building. Returns the receipt link and a ready WhatsApp message.
+         *     Send an `Idempotency-Key` so a retry after a timeout can't record the payment twice.
          */
         post: operations["log_payment_api_v1_payments_post"];
         delete?: never;
@@ -1014,7 +1015,7 @@ export interface paths {
         /**
          * Record Handover
          * @description Owner only. A handover larger than the caretaker's cash in hand is recorded (the owner may be settling an
-         *     advance) but comes back with a `warning`.
+         *     advance) but comes back with a `warning`. Send an `Idempotency-Key` so a retry can't record it twice.
          */
         post: operations["record_handover_api_v1_cash_handovers_post"];
         delete?: never;
@@ -1059,7 +1060,8 @@ export interface paths {
         put?: never;
         /**
          * Create Expense
-         * @description Caretaker or owner, for a building they can access. `created_by` is always the caller.
+         * @description Caretaker or owner, for a building they can access. `created_by` is always the caller. Send an
+         *     `Idempotency-Key` so a retry after a timeout can't record the expense twice.
          */
         post: operations["create_expense_api_v1_expenses_post"];
         delete?: never;
@@ -7108,6 +7110,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Optional UUID. Retrying with the same key and body returns the first response instead of recording it twice; the same key with a different body is 422. Keys are kept for 7 days. */
+                "Idempotency-Key"?: string | null;
                 /** @description Organization the request acts on */
                 "x-org-id": string;
             };
@@ -7934,6 +7938,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Optional UUID. Retrying with the same key and body returns the first response instead of recording it twice; the same key with a different body is 422. Keys are kept for 7 days. */
+                "Idempotency-Key"?: string | null;
                 /** @description Organization the request acts on */
                 "x-org-id": string;
             };
@@ -8158,6 +8164,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Optional UUID. Retrying with the same key and body returns the first response instead of recording it twice; the same key with a different body is 422. Keys are kept for 7 days. */
+                "Idempotency-Key"?: string | null;
                 /** @description Organization the request acts on */
                 "x-org-id": string;
             };

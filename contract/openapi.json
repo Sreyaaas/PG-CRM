@@ -4771,7 +4771,7 @@
           "payments"
         ],
         "summary": "Log Payment",
-        "description": "Owner or a caretaker of the resident's building. Returns the receipt link and a ready WhatsApp message.",
+        "description": "Owner or a caretaker of the resident's building. Returns the receipt link and a ready WhatsApp message.\nSend an `Idempotency-Key` so a retry after a timeout can't record the payment twice.",
         "operationId": "log_payment_api_v1_payments_post",
         "security": [
           {
@@ -4779,6 +4779,25 @@
           }
         ],
         "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional UUID. Retrying with the same key and body returns the first response instead of recording it twice; the same key with a different body is 422. Keys are kept for 7 days.",
+              "title": "Idempotency-Key"
+            },
+            "description": "Optional UUID. Retrying with the same key and body returns the first response instead of recording it twice; the same key with a different body is 422. Keys are kept for 7 days."
+          },
           {
             "name": "x-org-id",
             "in": "header",
@@ -6003,7 +6022,7 @@
           "cash"
         ],
         "summary": "Record Handover",
-        "description": "Owner only. A handover larger than the caretaker's cash in hand is recorded (the owner may be settling an\nadvance) but comes back with a `warning`.",
+        "description": "Owner only. A handover larger than the caretaker's cash in hand is recorded (the owner may be settling an\nadvance) but comes back with a `warning`. Send an `Idempotency-Key` so a retry can't record it twice.",
         "operationId": "record_handover_api_v1_cash_handovers_post",
         "security": [
           {
@@ -6011,6 +6030,25 @@
           }
         ],
         "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional UUID. Retrying with the same key and body returns the first response instead of recording it twice; the same key with a different body is 422. Keys are kept for 7 days.",
+              "title": "Idempotency-Key"
+            },
+            "description": "Optional UUID. Retrying with the same key and body returns the first response instead of recording it twice; the same key with a different body is 422. Keys are kept for 7 days."
+          },
           {
             "name": "x-org-id",
             "in": "header",
@@ -6325,7 +6363,7 @@
           "expenses"
         ],
         "summary": "Create Expense",
-        "description": "Caretaker or owner, for a building they can access. `created_by` is always the caller.",
+        "description": "Caretaker or owner, for a building they can access. `created_by` is always the caller. Send an\n`Idempotency-Key` so a retry after a timeout can't record the expense twice.",
         "operationId": "create_expense_api_v1_expenses_post",
         "security": [
           {
@@ -6333,6 +6371,25 @@
           }
         ],
         "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional UUID. Retrying with the same key and body returns the first response instead of recording it twice; the same key with a different body is 422. Keys are kept for 7 days.",
+              "title": "Idempotency-Key"
+            },
+            "description": "Optional UUID. Retrying with the same key and body returns the first response instead of recording it twice; the same key with a different body is 422. Keys are kept for 7 days."
+          },
           {
             "name": "x-org-id",
             "in": "header",

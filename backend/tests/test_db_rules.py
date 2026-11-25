@@ -692,3 +692,26 @@ def test_payment_flag_reason_only_with_a_flag(world: World, admin):
             (pid,),
         )
         assert cur.fetchone()["flag_reason"] == "Not in bank"
+
+
+# --------------------------------------------------------------------------
+# BE-32: idempotency keys are private to the user who sent them
+# --------------------------------------------------------------------------
+
+
+def test_idempotency_keys_are_per_user_and_never_deleted(world: World):
+    sql = """INSERT INTO idempotency_keys (org_id, user_id, key, request_hash, status_code, response, created_at)
+             VALUES (%s, %s, %s, repeat('a', 64), 201, '{}', now() - interval '30 days') RETURNING created_at"""
+    with as_user(world.caretaker_a, world.org) as cur:
+        cur.execute(sql, (world.org, world.caretaker_a, "k1"))
+        cur.execute("SELECT created_at > now() - interval '1 minute' AS fresh FROM idempotency_keys")
+        assert cur.fetchone()["fresh"] is True  # the 7-day clock can't be backdated
+    with raises_sqlstate("42501"), as_user(world.caretaker_a, world.org) as cur:
+        cur.execute(sql, (world.org, world.caretaker_b, "k2"))  # can't plant a key for someone else
+    for user in (world.caretaker_b, world.owner):  # nobody else sees it, not even the owner
+        with as_user(user, world.org) as cur:
+            cur.execute("SELECT count(*) AS n FROM idempotency_keys")
+            assert cur.fetchone()["n"] == 0
+    for change in ("DELETE FROM idempotency_keys", "UPDATE idempotency_keys SET status_code = 200"):
+        with raises_sqlstate("42501"), as_user(world.caretaker_a, world.org) as cur:
+            cur.execute(change)
