@@ -1,3 +1,4 @@
+import { CollectionCard } from '@/features/dashboard/CollectionCard'
 import { RecentActivityCard } from '@/features/dashboard/RecentActivityCard'
 import { OpenComplaintsCard } from '@/features/complaints/OpenComplaintsCard'
 import { useEffect, useMemo, useState } from 'react'
@@ -235,6 +236,14 @@ export function OwnerDashboardPage({
               />
             </Link>
           </div>
+          {dashboard && duesTotal !== null && (
+            <CollectionCard
+              confirmedPaise={totalsPnl.collected}
+              provisionalPaise={totalsPnl.provisional}
+              duePaise={duesTotal}
+              dueCount={Array.isArray(duesQuery.data) ? duesQuery.data.length : 0}
+            />
+          )}
         </section>
       )}
 
