@@ -41,7 +41,7 @@ export function RentToCollectCard({ propertyId, limit = 5 }: { propertyId: strin
             )}
           </>
         }
-        description={query.isLoading ? 'Loading…' : `${rows.length} residents · ${overdue} overdue · most overdue first`}
+        description={query.isLoading ? undefined : `${rows.length} ${rows.length === 1 ? 'resident' : 'residents'} · ${overdue} overdue`}
         action={
           <Button asChild variant="ghost" size="sm">
             <Link to="/caretaker/payments">View all</Link>
@@ -114,7 +114,6 @@ export function PendingCheckinsCard({ limit = 4 }: { limit?: number }) {
             {!query.isLoading && <span className="ml-1 text-muted tabular-nums">({rows.length})</span>}
           </>
         }
-        description="Longest waiting first"
         action={
           <Button asChild variant="ghost" size="sm">
             <Link to="/caretaker/check-ins">View all</Link>
