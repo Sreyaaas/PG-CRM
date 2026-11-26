@@ -40,7 +40,7 @@ export function OpenComplaintsCard({
             {!query.isLoading && <span className="ml-1 text-muted tabular-nums">({open.length})</span>}
           </>
         }
-        description={urgent > 0 ? `${urgent} urgent · urgent and longest waiting first` : 'Longest waiting first'}
+        description={urgent > 0 ? `${urgent} urgent` : undefined}
         action={
           <Button asChild variant="ghost" size="sm">
             <Link to={`${base}/complaints`}>View all</Link>

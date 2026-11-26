@@ -36,7 +36,7 @@ export function OwnerMorePage() {
   const { membership } = useAuth()
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="More" description={<>{membership?.organization_name} · Owner workspace</>} />
+      <PageHeader title="More" description={membership?.organization_name} />
       <MoreList
         links={[
           OWNER_NAV.beds,

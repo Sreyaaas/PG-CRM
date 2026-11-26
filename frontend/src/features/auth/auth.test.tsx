@@ -145,7 +145,7 @@ describe('Auth, login, org picker, and session guards', () => {
     renderApp(['/login'])
     submitLogin('9000000002', 'devpass123')
 
-    expect(await screen.findByText(/Caretaker workspace/i)).toBeInTheDocument()
+    expect(await screen.findByRole('navigation', { name: 'Caretaker navigation' })).toBeInTheDocument()
     expect(screen.getByLabelText('Caretaker navigation')).toBeInTheDocument()
   })
 
@@ -229,7 +229,7 @@ describe('Auth, login, org picker, and session guards', () => {
     expect(screen.getByText('Lakeview Group')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /Lakeview Group/i }))
-    expect(await screen.findByText(/Caretaker workspace/i)).toBeInTheDocument()
+    expect(await screen.findByRole('navigation', { name: 'Caretaker navigation' })).toBeInTheDocument()
     expect(window.localStorage.getItem(ORG_STORAGE_KEY)).toBe('org-2')
   })
 

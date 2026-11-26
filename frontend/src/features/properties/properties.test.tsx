@@ -275,7 +275,7 @@ describe('Property setup', () => {
     })
     renderApp(['/owner/properties'])
 
-    expect(await screen.findByText(/Caretaker workspace/i)).toBeInTheDocument()
+    expect(await screen.findByRole('navigation', { name: 'Caretaker navigation' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /properties/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /add property/i })).not.toBeInTheDocument()
   })
@@ -285,7 +285,7 @@ describe('Property setup', () => {
     mockApi(() => jsonResponse([]))
     renderApp(['/owner/properties/prop-1/edit'])
 
-    expect(await screen.findByText(/Caretaker workspace/i)).toBeInTheDocument()
+    expect(await screen.findByRole('navigation', { name: 'Caretaker navigation' })).toBeInTheDocument()
     expect(screen.queryByText(/edit property/i)).not.toBeInTheDocument()
   })
 })

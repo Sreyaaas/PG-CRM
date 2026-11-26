@@ -143,7 +143,7 @@ describe('Business details, resident profile, activity', () => {
     renderAt('/owner')
     const complaints = await screen.findByLabelText('Open complaints')
     expect(await within(complaints).findByText('Wi-Fi down on 2nd floor')).toBeInTheDocument()
-    expect(within(complaints).getByText('1 urgent · urgent and longest waiting first')).toBeInTheDocument()
+    expect(within(complaints).getByText('1 urgent')).toBeInTheDocument()
     expect(await screen.findByText('Ravi logged ₹6,000 cash from Arjun')).toBeInTheDocument()
   })
 })

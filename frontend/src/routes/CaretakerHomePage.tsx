@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react'
-import { BedDouble } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
 import { Money } from '@/components/Money'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Badge, type Tone } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardList } from '@/components/ui/card'
-import { EmptyState, ListRow, LoadingRows, PageHeader, ROW_LINK, Skeleton, StatTile } from '@/components/ui/misc'
+import { EmptyState, ListRow, LoadingRows, PageHeader, ROW_LINK, Skeleton } from '@/components/ui/misc'
 import { useMyDiscountRequests } from '@/features/approvals/useDiscountRequests'
 import { useAuth } from '@/features/auth/AuthContext'
 import { useCashLedger } from '@/features/cash/useCash'
@@ -98,7 +96,6 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
     })
   }, [discountsQuery.data, session?.me.id, effectivePropertyId])
 
-  const stat = (v: number) => (loading ? <Skeleton className="h-7 w-10" /> : v)
   const where = (b: BoardBedWithRoom) =>
     showPropertyInMeta ? `${b.propertyName} · Room ${b.roomLabel}` : `Room ${b.roomLabel}`
 
@@ -110,19 +107,7 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
       <PageHeader
         eyebrow={<DateLine />}
         title={section === 'Home' ? greeting(session?.me.full_name) : section}
-        description={
-          <>
-            Issues · {selectedPropName ?? (properties.length === 1 ? properties[0].name : membership?.organization_name)} · Caretaker workspace
-          </>
-        }
-        actions={
-          <Button asChild variant="secondary" size="sm">
-            <Link to="/caretaker/beds">
-              <BedDouble aria-hidden="true" />
-              Bed board
-            </Link>
-          </Button>
-        }
+        description={selectedPropName ?? (properties.length === 1 ? properties[0].name : membership?.organization_name)}
       />
 
       {multi && (
@@ -159,34 +144,83 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
         </div>
       )}
 
-      <section aria-label="Beds summary" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-        <StatTile
-          label="Beds"
-          value={stat(totals.total)}
-          foot={!loading && totals.total > 0 ? `${Math.round((occupiedIncludingNotice / totals.total) * 100)}% occupied` : undefined}
-        />
-        <StatTile label="Occupied" value={stat(totals.occupied)} />
-        <StatTile label="Vacant" value={stat(totals.vacant)} highlight={!loading && totals.vacant > 0} />
-        <StatTile label="On notice" value={stat(totals.onNotice)} />
-        {/* Money tiles only with real numbers from the API (never a made-up ₹0). */}
-        {(duesQuery.isLoading || Array.isArray(duesQuery.data)) && (
-          <StatTile
-            label="Rent to collect"
-            value={duesQuery.isLoading ? <Skeleton className="h-7 w-16" /> : <Money paise={duesTotal} />}
-            foot={duesQuery.isLoading ? undefined : `${duesOverdue} overdue`}
-          />
-        )}
-        {(cashQuery.isLoading || typeof cashQuery.data?.in_hand_paise === 'number') && (
-          <StatTile
-            label="My cash in hand"
-            value={cashQuery.isLoading ? <Skeleton className="h-7 w-16" /> : <Money paise={cashQuery.data?.in_hand_paise ?? 0} />}
-            foot={
-              <Link to="/caretaker/cash" className="underline underline-offset-2">
-                Details
+      <section aria-label="Beds summary" className="flex flex-col gap-3">
+        {/* Money cards only with real numbers from the API (never a made-up ₹0). */}
+        {(Array.isArray(duesQuery.data) || duesQuery.isLoading || typeof cashQuery.data?.in_hand_paise === 'number' || cashQuery.isLoading) && (
+          <div className="grid grid-cols-2 gap-3">
+            {(duesQuery.isLoading || Array.isArray(duesQuery.data)) && (
+              <Link to="/caretaker/payments" className="rounded-card active:opacity-80">
+                <Card className="flex h-full flex-col gap-1 p-4">
+                  <span className="text-[13px] font-medium text-muted">To collect</span>
+                  {duesQuery.isLoading ? (
+                    <Skeleton className="h-7 w-24" />
+                  ) : (
+                    <Money paise={duesTotal} className="text-[20px] font-bold leading-tight tracking-[-0.02em] text-ink" />
+                  )}
+                  {!duesQuery.isLoading && (
+                    <span className={duesOverdue > 0 ? 'text-[12.5px] font-semibold text-danger-ink' : 'text-[12.5px] text-muted'}>
+                      {duesOverdue > 0 ? `${duesOverdue} overdue` : 'Nobody overdue'}
+                    </span>
+                  )}
+                </Card>
               </Link>
-            }
-          />
+            )}
+            {(cashQuery.isLoading || typeof cashQuery.data?.in_hand_paise === 'number') && (
+              <Link to="/caretaker/cash" className="rounded-card active:opacity-80">
+                <Card className="flex h-full flex-col gap-1 p-4">
+                  <span className="text-[13px] font-medium text-muted">Cash in hand</span>
+                  {cashQuery.isLoading ? (
+                    <Skeleton className="h-7 w-20" />
+                  ) : (
+                    <Money
+                      paise={cashQuery.data?.in_hand_paise ?? 0}
+                      className="text-[20px] font-bold leading-tight tracking-[-0.02em] text-ink"
+                    />
+                  )}
+                  <span className="text-[12.5px] text-muted">
+                    {(cashQuery.data?.in_hand_paise ?? 0) > 0 ? 'To hand over' : 'Nothing to hand over'}
+                  </span>
+                </Card>
+              </Link>
+            )}
+          </div>
         )}
+
+        <Link to="/caretaker/beds" className="rounded-card active:opacity-80">
+          <Card className="flex flex-col gap-2.5 p-4">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <span className="text-[13px] font-medium text-muted">Beds filled</span>
+                {loading ? (
+                  <Skeleton className="mt-1 h-7 w-24" />
+                ) : (
+                  <p className="text-[22px] font-bold leading-tight tracking-[-0.02em] text-ink tabular-nums">
+                    {occupiedIncludingNotice}
+                    <span className="text-[15px] font-semibold text-muted"> of </span>
+                    {totals.total}
+                  </p>
+                )}
+              </div>
+              {!loading && totals.total > 0 && (
+                <span className="text-[20px] font-bold text-ink tabular-nums">
+                  {Math.round((occupiedIncludingNotice / totals.total) * 100)}%
+                </span>
+              )}
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-surface-3" aria-hidden="true">
+              <div
+                className="h-full rounded-full bg-brand"
+                style={{ width: `${totals.total > 0 ? (occupiedIncludingNotice / totals.total) * 100 : 0}%` }}
+              />
+            </div>
+            <p className="text-[13.5px] text-muted">
+              <span className={totals.vacant > 0 ? 'font-semibold text-success-ink' : 'font-semibold text-ink'}>
+                {totals.vacant}
+              </span>{' '}
+              vacant · <span className="font-semibold text-ink">{totals.onNotice}</span> on notice
+            </p>
+          </Card>
+        </Link>
       </section>
 
       {propertiesQuery.data && properties.length === 0 && (
