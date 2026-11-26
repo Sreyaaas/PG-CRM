@@ -28,6 +28,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback(
     (message: string, variant: ToastVariant = 'default') => {
       const id = nextToastId++
+      // A short tap on Android when something saves; iOS and desktops ignore it.
+      if (variant === 'success') navigator.vibrate?.(12)
       // Several requests can fail at once (e.g. every query on a page gets a 401); show each message once.
       setToasts((prev) =>
         prev.some((t) => t.message === message && t.variant === variant) ? prev : [...prev, { id, message, variant }],

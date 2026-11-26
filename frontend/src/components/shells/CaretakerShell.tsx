@@ -1,3 +1,4 @@
+import { PullToRefresh } from '@/components/PullToRefresh'
 import { useState, type ReactNode } from 'react'
 import { Plus } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
@@ -119,7 +120,7 @@ export function CaretakerShell({
         <TopBar orgName={orgName} homeTo="/caretaker" account={account} />
 
         <main className="safe-x mx-auto w-full max-w-lg flex-1 pb-[calc(var(--bottomnav-h)+32px+env(safe-area-inset-bottom))] pt-5 md:max-w-3xl lg:max-w-6xl lg:px-8 lg:pb-12 lg:pt-8">
-          {children}
+          <PullToRefresh>{children}</PullToRefresh>
         </main>
       </div>
 

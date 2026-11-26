@@ -1,3 +1,4 @@
+import { PullToRefresh } from '@/components/PullToRefresh'
 import { useState, type ReactNode } from 'react'
 import { Plus } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
@@ -83,7 +84,7 @@ export function OwnerShell({
         <TopBar orgName={orgName} homeTo="/owner" account={account} />
 
         <main className="safe-x mx-auto w-full max-w-5xl flex-1 pb-[calc(var(--bottomnav-h)+32px+env(safe-area-inset-bottom))] pt-5 lg:px-8 lg:pb-12 lg:pt-8 print:max-w-none print:p-0">
-          {children}
+          <PullToRefresh>{children}</PullToRefresh>
         </main>
       </div>
 
