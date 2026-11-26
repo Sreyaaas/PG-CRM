@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, FilePlus2, HandCoins, MessageCircle } from 'lucide-react'
+import { Check, FilePlus2, HandCoins, MessageCircle, Download } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
 import { Money } from '@/components/Money'
@@ -13,6 +13,7 @@ import { useAuth } from '@/features/auth/AuthContext'
 import { useOrgId, usePropertiesQuery } from '@/features/properties/api'
 import { getErrorMessage } from '@/features/residents/api'
 import { LogPaymentSheet } from '@/features/payments/LogPaymentSheet'
+import { downloadCsv, paiseToRupeesText, toCsv, todayIST } from '@/lib/csv'
 import { useDuesQuery, useGenerateInvoices, type DueRow } from './api'
 import { useReminders } from './reminders'
 
@@ -200,6 +201,28 @@ export function DuesPage() {
                 <FilePlus2 aria-hidden="true" />
                 {generate.isPending ? 'Creating invoices…' : "Generate this month's invoices"}
               </Button>
+              {rows.length > 0 && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    downloadCsv(
+                      `dues-${todayIST()}.csv`,
+                      toCsv(rows, [
+                        { header: 'Resident', value: (r) => r.full_name },
+                        { header: 'Bed', value: (r) => r.bed_label ?? 'Moved out' },
+                        { header: 'Phone', value: (r) => r.phone },
+                        { header: 'Outstanding (INR)', value: (r) => paiseToRupeesText(r.outstanding_paise) },
+                        { header: 'Oldest due date', value: (r) => r.oldest_due_date },
+                        { header: 'Days overdue', value: (r) => r.days_overdue },
+                      ]),
+                    )
+                  }
+                >
+                  <Download aria-hidden="true" />
+                  Export CSV
+                </Button>
+              )}
               </>
             )}
           </>

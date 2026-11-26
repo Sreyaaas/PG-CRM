@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { MessageCircle, Search } from 'lucide-react'
+import { Download, MessageCircle, Search } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
 import { Money } from '@/components/Money'
@@ -10,6 +10,7 @@ import { Avatar, EmptyState, ListRow, LoadingRows, PageHeader, ROW_LINK, StatTil
 import { useDuesQuery, type DueRow } from '@/features/dues/api'
 import { useBoards } from '@/features/home/useBoards'
 import { useOrgId, usePropertiesQuery } from '@/features/properties/api'
+import { downloadCsv, paiseToRupeesText, toCsv, todayIST } from '@/lib/csv'
 
 type Filter = 'all' | 'notice' | 'overdue' | 'new'
 
@@ -99,7 +100,37 @@ export function ResidentsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader title="Residents" description="Everyone staying now, by building and bed." />
+      <PageHeader
+        title="Residents"
+        description="Everyone staying now, by building and bed."
+        actions={
+          rows.length > 0 && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() =>
+                downloadCsv(
+                  `residents-${todayIST()}.csv`,
+                  toCsv(rows, [
+                    { header: 'Resident', value: (r) => r.name },
+                    { header: 'Building', value: (r) => r.propertyName },
+                    { header: 'Room', value: (r) => r.roomLabel },
+                    { header: 'Bed', value: (r) => r.bedLabel },
+                    { header: 'Rent per month (INR)', value: (r) => paiseToRupeesText(r.rentPaise) },
+                    { header: 'Checked in', value: (r) => r.checkIn },
+                    { header: 'On notice', value: (r) => (r.onNotice ? 'Yes' : 'No') },
+                    { header: 'Leaving on', value: (r) => r.vacateDate ?? '' },
+                    { header: 'Outstanding (INR)', value: (r) => (r.due ? paiseToRupeesText(r.due.outstanding_paise) : '0.00') },
+                  ]),
+                )
+              }
+            >
+              <Download aria-hidden="true" />
+              Export CSV
+            </Button>
+          )
+        }
+      />
 
       <section aria-label="Residents summary" className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <StatTile label="Staying now" value={counts.all} />
