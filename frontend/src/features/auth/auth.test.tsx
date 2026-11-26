@@ -127,7 +127,8 @@ describe('Auth, login, org picker, and session guards', () => {
     renderApp(['/login'])
     submitLogin('9000000001', 'devpass123')
 
-    expect(await screen.findByText(/Owner workspace/i)).toBeInTheDocument()
+    // Landing in the owner shell = its own bottom navigation is on screen.
+    expect(await screen.findByRole('navigation', { name: 'Owner bottom navigation' })).toBeInTheDocument()
     expect(screen.getByLabelText('Owner sidebar')).toBeInTheDocument()
 
     // Now test caretaker login
@@ -205,7 +206,8 @@ describe('Auth, login, org picker, and session guards', () => {
     renderApp(['/login'])
     submitLogin('9000000001', 'devpass123')
 
-    expect(await screen.findByText(/Owner workspace/i)).toBeInTheDocument()
+    // Landing in the owner shell = its own bottom navigation is on screen.
+    expect(await screen.findByRole('navigation', { name: 'Owner bottom navigation' })).toBeInTheDocument()
     expect(window.localStorage.getItem(ORG_STORAGE_KEY)).toBe('org-1')
 
     // Multiple memberships -> shows org picker

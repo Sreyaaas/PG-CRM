@@ -19,7 +19,18 @@ export function DateLine({ now = new Date() }: { now?: Date }) {
 }
 
 /** Occupied / total as a thin marigold bar with the numbers beside it. */
-export function OccupancyBar({ occupied, total, className }: { occupied: number; total: number; className?: string }) {
+export function OccupancyBar({
+  occupied,
+  total,
+  className,
+  wide = false,
+}: {
+  occupied: number
+  total: number
+  className?: string
+  /** Stretch the bar across the row (building lists) instead of a short fixed bar. */
+  wide?: boolean
+}) {
   const pct = total > 0 ? Math.round((occupied / total) * 100) : 0
   return (
     <div className={cn('flex items-center gap-2.5', className)}>
@@ -30,7 +41,7 @@ export function OccupancyBar({ occupied, total, className }: { occupied: number;
         aria-valuemax={total}
         aria-valuenow={occupied}
         aria-valuetext={`${occupied} of ${total} beds occupied`}
-        className="h-1.5 w-20 overflow-hidden rounded-full bg-surface-3 sm:w-28"
+        className={cn('h-1.5 overflow-hidden rounded-full bg-surface-3', wide ? 'flex-1' : 'w-20 sm:w-28')}
       >
         <span className="block h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
       </div>

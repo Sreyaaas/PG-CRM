@@ -62,27 +62,12 @@ export function PeriodSwitcher({
   )
 }
 
-function Figure({ label, children, tone }: { label: string; children: React.ReactNode; tone?: 'warning' | 'danger' }) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-[12px] text-muted">{label}</dt>
-      <dd
-        className={
-          'text-[14px] font-medium tabular-nums ' +
-          (tone === 'warning' ? 'text-warning-ink' : tone === 'danger' ? 'text-danger-ink' : 'text-ink')
-        }
-      >
-        {children}
-      </dd>
-    </div>
-  )
-}
 
 /** One row per property: collected, provisional, flagged, expenses, net. */
 export function PnlCard({ rows }: { rows: DashboardPnl[] }) {
   return (
     <Card className="overflow-hidden" aria-label="Profit and loss">
-      <CardHeader title="Profit and loss" description="By property for the period" />
+      <CardHeader title="Profit and loss" />
       {rows.length === 0 ? (
         <p className="px-4 py-6 text-center text-[13.5px] text-muted sm:px-5">No payments or expenses in this period.</p>
       ) : (
@@ -96,23 +81,7 @@ export function PnlCard({ rows }: { rows: DashboardPnl[] }) {
                   <Money paise={r.net_paise} />
                 </p>
               </div>
-              <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-5">
-                <Figure label="Verified">
-                  <Money paise={r.collected_verified_paise} />
-                </Figure>
-                <Figure label="Cash">
-                  <Money paise={r.collected_cash_paise} />
-                </Figure>
-                <Figure label="Provisional" tone={r.provisional_paise > 0 ? 'warning' : undefined}>
-                  <Money paise={r.provisional_paise} />
-                </Figure>
-                <Figure label="Flagged" tone={r.flagged_paise > 0 ? 'danger' : undefined}>
-                  <Money paise={r.flagged_paise} />
-                </Figure>
-                <Figure label="Expenses">
-                  <Money paise={r.expenses_paise} />
-                </Figure>
-              </dl>
+              <PnlBreakdown row={r} />
             </li>
           ))}
         </CardList>
@@ -181,5 +150,29 @@ export function AttentionCard({ attention: a }: { attention: DashboardAttention 
         </CardList>
       )}
     </Card>
+  )
+}
+
+/** One quiet line under each building: only the figures that aren't zero. */
+function PnlBreakdown({ row: r }: { row: DashboardPnl }) {
+  const parts: { label: string; paise: number; tone?: string }[] = [
+    { label: 'Verified', paise: r.collected_verified_paise },
+    { label: 'Cash', paise: r.collected_cash_paise },
+    { label: 'UPI to verify', paise: r.provisional_paise, tone: 'text-warning-ink' },
+    { label: 'Flagged', paise: r.flagged_paise, tone: 'text-danger-ink' },
+    { label: 'Expenses', paise: r.expenses_paise },
+  ].filter((p) => p.paise !== 0)
+  if (parts.length === 0) return <p className="mt-1 text-[12.5px] text-muted">Nothing collected or spent yet.</p>
+  return (
+    <dl className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[12.5px] text-muted">
+      {parts.map((p) => (
+        <div key={p.label} className="flex gap-1">
+          <dt>{p.label}</dt>
+          <dd className={p.tone ?? 'text-ink'}>
+            <Money paise={p.paise} className="font-medium tabular-nums" />
+          </dd>
+        </div>
+      ))}
+    </dl>
   )
 }

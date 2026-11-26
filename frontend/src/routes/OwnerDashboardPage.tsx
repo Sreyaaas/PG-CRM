@@ -3,12 +3,7 @@ import { RecentActivityCard } from '@/features/dashboard/RecentActivityCard'
 import { OpenComplaintsCard } from '@/features/complaints/OpenComplaintsCard'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  BedDouble,
-  Building2,
-  CheckCircle2,
   HandCoins,
-  Plus,
-  UserPlus,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DateText } from '@/components/DateText'
@@ -24,7 +19,6 @@ import {
   PageHeader,
   ROW_LINK,
   Skeleton,
-  StatTile,
 } from '@/components/ui/misc'
 import { DiscountRequestCard } from '@/features/approvals/DiscountRequestCard'
 import {
@@ -109,7 +103,6 @@ export function OwnerDashboardPage({
     : totals
   const pendingApprovals = dashboard ? dashboard.attention.pending_discounts : pending.length
   const loading = propertiesQuery.isLoading || (dashboard ? false : boardsLoading)
-  const stat = (v: number) => (loading ? <Skeleton className="h-7 w-10" /> : v)
 
   const movingOutSoon = useMemo(() => {
     const beds = boards
@@ -127,12 +120,15 @@ export function OwnerDashboardPage({
       )
   }, [boards])
 
+  const filled = bedTotals.occupied + bedTotals.onNotice
+  const filledPct = bedTotals.total > 0 ? Math.round((filled / bedTotals.total) * 100) : 0
+  const showFlagged = Boolean(dashboard && totalsPnl.flagged > 0)
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <PageHeader
         eyebrow={<DateLine />}
         title={isHome ? greeting(session?.me.full_name) : section}
-        description={<>{membership?.organization_name} · Owner workspace</>}
         actions={
           section === 'Money' ? (
             <Button asChild variant="secondary" size="sm">
@@ -141,77 +137,9 @@ export function OwnerDashboardPage({
                 Cash in hand
               </Link>
             </Button>
-          ) : (
-            isHome && (
-              <>
-                <Button asChild variant="secondary" size="sm">
-                  <Link to="/owner/beds">
-                    <BedDouble aria-hidden="true" />
-                    Bed board
-                  </Link>
-                </Button>
-                <Button asChild variant="secondary" size="sm">
-                  <Link to="/owner/properties/new">
-                    <Plus aria-hidden="true" />
-                    Add property
-                  </Link>
-                </Button>
-                <Button asChild variant="secondary" size="sm">
-                  <Link to="/owner/staff">
-                    <UserPlus aria-hidden="true" />
-                    Add caretaker
-                  </Link>
-                </Button>
-                <Button asChild variant="secondary" size="sm">
-                  <Link to="/owner/approvals">
-                    <CheckCircle2 aria-hidden="true" />
-                    Approvals
-                  </Link>
-                </Button>
-              </>
-            )
-          )
+          ) : undefined
         }
       />
-
-      {isHome && (
-        <section
-          aria-label="Summary"
-          className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6"
-        >
-          <StatTile
-            label="Properties"
-            value={
-              propertiesQuery.isLoading ? (
-                <Skeleton className="h-7 w-10" />
-              ) : (
-                properties.length
-              )
-            }
-          />
-          <StatTile label="Total beds" value={stat(bedTotals.total)} />
-          <StatTile label="Occupied" value={stat(bedTotals.occupied)} />
-          <StatTile label="Vacant" value={stat(bedTotals.vacant)} />
-          <StatTile label="On notice" value={stat(bedTotals.onNotice)} />
-          <Link
-            to="/owner/approvals"
-            className="rounded-card active:opacity-80"
-          >
-            <StatTile
-              label="Pending approvals"
-              value={
-                pendingQuery.isLoading && !dashboard ? (
-                  <Skeleton className="h-7 w-10" />
-                ) : (
-                  pendingApprovals
-                )
-              }
-              highlight={pendingApprovals > 0}
-              className="h-full"
-            />
-          </Link>
-        </section>
-      )}
 
       {isHome && (
         <section aria-label="Money" className="flex flex-col gap-3">
@@ -222,21 +150,8 @@ export function OwnerDashboardPage({
             onCustom={setCustom}
             invalid={customInvalid}
           />
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-            <StatTile label="Collected" value={moneyStat(dashLoading, dashboard && totalsPnl.collected)} />
-            <StatTile label="Provisional" value={moneyStat(dashLoading, dashboard && totalsPnl.provisional)} />
-            <StatTile label="Flagged" value={moneyStat(dashLoading, dashboard && totalsPnl.flagged)} />
-            <StatTile label="Expenses" value={moneyStat(dashLoading, dashboard && totalsPnl.expenses)} />
-            <StatTile label="Net profit" value={moneyStat(dashLoading, dashboard && totalsPnl.net)} highlight />
-            <Link to="/owner/money" className="rounded-card active:opacity-80">
-              <StatTile
-                label="Dues outstanding"
-                value={moneyStat(duesQuery.isLoading, duesTotal)}
-                className="h-full"
-              />
-            </Link>
-          </div>
-          {dashboard && duesTotal !== null && (
+          {dashLoading && <Skeleton className="h-52 w-full rounded-card" />}
+          {dashboard && (
             <CollectionCard
               confirmedPaise={totalsPnl.collected}
               provisionalPaise={totalsPnl.provisional}
@@ -244,6 +159,59 @@ export function OwnerDashboardPage({
               dueCount={Array.isArray(duesQuery.data) ? duesQuery.data.length : 0}
             />
           )}
+          <Card className="overflow-hidden">
+            <dl className="grid grid-cols-2 lg:grid-cols-3 [&>*:nth-last-child(-n+2)]:border-b-0">
+              <MoneyRow label="Expenses" value={moneyStat(dashLoading, dashboard && totalsPnl.expenses)} to="/owner/expenses" />
+              <MoneyRow label="Net profit" value={moneyStat(dashLoading, dashboard && totalsPnl.net)} strong />
+              {showFlagged && (
+                <MoneyRow label="Flagged" value={moneyStat(dashLoading, totalsPnl.flagged)} to="/owner/money/reconcile" tone="danger" />
+              )}
+            </dl>
+          </Card>
+        </section>
+      )}
+
+      {isHome && (
+        <section aria-label="Summary">
+          <Card className="flex flex-col gap-3 p-4 sm:p-5">
+            <div className="flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium text-muted">Beds filled</p>
+                {loading ? (
+                  <Skeleton className="mt-1 h-8 w-28" />
+                ) : (
+                  <p className="text-[26px] font-bold leading-tight tracking-[-0.02em] text-ink tabular-nums">
+                    <span>{filled}</span>
+                    <span className="text-[17px] font-semibold text-muted"> of </span>
+                    <span>{bedTotals.total}</span>
+                  </p>
+                )}
+              </div>
+              {!loading && bedTotals.total > 0 && (
+                <span className="text-[22px] font-bold text-ink tabular-nums">{filledPct}%</span>
+              )}
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-surface-3" aria-hidden="true">
+              <div className="h-full rounded-full bg-brand" style={{ width: `${filledPct}%` }} />
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13.5px] text-muted">
+              <Link to="/owner/beds" className="hover:text-ink">
+                <span className="font-semibold text-ink tabular-nums">{bedTotals.vacant}</span> vacant
+              </Link>
+              <Link to="/owner/beds" className="hover:text-ink">
+                <span className="font-semibold text-ink tabular-nums">{bedTotals.onNotice}</span> on notice
+              </Link>
+              <Link to="/owner/properties" className="hover:text-ink">
+                <span className="font-semibold text-ink tabular-nums">{properties.length}</span>{' '}
+                {properties.length === 1 ? 'building' : 'buildings'}
+              </Link>
+              {pendingApprovals > 0 && (
+                <Link to="/owner/approvals" className="font-semibold text-brand-ink">
+                  {pendingApprovals} waiting for approval
+                </Link>
+              )}
+            </div>
+          </Card>
         </section>
       )}
 
@@ -288,40 +256,31 @@ export function OwnerDashboardPage({
                         to={`/owner/properties/${p.id}`}
                         className={ROW_LINK}
                       >
-                        <ListRow
-                          leading={
-                            <span className="inline-flex size-9 items-center justify-center rounded-full bg-surface-2 text-muted">
-                              <Building2
-                                className="size-[18px]"
-                                aria-hidden="true"
-                              />
-                            </span>
-                          }
-                          title={p.name}
-                          meta={
-                            [
-                              full?.locality,
-                              full?.upi_vpa ? null : 'No UPI set',
-                            ]
-                              .filter(Boolean)
-                              .join(' · ') || undefined
-                          }
-                          trailing={
-                            isLoading ? (
-                              <Skeleton className="h-3 w-24" />
+                        <div className="flex flex-col gap-2 px-4 py-3.5 sm:px-5">
+                          <div className="flex items-baseline justify-between gap-3">
+                            <span className="min-w-0 truncate text-[14.5px] font-semibold text-ink">{p.name}</span>
+                            {isLoading ? (
+                              <Skeleton className="h-3 w-14" />
                             ) : (
-                              <div className="flex items-center gap-3">
-                                <span className="text-[12.5px] text-muted tabular-nums">
-                                  {counts.vacant} vacant
-                                </span>
-                                <OccupancyBar
-                                  occupied={counts.occupied + counts.onNotice}
-                                  total={counts.total}
-                                />
-                              </div>
-                            )
-                          }
-                        />
+                              <span
+                                className={
+                                  'shrink-0 text-[13px] tabular-nums ' +
+                                  (counts.vacant > 0 ? 'font-semibold text-success-ink' : 'text-muted')
+                                }
+                              >
+                                {counts.vacant} vacant
+                              </span>
+                            )}
+                          </div>
+                          {!isLoading && (
+                            <OccupancyBar wide occupied={counts.occupied + counts.onNotice} total={counts.total} />
+                          )}
+                          {(full?.locality || !full?.upi_vpa) && (
+                            <span className="truncate text-[12.5px] text-muted">
+                              {[full?.locality, full?.upi_vpa ? null : 'No UPI set'].filter(Boolean).join(' · ')}
+                            </span>
+                          )}
+                        </div>
                       </Link>
                     </li>
                   )
@@ -474,4 +433,40 @@ export function OwnerDashboardPage({
 function moneyStat(loading: boolean, paise: number | null | undefined) {
   if (loading) return <Skeleton className="h-7 w-20" />
   return typeof paise === 'number' ? <Money paise={paise} /> : '–'
+}
+
+function MoneyRow({
+  label,
+  value,
+  to,
+  strong = false,
+  tone,
+}: {
+  label: string
+  value: React.ReactNode
+  to?: string
+  strong?: boolean
+  tone?: 'danger'
+}) {
+  const body = (
+    <>
+      <dt className="text-[12.5px] font-medium text-muted">{label}</dt>
+      <dd
+        className={
+          'mt-0.5 text-[17px] font-bold tracking-[-0.01em] tabular-nums ' +
+          (tone === 'danger' ? 'text-danger-ink' : strong ? 'text-brand-ink' : 'text-ink')
+        }
+      >
+        {value}
+      </dd>
+    </>
+  )
+  const cls = 'block border-b border-r border-line px-4 py-3 [&:nth-child(2n)]:border-r-0 lg:[&:nth-child(2n)]:border-r lg:[&:nth-child(3n)]:border-r-0'
+  return to ? (
+    <Link to={to} className={cls + ' transition-colors hover:bg-surface-2 active:bg-surface-2'}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls}>{body}</div>
+  )
 }
