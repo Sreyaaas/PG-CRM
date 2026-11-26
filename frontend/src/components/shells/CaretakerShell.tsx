@@ -21,6 +21,7 @@ const SIDEBAR_ITEMS = [
   NAV.complaints,
   NAV.checkIns,
   NAV.payments,
+  NAV.residents,
   NAV.expenses,
   NAV.beds,
   NAV.cash,

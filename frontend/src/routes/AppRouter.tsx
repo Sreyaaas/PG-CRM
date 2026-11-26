@@ -24,6 +24,7 @@ import { MyCashPage } from '@/features/cash/MyCashPage'
 import { OwnerCaretakerCashPage, OwnerCashPage } from '@/features/cash/OwnerCashPage'
 import { ReceiptPage } from '@/features/receipt/ReceiptPage'
 import { ComplaintsPage } from '@/features/complaints/ComplaintsPage'
+import { ResidentsPage } from '@/features/residents/ResidentsPage'
 import { SignupPage } from './SignupPage'
 import { DuesPage } from '@/features/dues/DuesPage'
 import { LedgerPage } from '@/features/dues/LedgerPage'
@@ -56,6 +57,7 @@ export function AppRouter() {
         <Route path="properties/:propertyId/beds" element={<BedBoardPage />} />
         <Route path="properties/:propertyId/poster" element={<PosterPage />} />
         <Route path="beds" element={<BedBoardPage />} />
+        <Route path="residents" element={<ResidentsPage />} />
         <Route path="residents/:residentId" element={<ResidentDetailPage />} />
         <Route path="money" element={<DuesPage />} />
         <Route path="money/reconcile" element={<ReconcilePage />} />
@@ -73,6 +75,7 @@ export function AppRouter() {
       <Route path="/caretaker" element={<CaretakerLayoutRoute />}>
         <Route index element={<CaretakerHomePage section="Home" />} />
         <Route path="beds" element={<BedBoardPage />} />
+        <Route path="residents" element={<ResidentsPage />} />
         <Route path="residents/:residentId" element={<ResidentDetailPage />} />
         <Route path="check-ins" element={<CheckInsPage />} />
         <Route path="complaints" element={<ComplaintsPage />} />
