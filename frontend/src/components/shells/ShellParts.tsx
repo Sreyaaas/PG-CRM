@@ -3,6 +3,7 @@ import { ArrowLeftRight, ChevronRight, LogOut, Moon, Plus, Settings, Sun } from 
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Avatar, BrandMark } from '@/components/ui/misc'
 import { Sheet } from '@/components/ui/sheet'
+import { SearchButton } from '@/features/search/GlobalSearch'
 import { resolvedTheme, useAppearance } from '@/features/settings/appearance'
 import { cn } from '@/lib/utils'
 
@@ -173,6 +174,7 @@ export function TopBar({
           <BrandMark size="sm" />
           <span className="truncate text-[15px] font-semibold tracking-[-0.01em] text-ink">{orgName}</span>
         </Link>
+        <SearchButton base={homeTo === '/owner' ? '/owner' : '/caretaker'} />
         <ThemeToggle />
         <AccountMenu account={account} />
       </div>
