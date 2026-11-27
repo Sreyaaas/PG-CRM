@@ -2,7 +2,7 @@ import type { VitePWAOptions } from 'vite-plugin-pwa'
 
 export const pwaOptions: Partial<VitePWAOptions> = {
   // 'prompt': a new version waits until the user taps "Reload to update" (FE-51), so a half-filled form is never wiped.
-  registerType: 'prompt',
+  registerType: 'autoUpdate',
   includeAssets: ['pwa-192x192.png', 'pwa-512x512.png', 'apple-touch-icon.png', 'favicon.svg'],
   manifest: {
     name: 'NivasOS',
@@ -26,6 +26,9 @@ export const pwaOptions: Partial<VitePWAOptions> = {
     ],
   },
   workbox: {
+    cleanupOutdatedCaches: true,
+    skipWaiting: true,
+    clientsClaim: true,
     globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
     navigateFallbackDenylist: [/^\/api\//, /^\/health$/],
     runtimeCaching: [
