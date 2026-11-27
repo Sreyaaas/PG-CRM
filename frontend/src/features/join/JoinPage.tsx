@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Camera, CheckCircle2, Upload } from 'lucide-react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '@/api/client'
 import { Money } from '@/components/Money'
 import { Button } from '@/components/ui/button'
