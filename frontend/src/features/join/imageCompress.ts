@@ -1,5 +1,5 @@
-const MAX_DIMENSION = 1600
-const TARGET_BYTES = 1_000_000
+const MAX_DIMENSION = 1024
+const TARGET_BYTES = 180_000
 
 export interface CompressedImage {
   blob: Blob
