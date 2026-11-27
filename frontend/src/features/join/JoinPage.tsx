@@ -205,6 +205,9 @@ function JoinFlow({ slug }: { slug: string }) {
                   {shortId}
                 </p>
               </div>
+              <Button asChild variant="secondary" block>
+                <Link to="/">Back to app</Link>
+              </Button>
             </CardBody>
           </Card>
         </div>
