@@ -8,19 +8,15 @@ import { Chip } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { EmptyState, LoadingRows, Notice, PageHeader } from '@/components/ui/misc'
 import { Button } from '@/components/ui/button'
+import { Sheet } from '@/components/ui/sheet'
 import { useAuth } from '@/features/auth/AuthContext'
 import { countBeds } from '@/features/home/useBoards'
 import { usePropertiesQuery } from '@/features/properties/api'
 import { useBedBoardQuery, type BoardBed, type BoardRoom } from '@/features/rooms/api'
 import { cn } from '@/lib/utils'
 
-type BedFilter = 'all' | 'vacant' | 'on_notice'
-
-const FILTERS: { id: BedFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'vacant', label: 'Vacant' },
-  { id: 'on_notice', label: 'On notice' },
-]
+type BedFilter = 'all' | 'occupied' | 'vacant' | 'on_notice' | 'reserved'
+type AcFilter = 'all' | 'ac' | 'non_ac'
 
 function firstName(fullName: string): string {
   const first = fullName.trim().split(/\s+/)[0]
@@ -33,7 +29,15 @@ function bedMatchesFilter(bed: BoardBed, filter: BedFilter): boolean {
   return bed.status === filter
 }
 
-function BedTile({ bed, isOwner }: { bed: BoardBed; isOwner: boolean }) {
+function BedTile({
+  bed,
+  isOwner,
+  onSelectVacant,
+}: {
+  bed: BoardBed
+  isOwner: boolean
+  onSelectVacant?: (bed: BoardBed) => void
+}) {
   const resident = bed.stay?.resident ?? null
   const rentPaise = bed.stay ? bed.stay.rent_paise : bed.base_rent_paise
   const rolePrefix = isOwner ? '/owner' : '/caretaker'
@@ -69,7 +73,9 @@ function BedTile({ bed, isOwner }: { bed: BoardBed; isOwner: boolean }) {
 
   const tileClasses = cn(
     'flex min-h-[104px] flex-col rounded-control border border-line bg-surface p-3 text-left shadow-xs transition-colors',
-    resident ? 'hover:border-line-strong hover:bg-surface-2 active:bg-surface-2' : 'bg-surface-2/50',
+    resident
+      ? 'hover:border-line-strong hover:bg-surface-2 active:bg-surface-2'
+      : 'bg-surface-2/50 hover:border-line-strong hover:bg-surface-2 active:bg-surface-2 cursor-pointer',
   )
 
   if (resident) {
@@ -85,13 +91,28 @@ function BedTile({ bed, isOwner }: { bed: BoardBed; isOwner: boolean }) {
   }
 
   return (
-    <div data-testid={`bed-tile-${bed.label}`} className={tileClasses}>
+    <button
+      type="button"
+      onClick={() => onSelectVacant?.(bed)}
+      data-testid={`bed-tile-${bed.label}`}
+      className={tileClasses}
+    >
       {content}
-    </div>
+    </button>
   )
 }
 
-function RoomRow({ room, beds, isOwner }: { room: BoardRoom; beds: BoardBed[]; isOwner: boolean }) {
+function RoomRow({
+  room,
+  beds,
+  isOwner,
+  onSelectVacant,
+}: {
+  room: BoardRoom
+  beds: BoardBed[]
+  isOwner: boolean
+  onSelectVacant: (bed: BoardBed, room: BoardRoom) => void
+}) {
   return (
     <section
       aria-label={`Room ${room.label}`}
@@ -117,7 +138,12 @@ function RoomRow({ room, beds, isOwner }: { room: BoardRoom; beds: BoardBed[]; i
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4">
         {beds.map((bed) => (
-          <BedTile key={bed.id} bed={bed} isOwner={isOwner} />
+          <BedTile
+            key={bed.id}
+            bed={bed}
+            isOwner={isOwner}
+            onSelectVacant={(b) => onSelectVacant(b, room)}
+          />
         ))}
       </div>
     </section>
@@ -139,6 +165,10 @@ export function BedBoardPage() {
 
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('')
   const [filter, setFilter] = useState<BedFilter>('all')
+  const [floorFilter, setFloorFilter] = useState<number | 'all'>('all')
+  const [acFilter, setAcFilter] = useState<AcFilter>('all')
+  const [selectedVacant, setSelectedVacant] = useState<{ bed: BoardBed; room: BoardRoom } | null>(null)
+  const rolePrefix = isOwner ? '/owner' : '/caretaker'
 
   const activePropertyId = useMemo(() => {
     if (routePropertyId) return routePropertyId
@@ -154,14 +184,34 @@ export function BedBoardPage() {
 
   const counts = useMemo(() => countBeds(rooms), [rooms])
 
+  const floors = useMemo(() => {
+    const set = new Set<number>()
+    for (const r of rooms) {
+      if (r.floor != null) set.add(r.floor)
+    }
+    return Array.from(set).sort((a, b) => a - b)
+  }, [rooms])
+
   const filteredRooms = useMemo(() => {
     return rooms
+      .filter((room) => {
+        if (floorFilter !== 'all' && room.floor !== floorFilter) return false
+        if (acFilter === 'ac' && !room.is_ac) return false
+        if (acFilter === 'non_ac' && room.is_ac) return false
+        return true
+      })
       .map((room) => ({
         room,
         beds: room.beds.filter((b) => bedMatchesFilter(b, filter)),
       }))
-      .filter((entry) => (filter === 'all' ? entry.beds.length > 0 || entry.room.beds.length === 0 : entry.beds.length > 0))
-  }, [rooms, filter])
+      .filter((entry) =>
+        filter === 'all' ? entry.beds.length > 0 || entry.room.beds.length === 0 : entry.beds.length > 0,
+      )
+  }, [rooms, filter, floorFilter, acFilter])
+
+  function toggleCardFilter(next: BedFilter) {
+    setFilter((prev) => (prev === next ? 'all' : next))
+  }
 
   function handleSelectProperty(nextId: string) {
     if (routePropertyId) {
@@ -223,18 +273,80 @@ export function BedBoardPage() {
       {activePropertyId && (
         <>
           {boardQuery.data && (
-            <p data-testid="bed-board-summary" className="text-[14px] font-medium text-muted tabular-nums">
-              {counts.occupied} occupied · {counts.vacant} vacant · {counts.onNotice} on notice
-              {counts.reserved > 0 ? ` · ${counts.reserved} reserved` : ''}
-            </p>
+            <div
+              data-testid="bed-board-summary"
+              className="grid grid-cols-2 gap-2.5 sm:grid-cols-4"
+              role="group"
+              aria-label="Bed summary cards"
+            >
+              {(
+                [
+                  { id: 'all', label: 'All beds', count: counts.total, tone: 'text-ink' },
+                  { id: 'vacant', label: 'Vacant', count: counts.vacant, tone: 'text-success-ink' },
+                  { id: 'on_notice', label: 'To be vacant', count: counts.onNotice, tone: 'text-warning-ink' },
+                  { id: 'occupied', label: 'Occupied', count: counts.occupied, tone: 'text-ink' },
+                ] as const
+              ).map((card) => {
+                const active = filter === card.id
+                return (
+                  <button
+                    key={card.id}
+                    type="button"
+                    aria-pressed={active}
+                    data-testid={`bed-card-${card.id}`}
+                    onClick={() => (card.id === 'all' ? setFilter('all') : toggleCardFilter(card.id))}
+                    className={cn(
+                      'flex flex-col items-start justify-between gap-1 rounded-card border bg-surface px-3.5 py-3 text-left shadow-xs transition-colors cursor-pointer',
+                      active
+                        ? 'border-accent bg-accent/10 ring-1 ring-accent/40'
+                        : 'border-line hover:border-line-strong hover:bg-surface-2',
+                    )}
+                  >
+                    <span className="text-[12.5px] font-medium text-muted">{card.label}</span>
+                    <span className={cn('text-[22px] font-bold leading-tight tabular-nums', card.tone)}>
+                      {card.count}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
           )}
 
-          <div role="group" aria-label="Bed status filter" className="flex flex-wrap gap-2">
-            {FILTERS.map((f) => (
-              <Chip key={f.id} pressed={filter === f.id} onClick={() => setFilter(f.id)}>
-                {f.label}
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Bed board filters">
+            {floors.length > 0 && (
+              <>
+                <Chip pressed={floorFilter === 'all'} onClick={() => setFloorFilter('all')}>
+                  All floors
+                </Chip>
+                {floors.map((fl) => (
+                  <Chip key={fl} pressed={floorFilter === fl} onClick={() => setFloorFilter(fl)}>
+                    Floor {fl}
+                  </Chip>
+                ))}
+              </>
+            )}
+
+            <Chip pressed={acFilter === 'all'} onClick={() => setAcFilter('all')}>
+              All rooms
+            </Chip>
+            <Chip pressed={acFilter === 'ac'} onClick={() => setAcFilter(acFilter === 'ac' ? 'all' : 'ac')}>
+              AC
+            </Chip>
+            <Chip
+              pressed={acFilter === 'non_ac'}
+              onClick={() => setAcFilter(acFilter === 'non_ac' ? 'all' : 'non_ac')}
+            >
+              Non-AC
+            </Chip>
+
+            {counts.reserved > 0 && (
+              <Chip
+                pressed={filter === 'reserved'}
+                onClick={() => toggleCardFilter('reserved')}
+              >
+                Reserved ({counts.reserved})
               </Chip>
-            ))}
+            )}
           </div>
 
           {boardQuery.isLoading && (
@@ -264,12 +376,59 @@ export function BedBoardPage() {
           {filteredRooms.length > 0 && (
             <div className="flex flex-col gap-3">
               {filteredRooms.map(({ room, beds }) => (
-                <RoomRow key={room.id} room={room} beds={beds} isOwner={isOwner} />
+                <RoomRow
+                  key={room.id}
+                  room={room}
+                  beds={beds}
+                  isOwner={isOwner}
+                  onSelectVacant={(bed, r) => setSelectedVacant({ bed, room: r })}
+                />
               ))}
             </div>
           )}
         </>
       )}
+
+      <Sheet
+        open={selectedVacant !== null}
+        onClose={() => setSelectedVacant(null)}
+        title={selectedVacant ? `Bed ${selectedVacant.bed.label}` : ''}
+        description={
+          selectedVacant
+            ? `Room ${selectedVacant.room.label}${
+                selectedVacant.room.floor != null ? ` · Floor ${selectedVacant.room.floor}` : ''
+              } · ${selectedVacant.room.sharing}-sharing · ${selectedVacant.room.is_ac ? 'AC' : 'Non-AC'}`
+            : undefined
+        }
+        footer={
+          selectedVacant && (
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={() => setSelectedVacant(null)}>
+                Close
+              </Button>
+              <Button asChild>
+                <Link to={`${rolePrefix}/check-ins`}>Add tenant</Link>
+              </Button>
+            </div>
+          )
+        }
+      >
+        {selectedVacant && (
+          <div className="flex flex-col gap-3 text-[14px]">
+            <div className="flex items-center justify-between rounded-control border border-line bg-surface-2/60 px-3.5 py-2.5">
+              <span className="text-muted">Status</span>
+              <StatusBadge kind="bed" value={selectedVacant.bed.status} />
+            </div>
+            <div className="flex items-center justify-between rounded-control border border-line bg-surface-2/60 px-3.5 py-2.5">
+              <span className="text-muted">Monthly rent</span>
+              <span className="font-semibold text-ink">
+                <Money paise={selectedVacant.bed.base_rent_paise} />
+                <span className="font-normal text-muted">/mo</span>
+              </span>
+            </div>
+          </div>
+        )}
+      </Sheet>
     </div>
   )
 }

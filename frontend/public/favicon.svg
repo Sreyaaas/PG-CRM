@@ -1,1 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#f5b31f"/><text x="32" y="46" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="40" fill="#1c1917">P</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f9c23c"/>
+      <stop offset="100%" stop-color="#e59a08"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#bg)"/>
+  <!-- Architectural N Monogram for Nivas OS -->
+  <path fill="#1c1917" d="
+    M 16 49
+    V 15
+    H 25
+    L 39 36
+    V 15
+    H 48
+    V 49
+    H 39
+    L 25 28
+    V 49
+    Z
+  "/>
+  <!-- Subtle warm accent spark -->
+  <circle cx="43.5" cy="19.5" r="2.2" fill="#f5b31f"/>
+</svg>

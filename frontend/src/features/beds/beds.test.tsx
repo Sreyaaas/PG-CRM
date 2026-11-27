@@ -293,9 +293,11 @@ describe('FE-23 Bed board and resident detail', () => {
     renderAt('/owner/beds')
 
     await screen.findByTestId('bed-tile-101-A')
-    expect(screen.getByTestId('bed-board-summary')).toHaveTextContent(
-      '1 occupied · 1 vacant · 1 on notice · 1 reserved',
-    )
+    const summary = screen.getByTestId('bed-board-summary')
+    expect(within(summary).getByTestId('bed-card-all')).toHaveTextContent('4')
+    expect(within(summary).getByTestId('bed-card-vacant')).toHaveTextContent('1')
+    expect(within(summary).getByTestId('bed-card-on_notice')).toHaveTextContent('1')
+    expect(within(summary).getByTestId('bed-card-occupied')).toHaveTextContent('1')
 
     const tile101A = screen.getByTestId('bed-tile-101-A')
     expect(within(tile101A).getByText('Occupied')).toBeInTheDocument()
@@ -336,27 +338,31 @@ describe('FE-23 Bed board and resident detail', () => {
     renderAt('/caretaker/beds')
     await screen.findByTestId('bed-tile-101-A')
 
-    const filterGroup = screen.getByRole('group', { name: 'Bed status filter' })
+    const summaryGroup = screen.getByRole('group', { name: 'Bed summary cards' })
 
-    // Vacant filter
-    fireEvent.click(within(filterGroup).getByRole('button', { name: 'Vacant' }))
+    // Vacant filter via summary card
+    fireEvent.click(within(summaryGroup).getByTestId('bed-card-vacant'))
     expect(screen.getByTestId('bed-tile-101-B')).toBeInTheDocument()
     expect(screen.queryByTestId('bed-tile-101-A')).not.toBeInTheDocument()
     expect(screen.queryByTestId('bed-tile-102-A')).not.toBeInTheDocument()
     expect(screen.queryByTestId('bed-tile-102-B')).not.toBeInTheDocument()
 
-    // On notice filter
-    fireEvent.click(within(filterGroup).getByRole('button', { name: 'On notice' }))
+    // On notice ("To be vacant") filter via summary card
+    fireEvent.click(within(summaryGroup).getByTestId('bed-card-on_notice'))
     expect(screen.getByTestId('bed-tile-102-A')).toBeInTheDocument()
     expect(screen.queryByTestId('bed-tile-101-B')).not.toBeInTheDocument()
     expect(screen.queryByTestId('bed-tile-101-A')).not.toBeInTheDocument()
 
-    // Back to All
-    fireEvent.click(within(filterGroup).getByRole('button', { name: 'All' }))
+    // Back to All via summary card
+    fireEvent.click(within(summaryGroup).getByTestId('bed-card-all'))
     expect(screen.getByTestId('bed-tile-101-A')).toBeInTheDocument()
     expect(screen.getByTestId('bed-tile-101-B')).toBeInTheDocument()
     expect(screen.getByTestId('bed-tile-102-A')).toBeInTheDocument()
     expect(screen.getByTestId('bed-tile-102-B')).toBeInTheDocument()
+
+    // Clicking a vacant bed opens quick details with Add tenant link
+    fireEvent.click(screen.getByTestId('bed-tile-101-B'))
+    expect(screen.getByRole('link', { name: 'Add tenant' })).toHaveAttribute('href', '/caretaker/check-ins')
   })
 
   test('[FE-23/AC3,AC4] Caretaker move out today has no date picker and frees the bed on the board immediately', async () => {
