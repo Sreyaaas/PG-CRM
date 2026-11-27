@@ -40,7 +40,6 @@ function useOrganization() {
 }
 
 export function OrgDetailsCard() {
-  const { updateMe } = useAuth()
   const query = useOrganization()
   // Optional card: if the details can't be loaded, leave it out rather than alarm the owner.
   if (query.isError) return null
@@ -56,6 +55,7 @@ export function OrgDetailsCard() {
 }
 
 function OrgDetailsForm({ org }: { org: Organization }) {
+  const { updateMe } = useAuth()
   const orgId = useOrgId()
   const qc = useQueryClient()
   const { showToast } = useToast()
