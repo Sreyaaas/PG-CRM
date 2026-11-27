@@ -211,7 +211,7 @@ function OwnerOrgCard({ orgName }: { orgName?: string }) {
 }
 
 export function SettingsPage() {
-  const { session, membership, logout } = useAuth()
+  const { session, membership, logout, updateMe } = useAuth()
   const { showToast } = useToast()
   const { prefs, update } = useAppearance()
   const { isStandalone, isIos, canInstall, promptInstall } = useInstallPrompt()
@@ -298,7 +298,8 @@ export function SettingsPage() {
                   const val = el?.value.trim()
                   if (!val) return
                   try {
-                    await apiClient.PATCH('/api/v1/me', { body: { full_name: val } })
+                    const { data } = await apiClient.PATCH('/api/v1/me', { body: { full_name: val } })
+                    if (data) updateMe(data)
                     showToast('Name updated', 'success')
                   } catch (err) {
                     showToast(err instanceof ApiError ? err.message : 'Unable to update name', 'error')
