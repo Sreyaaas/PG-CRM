@@ -70,7 +70,7 @@ export function SignupPage() {
 
   return (
     <AuthLayout
-      title={['Create', 'PG-CRM account']}
+      title={['Create', 'NivasOS account']}
       description="Set up your organization as a PG owner."
       footer={
         <>
