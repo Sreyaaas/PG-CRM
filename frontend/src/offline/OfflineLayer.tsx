@@ -189,7 +189,7 @@ export function InstallBanner() {
     <div className="safe-x border-b border-line bg-surface-2 py-2 print:hidden">
       <Notice tone="info" role="region" aria-label="Install app" className="items-center">
         <div className="flex items-center gap-2">
-          <span className="min-w-0 flex-1 text-[13.5px]">Install PG-CRM on your home screen for one-tap access.</span>
+          <span className="min-w-0 flex-1 text-[13.5px]">Install NivasOS on your home screen for one-tap access.</span>
           <Button
             type="button"
             size="sm"

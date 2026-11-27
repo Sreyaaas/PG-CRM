@@ -374,7 +374,7 @@ describe('install and update prompts', () => {
     saveTokenResponse(TOKEN_RESPONSE)
     const prompt = vi.fn().mockResolvedValue(undefined)
     const { unmount } = render(wrapper(<InstallBanner />))
-    expect(screen.queryByText(/Install PG-CRM/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Install NivasOS/)).not.toBeInTheDocument()
 
     const event = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
       prompt,
@@ -385,10 +385,10 @@ describe('install and update prompts', () => {
     expect(prompt).toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss install prompt' }))
-    expect(screen.queryByText(/Install PG-CRM/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Install NivasOS/)).not.toBeInTheDocument()
     unmount()
     render(wrapper(<InstallBanner />))
-    expect(screen.queryByText(/Install PG-CRM/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Install NivasOS/)).not.toBeInTheDocument()
   })
 
   test('the update toast offers "Reload to update"', () => {
