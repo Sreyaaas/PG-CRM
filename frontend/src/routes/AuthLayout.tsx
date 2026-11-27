@@ -24,7 +24,7 @@ export function AuthLayout({
       <header className="safe-x flex h-16 items-center justify-between gap-3 sm:px-8">
         <span className="flex items-center gap-2.5">
           <BrandMark size="md" />
-          <span className="text-[16px] font-bold tracking-[-0.02em]">PG-CRM</span>
+          <span className="text-[16px] font-bold tracking-[-0.02em]">NivasOS</span>
         </span>
         {aside}
       </header>
