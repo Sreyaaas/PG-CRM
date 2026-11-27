@@ -26,7 +26,8 @@ const DISCOUNT_STATUS: Record<'pending' | 'approved' | 'rejected', { label: stri
 }
 
 export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
-  const [showAllVacant, setShowAllVacant] = useState(false)
+  const [vacantLimit, setVacantLimit] = useState(10)
+  const [floorFilter, setFloorFilter] = useState<string>('all')
   const { session, membership } = useAuth()
   const orgId = membership?.org_id ?? ''
   const propertiesQuery = usePropertiesQuery()
@@ -255,8 +256,37 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
                 {loading ? (
                   <LoadingRows label="Loading vacant beds…" rows={2} />
                 ) : (
-                  <div className="divide-y divide-line">
-                    {(showAllVacant ? vacantByRoom : vacantByRoom.slice(0, 10)).map((group) => {
+                  <>
+                    {(() => {
+                      const floors = [...new Set(vacantByRoom.map((g) => roomInfo.get(g.key)?.floor).filter((f): f is number => f != null))].sort((a, b) => a - b)
+                      const filtered = floorFilter === 'all' ? vacantByRoom : vacantByRoom.filter((g) => String(roomInfo.get(g.key)?.floor ?? '') === floorFilter)
+                      const visible = filtered.slice(0, vacantLimit)
+                      const remaining = filtered.length - visible.length
+                      return (
+                        <>
+                          {floors.length > 1 && (
+                            <div className="flex flex-wrap gap-1.5 border-b border-line px-4 py-2.5 sm:px-5">
+                              <button
+                                type="button"
+                                onClick={() => { setFloorFilter('all'); setVacantLimit(10) }}
+                                className={`rounded-chip px-2.5 py-1 text-[12px] font-medium ${floorFilter === 'all' ? 'bg-ink text-surface' : 'bg-surface-2 text-muted hover:text-ink'}`}
+                              >
+                                All floors
+                              </button>
+                              {floors.map((f) => (
+                                <button
+                                  key={f}
+                                  type="button"
+                                  onClick={() => { setFloorFilter(String(f)); setVacantLimit(10) }}
+                                  className={`rounded-chip px-2.5 py-1 text-[12px] font-medium tabular-nums ${floorFilter === String(f) ? 'bg-ink text-surface' : 'bg-surface-2 text-muted hover:text-ink'}`}
+                                >
+                                  Floor {f}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          <div className="divide-y divide-line">
+                            {visible.map((group) => {
                       const room = roomInfo.get(group.key)
                       const rents = [...new Set(group.beds.map((b) => b.base_rent_paise))].sort((a, b) => a - b)
                       const roomBeds = room ? room.beds.filter((b) => b.is_active).length : group.beds.length
@@ -303,19 +333,23 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
                         </div>
                       )
                     })}
-                    {vacantByRoom.length > 10 && (
+                    {remaining > 0 && (
                       <div className="px-4 py-3 text-center sm:px-5">
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => setShowAllVacant((v) => !v)}
+                          onClick={() => setVacantLimit((n) => n + 20)}
                         >
-                          {showAllVacant ? 'Show less' : `Show ${vacantByRoom.length - 10} more rooms`}
+                          Show next {Math.min(20, remaining)} ({remaining} remaining)
                         </Button>
                       </div>
                     )}
-                  </div>
+                          </div>
+                        </>
+                      )
+                    })()}
+                  </>
                 )}
               </Card>
             )}
