@@ -320,7 +320,42 @@ export function SettingsPage() {
           </li>
           <li className="px-4 py-3 sm:px-5">
             <div className="text-[12.5px] text-muted">Organization</div>
-            <div className="text-[15px] font-semibold text-ink">{membership?.organization_name ?? '—'}</div>
+            {isOwner && membership ? (
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  type="text"
+                  aria-label="Organization name"
+                  defaultValue={membership.organization_name}
+                  id="settings-org-name"
+                  className="h-10 flex-1 rounded-control border border-line-strong bg-surface px-3 text-[15px] text-ink outline-none focus:border-ink"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={async () => {
+                    const el = document.getElementById('settings-org-name') as HTMLInputElement | null
+                    const val = el?.value.trim()
+                    if (!val) return
+                    try {
+                      await apiClient.PATCH('/api/v1/organization', {
+                        params: { header: { 'x-org-id': membership.org_id } },
+                        body: { name: val },
+                      })
+                      const { data } = await apiClient.GET('/api/v1/me')
+                      if (data) updateMe(data)
+                      showToast('Organization name updated', 'success')
+                    } catch (err) {
+                      showToast(err instanceof ApiError ? err.message : 'Unable to update organization', 'error')
+                    }
+                  }}
+                >
+                  Save
+                </Button>
+              </div>
+            ) : (
+              <div className="text-[15px] font-semibold text-ink">{membership?.organization_name ?? '—'}</div>
+            )}
           </li>
         </CardList>
         <CardBody className="flex flex-col gap-5 border-t border-line">
