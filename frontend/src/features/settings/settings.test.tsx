@@ -207,7 +207,7 @@ describe('Settings (FE-05)', () => {
 
     await waitFor(() => {
       expect(logoutAllCalled).toBe(true)
-      expect(screen.getByRole('heading', { name: 'Sign in to PG-CRM' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Sign in to NivasOS' })).toBeInTheDocument()
     })
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull()
   })

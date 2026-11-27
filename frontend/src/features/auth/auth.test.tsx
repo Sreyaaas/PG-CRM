@@ -188,7 +188,7 @@ describe('Auth, login, org picker, and session guards', () => {
 
     renderApp(['/owner'])
 
-    expect(await screen.findByRole('heading', { name: /Sign in to PG-CRM/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Sign in to NivasOS/i })).toBeInTheDocument()
     expect(await screen.findByText('Session expired')).toBeInTheDocument()
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull()
     expect(window.localStorage.getItem(ORG_STORAGE_KEY)).toBeNull()
@@ -257,7 +257,7 @@ describe('Auth, login, org picker, and session guards', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: /log out/i }))
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Sign in to PG-CRM/i })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /Sign in to NivasOS/i })).toBeInTheDocument()
     })
     expect(window.localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull()
     expect(window.localStorage.getItem(ORG_STORAGE_KEY)).toBeNull()
