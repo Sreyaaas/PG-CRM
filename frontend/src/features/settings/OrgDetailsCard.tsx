@@ -8,6 +8,7 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { Input, Select, Textarea } from '@/components/ui/input'
 import { LoadingRows, Notice } from '@/components/ui/misc'
+import { useAuth } from '@/features/auth/AuthContext'
 import { useOrgId } from '@/features/properties/api'
 
 type Organization = components['schemas']['Organization']
