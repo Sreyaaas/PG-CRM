@@ -25,6 +25,7 @@ const DISCOUNT_STATUS: Record<'pending' | 'approved' | 'rejected', { label: stri
 }
 
 export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
+  const [showAllVacant, setShowAllVacant] = useState(false)
   const { session, membership } = useAuth()
   const orgId = membership?.org_id ?? ''
   const propertiesQuery = usePropertiesQuery()
@@ -254,7 +255,7 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
                   <LoadingRows label="Loading vacant beds…" rows={2} />
                 ) : (
                   <div className="divide-y divide-line">
-                    {vacantByRoom.map((group) => {
+                    {(showAllVacant ? vacantByRoom : vacantByRoom.slice(0, 10)).map((group) => {
                       const room = roomInfo.get(group.key)
                       const rents = [...new Set(group.beds.map((b) => b.base_rent_paise))].sort((a, b) => a - b)
                       const roomBeds = room ? room.beds.filter((b) => b.is_active).length : group.beds.length
@@ -301,6 +302,18 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
                         </div>
                       )
                     })}
+                    {vacantByRoom.length > 10 && (
+                      <div className="px-4 py-3 text-center sm:px-5">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowAllVacant((v) => !v)}
+                        >
+                          {showAllVacant ? 'Show less' : `Show ${vacantByRoom.length - 10} more rooms`}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </Card>
