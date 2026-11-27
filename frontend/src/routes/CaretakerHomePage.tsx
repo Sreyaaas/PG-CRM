@@ -332,7 +332,7 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
                           title={
                             <>
                               {b.label}
-                              {b.stay?.resident.full_name && (
+                              {b.stay?.resident?.full_name && (
                                 <span className="font-normal text-muted"> · {b.stay.resident.full_name}</span>
                               )}
                             </>
@@ -359,7 +359,7 @@ export function CaretakerHomePage({ section = 'Home' }: { section?: string }) {
                       )
                       return (
                         <li key={b.id}>
-                          {b.stay ? (
+                          {b.stay?.resident?.id ? (
                             <Link to={`/caretaker/residents/${b.stay.resident.id}`} className={ROW_LINK}>
                               {row}
                             </Link>
