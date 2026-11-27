@@ -91,7 +91,7 @@ export function StatTile({
   return (
     <div
       className={cn(
-        '@container flex min-w-0 flex-col gap-1 rounded-card border px-4 py-3 shadow-xs sm:px-[18px] sm:py-4',
+        '@container flex min-w-0 flex-col gap-1 rounded-card border px-4 py-3 shadow-xs transition-all duration-150 hover:shadow-sm sm:px-[18px] sm:py-4',
         highlight
           ? 'border-[color-mix(in_oklab,var(--brand)_45%,var(--line))] bg-brand-soft'
           : 'border-line bg-surface',
