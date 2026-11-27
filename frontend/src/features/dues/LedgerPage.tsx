@@ -62,7 +62,7 @@ export function LedgerPage() {
     <div className="flex max-w-2xl flex-col gap-5 pb-8">
       <PageHeader
         back={{ to: `${base}/residents/${residentId}`, label: 'Resident' }}
-        title={ledger ? ledger.full_name : 'Ledger'}
+        title={ledger ? ledger.full_name : 'Payment history'}
         description="Invoices and payments, oldest first."
         actions={
           ledger && (
@@ -73,18 +73,18 @@ export function LedgerPage() {
         }
       />
 
-      {query.isError && <Notice role="alert">{getErrorMessage(query.error, 'Unable to load the ledger.')}</Notice>}
+      {query.isError && <Notice role="alert">{getErrorMessage(query.error, 'Unable to load payment history.')}</Notice>}
 
       {ledger && (
         <StatTile
-          label="Outstanding"
+          label="Balance due"
           value={<Money paise={ledger.outstanding_paise} />}
           highlight={ledger.outstanding_paise > 0}
         />
       )}
 
       <Card className="overflow-hidden" aria-label="Ledger">
-        {query.isLoading && <LoadingRows label="Loading ledger…" rows={4} />}
+        {query.isLoading && <LoadingRows label="Loading payment history…" rows={4} />}
         {ledger && ledger.entries.length === 0 && <EmptyState>No invoices or payments yet.</EmptyState>}
         {ledger && ledger.entries.length > 0 && (
           <CardList>

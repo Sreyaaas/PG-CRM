@@ -143,7 +143,7 @@ export function ResidentDetailPage() {
           resident && (
             <>
               <Button asChild variant="secondary">
-                <Link to={`${isOwner ? '/owner' : '/caretaker'}/residents/${resident.id}/ledger`}>Ledger</Link>
+                <Link to={`${isOwner ? '/owner' : '/caretaker'}/residents/${resident.id}/ledger`}>Payment history</Link>
               </Button>
               <Button asChild variant="secondary">
                 <a href={`tel:${resident.phone}`}>
@@ -407,7 +407,7 @@ export function ResidentDetailPage() {
                             <Link
                               to={`${isOwner ? '/owner' : '/caretaker'}/residents/${resident.id}/settlement/${stay.id}`}
                             >
-                              {isOwner ? 'Settle deposit' : 'View settlement'}
+                              {isOwner ? 'Return deposit' : 'Move-out bill'}
                             </Link>
                           </Button>
                         )}

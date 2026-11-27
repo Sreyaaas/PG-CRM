@@ -244,7 +244,7 @@ export function DuesPage() {
 
       {dues.data && (
         <div className="grid grid-cols-2 gap-3">
-          <StatTile label="Total outstanding" value={<Money paise={total} />} highlight={total > 0} />
+          <StatTile label="Total due" value={<Money paise={total} />} highlight={total > 0} />
           <StatTile label="Residents with dues" value={<span className="tabular-nums">{rows.length}</span>} />
         </div>
       )}

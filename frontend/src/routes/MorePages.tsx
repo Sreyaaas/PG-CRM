@@ -45,7 +45,7 @@ export function OwnerMorePage() {
           { label: 'Residents', to: '/owner/residents', icon: <Contact /> },
           { label: 'Complaints', to: '/owner/complaints', icon: <MessageSquareWarning /> },
           { label: 'Expenses', to: '/owner/expenses', icon: <Receipt /> },
-          { label: 'Reconcile statements', to: '/owner/money/reconcile', icon: <FileCheck2 /> },
+          { label: 'Match bank payments', to: '/owner/money/reconcile', icon: <FileCheck2 /> },
           { label: 'Cash in hand', to: '/owner/money/cash', icon: <HandCoins /> },
           { label: 'Settings', to: '/owner/settings', icon: <Settings /> },
         ]}
