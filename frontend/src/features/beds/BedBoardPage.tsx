@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card'
 import { EmptyState, LoadingRows, Notice, PageHeader } from '@/components/ui/misc'
 import { Button } from '@/components/ui/button'
 import { Sheet } from '@/components/ui/sheet'
+import { useToast } from '@/components/Toast'
 import { useAuth } from '@/features/auth/AuthContext'
 import { countBeds } from '@/features/home/useBoards'
 import { usePropertiesQuery } from '@/features/properties/api'
@@ -169,6 +170,7 @@ export function BedBoardPage() {
   const [acFilter, setAcFilter] = useState<AcFilter>('all')
   const [selectedVacant, setSelectedVacant] = useState<{ bed: BoardBed; room: BoardRoom } | null>(null)
   const rolePrefix = isOwner ? '/owner' : '/caretaker'
+  const { showToast } = useToast()
 
   const activePropertyId = useMemo(() => {
     if (routePropertyId) return routePropertyId
@@ -406,8 +408,13 @@ export function BedBoardPage() {
               <Button type="button" variant="secondary" onClick={() => setSelectedVacant(null)}>
                 Close
               </Button>
+              {activeProperty?.qr_slug && (
+                <Button asChild variant="secondary">
+                  <Link to={`/join/${activeProperty.qr_slug}`}>New tenant form</Link>
+                </Button>
+              )}
               <Button asChild>
-                <Link to={`${rolePrefix}/check-ins`}>Add tenant</Link>
+                <Link to={`${rolePrefix}/check-ins`}>Pending check-ins</Link>
               </Button>
             </div>
           )
@@ -426,6 +433,23 @@ export function BedBoardPage() {
                 <span className="font-normal text-muted">/mo</span>
               </span>
             </div>
+            {activeProperty?.qr_slug && (
+              <div className="flex items-center justify-between gap-2 rounded-control border border-line bg-surface-2/60 px-3.5 py-2.5">
+                <span className="text-muted">Share join link</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    const url = `${window.location.origin}/join/${activeProperty.qr_slug}`
+                    void navigator.clipboard?.writeText(url)
+                    showToast('Join link copied')
+                  }}
+                >
+                  Copy link
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Sheet>

@@ -360,9 +360,10 @@ describe('FE-23 Bed board and resident detail', () => {
     expect(screen.getByTestId('bed-tile-102-A')).toBeInTheDocument()
     expect(screen.getByTestId('bed-tile-102-B')).toBeInTheDocument()
 
-    // Clicking a vacant bed opens quick details with Add tenant link
+    // Clicking a vacant bed opens quick details with New tenant form & Pending check-ins links
     fireEvent.click(screen.getByTestId('bed-tile-101-B'))
-    expect(screen.getByRole('link', { name: 'Add tenant' })).toHaveAttribute('href', '/caretaker/check-ins')
+    expect(screen.getByRole('link', { name: 'New tenant form' })).toHaveAttribute('href', '/join/qr-prop-1')
+    expect(screen.getByRole('link', { name: 'Pending check-ins' })).toHaveAttribute('href', '/caretaker/check-ins')
   })
 
   test('[FE-23/AC3,AC4] Caretaker move out today has no date picker and frees the bed on the board immediately', async () => {
