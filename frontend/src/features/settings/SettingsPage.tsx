@@ -281,7 +281,33 @@ export function SettingsPage() {
         <CardList>
           <li className="px-4 py-3 sm:px-5">
             <div className="text-[12.5px] text-muted">Full name</div>
-            <div className="text-[15px] font-semibold text-ink">{session?.me.full_name ?? '—'}</div>
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                type="text"
+                aria-label="Your full name"
+                defaultValue={session?.me.full_name ?? ''}
+                id="settings-full-name"
+                className="h-10 flex-1 rounded-control border border-line-strong bg-surface px-3 text-[15px] text-ink outline-none focus:border-ink"
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={async () => {
+                  const el = document.getElementById('settings-full-name') as HTMLInputElement | null
+                  const val = el?.value.trim()
+                  if (!val) return
+                  try {
+                    await apiClient.PATCH('/api/v1/me', { body: { full_name: val } })
+                    showToast('Name updated', 'success')
+                  } catch (err) {
+                    showToast(err instanceof ApiError ? err.message : 'Unable to update name', 'error')
+                  }
+                }}
+              >
+                Save
+              </Button>
+            </div>
           </li>
           <li className="px-4 py-3 sm:px-5">
             <div className="text-[12.5px] text-muted">Phone</div>

@@ -157,7 +157,8 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update Me */
+        patch: operations["update_me_api_v1_me_patch"];
         trace?: never;
     };
     "/api/v1/properties": {
@@ -2665,6 +2666,11 @@ export interface components {
             /** Memberships */
             memberships: components["schemas"]["Membership"][];
         };
+        /** MeUpdate */
+        MeUpdate: {
+            /** Full Name */
+            full_name: string;
+        };
         /** Membership */
         Membership: {
             /**
@@ -3891,6 +3897,8 @@ export interface components {
              * @enum {string}
              */
             role?: "owner" | "caretaker";
+            /** Full Name */
+            full_name?: string;
         };
         /** Stay */
         Stay: {
@@ -4572,6 +4580,75 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_me_api_v1_me_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MeUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

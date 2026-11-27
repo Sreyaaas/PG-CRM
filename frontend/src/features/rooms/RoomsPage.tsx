@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'react-router-dom'
 import { ApiError, apiClient } from '@/api/client'
+import { BulkRoomsForm } from './BulkRoomsForm'
 import { Money } from '@/components/Money'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useToast } from '@/components/Toast'
@@ -556,6 +557,7 @@ export function RoomsPage() {
     <div className="flex max-w-xl flex-col gap-6">
       <PageHeader back={{ to: `/owner/properties/${propertyId}`, label: property.data?.name ?? 'Back' }} title="Rooms &amp; beds" />
 
+      {propertyId && <BulkRoomsForm propertyId={propertyId} />}
       {propertyId && <AddRoomForm propertyId={propertyId} onWarning={onWarning} />}
 
       {board.isLoading && (

@@ -604,6 +604,90 @@
             "HTTPBearer": []
           }
         ]
+      },
+      "patch": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Update Me",
+        "operationId": "update_me_api_v1_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/properties": {
@@ -11483,6 +11567,22 @@
         ],
         "title": "Me"
       },
+      "MeUpdate": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Full Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "full_name"
+        ],
+        "title": "MeUpdate"
+      },
       "Membership": {
         "properties": {
           "org_id": {
@@ -14588,6 +14688,12 @@
               "caretaker"
             ],
             "title": "Role"
+          },
+          "full_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Full Name"
           }
         },
         "additionalProperties": false,

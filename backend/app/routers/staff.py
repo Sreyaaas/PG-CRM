@@ -62,10 +62,19 @@ def update_staff(user_id: UUID, body: StaffUpdate, ctx: Org) -> StaffMember | JS
     once). Owners can't change their own membership (RLS `members_update` excludes self), so nobody can lock
     themselves out."""
     values = body.model_dump(exclude_unset=True)
+    new_name = values.pop("full_name", None)
     with ctx.tx() as cur:
         require_owner(cur, _OWNER_ONLY)
         if user_id == ctx.user_id:
             raise HTTPException(403, "You can't change your own membership.")
+        if new_name is not None:
+            cur.execute(
+                """UPDATE users SET full_name = %s
+                   WHERE id = %s AND EXISTS (
+                       SELECT 1 FROM organization_members WHERE org_id = app.current_org_id() AND user_id = %s
+                   )""",
+                (new_name, user_id, user_id),
+            )
         if "assigned_property_ids" in values:
             values["assigned_property_ids"] = list(dict.fromkeys(values["assigned_property_ids"]))
             cur.execute(

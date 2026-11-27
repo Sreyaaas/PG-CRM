@@ -308,10 +308,11 @@ class StaffUpdate(BaseModel):
     assigned_property_ids: list[UUID] = _optional()
     is_active: bool = _optional(description="false removes all access to this organization immediately")
     role: Role = _optional()
+    full_name: Annotated[str, StringConstraints(min_length=1, max_length=120, strip_whitespace=True)] = _optional()
 
     @model_validator(mode="after")
     def _not_null(self):
-        for name in ("assigned_property_ids", "is_active", "role"):
+        for name in ("assigned_property_ids", "is_active", "role", "full_name"):
             if name in self.model_fields_set and getattr(self, name) is None:
                 raise ValueError(f"{name} may not be null")
         return self

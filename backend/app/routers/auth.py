@@ -5,12 +5,14 @@ Access token: short JWT (15 min). Refresh token: random, single use, 30 days, st
 Failed logins are rate limited per phone and per IP (`app.ratelimit`).
 """
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from psycopg import Cursor
 from psycopg.rows import DictRow
+from pydantic import BaseModel, StringConstraints
 
 from app import ratelimit
 from app.config import get_settings
@@ -197,4 +199,17 @@ def change_password(body: ChangePasswordRequest, claims: Claims, request: Reques
 @router.get("/me", response_model=Me)
 def me(user_id: UserId) -> Me:
     with transaction(user_id=user_id) as cur:
+        return _load_me(cur, user_id)
+
+
+class MeUpdate(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    full_name: Annotated[str, StringConstraints(min_length=1, max_length=120, strip_whitespace=True)]
+
+
+@router.patch("/me", response_model=Me)
+def update_me(body: MeUpdate, user_id: UserId) -> Me:
+    with transaction(user_id=user_id) as cur:
+        cur.execute("UPDATE users SET full_name = %s WHERE id = %s", (body.full_name, user_id))
         return _load_me(cur, user_id)

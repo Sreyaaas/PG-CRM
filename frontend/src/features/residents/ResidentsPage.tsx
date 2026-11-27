@@ -104,11 +104,18 @@ export function ResidentsPage() {
         title="Residents"
         description="Everyone staying now, by building and bed."
         actions={
-          rows.length > 0 && (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() =>
+          <div className="flex flex-wrap gap-2">
+            {properties.data && properties.data.length > 0 && (
+              <Button asChild variant="brand" size="sm">
+                <Link to={`/join/${properties.data[0].qr_slug}`}>Add tenant</Link>
+              </Button>
+            )}
+            {rows.length > 0 && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() =>
                 downloadCsv(
                   `residents-${todayIST()}.csv`,
                   toCsv(rows, [
@@ -128,7 +135,8 @@ export function ResidentsPage() {
               <Download aria-hidden="true" />
               Export CSV
             </Button>
-          )
+            )}
+          </div>
         }
       />
 

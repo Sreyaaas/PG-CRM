@@ -135,6 +135,30 @@ export function LoginPage() {
           {loginMutation.isPending ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
+
+      <div className="mt-6 border-t border-line pt-4">
+        <p className="mb-2.5 text-center text-[12px] font-medium text-muted">Quick Demo (Client Pitch)</p>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={loginMutation.isPending}
+            onClick={() => loginMutation.mutate({ phone: '9000000001', password: 'devpass123' })}
+          >
+            Demo Owner
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={loginMutation.isPending}
+            onClick={() => loginMutation.mutate({ phone: '9000000002', password: 'devpass123' })}
+          >
+            Demo Caretaker
+          </Button>
+        </div>
+      </div>
     </AuthLayout>
   )
 }

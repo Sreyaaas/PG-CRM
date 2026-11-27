@@ -7,6 +7,8 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { Chip } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { EmptyState, LoadingRows, Notice, PageHeader } from '@/components/ui/misc'
+import { Button } from '@/components/ui/button'
+import { useAuth } from '@/features/auth/AuthContext'
 import { countBeds } from '@/features/home/useBoards'
 import { usePropertiesQuery } from '@/features/properties/api'
 import { useBedBoardQuery, type BoardBed, type BoardRoom } from '@/features/rooms/api'
@@ -123,6 +125,7 @@ function RoomRow({ room, beds, isOwner }: { room: BoardRoom; beds: BoardBed[]; i
 }
 
 export function BedBoardPage() {
+  const { membership } = useAuth()
   const { propertyId: routePropertyId } = useParams<{ propertyId: string }>()
   const { pathname } = useLocation()
   const navigate = useNavigate()
@@ -180,6 +183,13 @@ export function BedBoardPage() {
         description={
           activeProperty ? (
             <span>{activeProperty.name}</span>
+          ) : undefined
+        }
+        actions={
+          membership?.role === 'owner' && activeProperty ? (
+            <Button asChild variant="secondary" size="sm">
+              <Link to={`/owner/properties/${activeProperty.id}/rooms`}>Manage rooms & beds</Link>
+            </Button>
           ) : undefined
         }
       />
