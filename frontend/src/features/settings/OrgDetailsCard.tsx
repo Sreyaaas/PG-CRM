@@ -39,6 +39,7 @@ function useOrganization() {
 }
 
 export function OrgDetailsCard() {
+  const { updateMe } = useAuth()
   const query = useOrganization()
   // Optional card: if the details can't be loaded, leave it out rather than alarm the owner.
   if (query.isError) return null
@@ -76,9 +77,15 @@ function OrgDetailsForm({ org }: { org: Organization }) {
       })
       return data
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       showToast('Business details saved', 'success')
       qc.invalidateQueries({ queryKey: ['organization', orgId] })
+      try {
+        const { data } = await apiClient.GET('/api/v1/me')
+        if (data) updateMe(data)
+      } catch {
+        // non-fatal: next login/refresh will sync
+      }
     },
     onError: (err) => setError(err instanceof ApiError || err instanceof Error ? err.message : 'Unable to save.'),
   })
