@@ -1,0 +1,92 @@
+# Production deploy (Vercel), only after CI has passed on main.
+#
+# Why not Vercel's own Git deploys: (1) they deploy every push to main even when CI is red, so a broken commit
+# reaches prod; (2) on the Hobby plan only the Vercel account's own GitHub user can trigger them, so commits and
+# merges by anyone else are "blocked" and prod silently stops updating. This workflow deploys with a Vercel token
+# instead, after the CI workflow succeeds for that exact commit. In both Vercel projects, turn the Git connection
+# off (Settings -> Git -> Disconnect) once this works, see docs/DEPLOY.md.
+#
+# Does nothing until the secrets VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_API_PROJECT_ID, VERCEL_WEB_PROJECT_ID exist.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: # redeploy the current main by hand
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Only a CI run for a push to main that passed (or a manual run).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      API_PROJECT: ${{ secrets.VERCEL_API_PROJECT_ID }}
+      WEB_PROJECT: ${{ secrets.VERCEL_WEB_PROJECT_ID }}
+      API_URL: https://pgcrm-api.vercel.app
+      WEB_URL: https://pg-crm-bay.vercel.app
+    steps:
+      - name: Configured?
+        id: cfg
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$API_PROJECT" ] || [ -z "$WEB_PROJECT" ]; then
+            echo "::notice::Vercel deploy secrets aren't set yet, so nothing to deploy (see docs/DEPLOY.md)."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The exact commit CI tested, not whatever main is by now.
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ok == 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.ok == 'true'
+        with:
+          node-version: 22
+
+      # Vercel builds remotely, the same way as the Git integration did; each project's Root Directory
+      # (backend / frontend) is a project setting, so we deploy from the repository root.
+      - name: Deploy API
+        if: steps.cfg.outputs.ok == 'true'
+        env:
+          VERCEL_PROJECT_ID: ${{ env.API_PROJECT }}
+        run: npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
+
+      - name: API health check
+        if: steps.cfg.outputs.ok == 'true'
+        run: |
+          for i in $(seq 1 20); do
+            body=$(curl -s -m 30 "$API_URL/health" || true)
+            [ "$body" = '{"status":"ok"}' ] && { echo "API healthy"; exit 0; }
+            sleep 6
+          done
+          echo "::error::$API_URL/health did not return ok after the deploy. Roll back in Vercel (Deployments -> previous -> Promote) and check the logs."
+          exit 1
+
+      - name: Deploy frontend
+        if: steps.cfg.outputs.ok == 'true'
+        env:
+          VERCEL_PROJECT_ID: ${{ env.WEB_PROJECT }}
+        run: npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
+
+      - name: Frontend check
+        if: steps.cfg.outputs.ok == 'true'
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' -m 30 "$WEB_URL/receipt/check")
+          [ "$code" = 200 ] || { echo "::error::$WEB_URL returned $code after the deploy"; exit 1; }
+          echo "Frontend up"
