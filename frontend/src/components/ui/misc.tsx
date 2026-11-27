@@ -61,7 +61,11 @@ export function BrandMark({ size = 'md', className }: { size?: 'sm' | 'md' | 'lg
         className,
       )}
     >
-      P
+      <svg viewBox="0 0 24 24" className="size-[62%]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 11L12 4l8 7" />
+        <path d="M6.5 9.5V20h11V9.5" />
+        <path d="M10 20v-6h4v6" />
+      </svg>
     </span>
   )
 }
