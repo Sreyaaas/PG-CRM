@@ -238,6 +238,27 @@ export function LogPaymentSheet({ residentId, residentName, outstandingPaise, on
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {outstandingPaise > 0 && (
+              <button
+                type="button"
+                onClick={() => setAmount(paiseToInput(outstandingPaise))}
+                className="rounded-chip bg-surface-2 px-2.5 py-1 text-[12px] font-medium text-ink hover:bg-surface-3 tabular-nums"
+              >
+                Full due
+              </button>
+            )}
+            {[5000, 8000, 10000].map((rs) => (
+              <button
+                key={rs}
+                type="button"
+                onClick={() => setAmount(String(rs))}
+                className="rounded-chip bg-surface-2 px-2.5 py-1 text-[12px] font-medium text-ink hover:bg-surface-3 tabular-nums"
+              >
+                ₹{rs.toLocaleString('en-IN')}
+              </button>
+            ))}
+          </div>
         </Field>
 
         <div className="flex flex-col gap-1.5">
