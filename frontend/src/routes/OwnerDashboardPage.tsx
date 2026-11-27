@@ -172,15 +172,32 @@ export function OwnerDashboardPage({
       )}
 
       {isHome && (
+        <section aria-label="Quick actions" className="flex flex-wrap gap-2">
+          <Button asChild size="sm" variant="secondary">
+            <Link to="/owner/beds">Bed board</Link>
+          </Button>
+          <Button asChild size="sm" variant="secondary">
+            <Link to="/owner/money/dues">Dues &amp; rent</Link>
+          </Button>
+          <Button asChild size="sm" variant="secondary">
+            <Link to="/owner/check-ins">Check-ins</Link>
+          </Button>
+          <Button asChild size="sm" variant="secondary">
+            <Link to="/owner/expenses">Expenses</Link>
+          </Button>
+        </section>
+      )}
+
+      {isHome && (
         <section aria-label="Summary">
-          <Card className="flex flex-col gap-3 p-4 sm:p-5">
+          <Card className="flex flex-col gap-4 border-brand/30 bg-gradient-to-br from-brand/12 via-surface to-surface p-4 sm:p-5">
             <div className="flex items-end justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[13px] font-medium text-muted">Beds filled</p>
+                <p className="text-[13px] font-semibold uppercase tracking-wide text-brand-ink">Beds filled</p>
                 {loading ? (
                   <Skeleton className="mt-1 h-8 w-28" />
                 ) : (
-                  <p className="text-[26px] font-bold leading-tight tracking-[-0.02em] text-ink tabular-nums">
+                  <p className="text-[28px] font-bold leading-tight tracking-[-0.02em] text-ink tabular-nums">
                     <span>{filled}</span>
                     <span className="text-[17px] font-semibold text-muted"> of </span>
                     <span>{bedTotals.total}</span>
@@ -188,28 +205,52 @@ export function OwnerDashboardPage({
                 )}
               </div>
               {!loading && bedTotals.total > 0 && (
-                <span className="text-[22px] font-bold text-ink tabular-nums">{filledPct}%</span>
+                <span className="rounded-full bg-brand/20 px-3 py-1 text-[16px] font-bold text-brand-ink tabular-nums">
+                  {filledPct}%
+                </span>
               )}
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-surface-3" aria-hidden="true">
-              <div className="h-full rounded-full bg-brand" style={{ width: `${filledPct}%` }} />
+            <div className="h-2.5 overflow-hidden rounded-full bg-surface-3" aria-hidden="true">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-brand to-amber-500 transition-all"
+                style={{ width: `${filledPct}%` }}
+              />
             </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13.5px] text-muted">
-              <Link to="/owner/beds" className="hover:text-ink">
-                <span className="font-semibold text-ink tabular-nums">{bedTotals.vacant}</span> vacant
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              <Link
+                to="/owner/beds"
+                className="flex flex-col gap-0.5 rounded-control border border-line bg-surface/90 px-3 py-2.5 transition-colors hover:border-line-strong hover:bg-surface-2"
+              >
+                <span className="text-[12px] font-medium text-muted">Vacant beds</span>
+                <span className="text-[18px] font-bold text-success-ink tabular-nums">{bedTotals.vacant}</span>
               </Link>
-              <Link to="/owner/beds" className="hover:text-ink">
-                <span className="font-semibold text-ink tabular-nums">{bedTotals.onNotice}</span> on notice
+              <Link
+                to="/owner/beds"
+                className="flex flex-col gap-0.5 rounded-control border border-line bg-surface/90 px-3 py-2.5 transition-colors hover:border-line-strong hover:bg-surface-2"
+              >
+                <span className="text-[12px] font-medium text-muted">On notice</span>
+                <span className="text-[18px] font-bold text-warning-ink tabular-nums">{bedTotals.onNotice}</span>
               </Link>
-              <Link to="/owner/properties" className="hover:text-ink">
-                <span className="font-semibold text-ink tabular-nums">{properties.length}</span>{' '}
-                {properties.length === 1 ? 'building' : 'buildings'}
+              <Link
+                to="/owner/money/dues"
+                className="flex flex-col gap-0.5 rounded-control border border-line bg-surface/90 px-3 py-2.5 transition-colors hover:border-line-strong hover:bg-surface-2"
+              >
+                <span className="text-[12px] font-medium text-muted">Pending dues</span>
+                <span className="text-[18px] font-bold text-danger-ink tabular-nums">
+                  {duesTotal != null ? <Money paise={duesTotal} /> : '—'}
+                </span>
               </Link>
-              {pendingApprovals > 0 && (
-                <Link to="/owner/approvals" className="font-semibold text-brand-ink">
-                  {pendingApprovals} waiting for approval
-                </Link>
-              )}
+              <Link
+                to={pendingApprovals > 0 ? '/owner/approvals' : '/owner/properties'}
+                className="flex flex-col gap-0.5 rounded-control border border-line bg-surface/90 px-3 py-2.5 transition-colors hover:border-line-strong hover:bg-surface-2"
+              >
+                <span className="text-[12px] font-medium text-muted">
+                  {pendingApprovals > 0 ? 'Approvals' : properties.length === 1 ? 'Building' : 'Buildings'}
+                </span>
+                <span className="text-[18px] font-bold text-brand-ink tabular-nums">
+                  {pendingApprovals > 0 ? pendingApprovals : properties.length}
+                </span>
+              </Link>
             </div>
           </Card>
         </section>
