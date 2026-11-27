@@ -86,9 +86,23 @@ use a superuser connection to prove the triggers hold even when RLS is bypassed.
 ## Deploy (each release)
 
 **On the MVP stack:** merging to `main` is the release. GitHub Actions applies new migrations as `pgcrm_migrator`
-(`migrate.yml`) while Vercel builds and deploys the API from `main`. Because both start together, a migration must
-never break the previous API version (add columns/tables; don't rename or drop in the same release). Check
-`/health` afterwards. To roll back code, promote the previous deployment in Vercel.
+(`migrate.yml`) on the push, and `deploy.yml` deploys the API, then the frontend, to Vercel **only after the CI run
+for that commit has passed**, then checks `/health` and the frontend. A commit that fails CI is never deployed. Because
+migrations run before CI finishes, a migration must never break the previous API version (add columns/tables; don't
+rename or drop in the same release). To roll back code, promote the previous deployment in Vercel. To redeploy
+`main` by hand: Actions, "Deploy", Run workflow.
+
+Why not Vercel's own Git deploys: they deploy even when CI is red, and on the Hobby plan only the Vercel account's
+own GitHub user may trigger them, so commits and merges by anyone else are "blocked" and prod silently stops
+updating.
+
+One-time setup (owner):
+1. Vercel, Account Settings, Tokens: create a token (scope: the team that has both projects). Vercel, team
+   Settings, General: copy the **Team ID**. Each project's Settings, General: copy its **Project ID**.
+2. GitHub (repo owner), Actions secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID` (the Team ID),
+   `VERCEL_API_PROJECT_ID` (`pgcrm-api`), `VERCEL_WEB_PROJECT_ID` (the frontend project).
+3. Actions, "Deploy", Run workflow. When it's green, in **both** Vercel projects: Settings, Git, **Disconnect**, so
+   only this workflow deploys.
 
 **On a container host:**
 
