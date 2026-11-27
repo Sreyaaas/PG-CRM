@@ -15,7 +15,7 @@ export const CARETAKER_NAV = {
     label: 'More',
     to: '/caretaker/more',
     icon: <Menu />,
-    alsoActiveFor: ['/caretaker/beds', '/caretaker/residents', '/caretaker/expenses', '/caretaker/settings', '/caretaker/cash', '/caretaker/complaints'],
+    alsoActiveFor: ['/caretaker/settings'],
   },
 } satisfies Record<string, ShellNavItem>
 
@@ -41,7 +41,7 @@ export const OWNER_NAV = {
     label: 'More',
     to: '/owner/more',
     icon: <Menu />,
-    alsoActiveFor: ['/owner/beds', '/owner/residents', '/owner/staff', '/owner/money', '/owner/settings', '/owner/complaints', '/owner/expenses', '/owner/activity'],
+    alsoActiveFor: ['/owner/settings', '/owner/activity'],
   },
 } satisfies Record<string, ShellNavItem>
 
