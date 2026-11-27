@@ -28,7 +28,7 @@ def main() -> None:
             print("seed data already present")
             return
         cur.execute(
-            "SELECT * FROM api.signup_owner(%s, 'Demo Owner', %s, 'Demo PGs')",
+            "SELECT * FROM api.signup_owner(%s, 'Aarav Mehta', %s, 'Nivas PGs')",
             (OWNER_PHONE, hash_password(PASSWORD)),
         )
         row = cur.fetchone()
@@ -40,7 +40,7 @@ def main() -> None:
             cur.execute(
                 """INSERT INTO properties (org_id, name, locality, short_term_daily_rate_paise,
                                            exit_deduction_paise, upi_vpa, upi_payee_name, house_rules)
-                   VALUES (%s, %s, %s, %s, 2000_00, 'demo@paytm', 'Demo PGs',
+                   VALUES (%s, %s, %s, %s, 2000_00, 'nivas@paytm', 'Nivas PGs',
                            'Gate closes 11 PM. No outside guests overnight.')
                    RETURNING id""",
                 (org, name, locality, rate),
@@ -62,7 +62,7 @@ def main() -> None:
                         (org, props[name], room_id, f"{room}-{'ABC'[i]}", rent),
                     )
         cur.execute(
-            "SELECT api.add_staff_member(%s, 'Ravi (Caretaker)', %s, 'caretaker', %s)",
+            "SELECT api.add_staff_member(%s, 'Ravi Kumar', %s, 'caretaker', %s)",
             (CARETAKER_PHONE, hash_password(PASSWORD), [props["Sunrise HSR"]]),
         )
     print("seeded: 1 org, 2 properties, 14 beds, owner + caretaker")

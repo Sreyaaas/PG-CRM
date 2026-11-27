@@ -82,7 +82,7 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title={['Sign in to', 'PG-CRM']}
+      title={['Sign in to', 'NivasOS']}
       description="For PG owners and caretakers."
       footer={
         <>
@@ -137,7 +137,7 @@ export function LoginPage() {
       </form>
 
       <div className="mt-6 border-t border-line pt-4">
-        <p className="mb-2.5 text-center text-[12px] font-medium text-muted">Quick Demo (Client Pitch)</p>
+        <p className="mb-2.5 text-center text-[12px] font-medium text-muted">Quick Access</p>
         <div className="grid grid-cols-2 gap-2">
           <Button
             type="button"
@@ -146,7 +146,7 @@ export function LoginPage() {
             disabled={loginMutation.isPending}
             onClick={() => loginMutation.mutate({ phone: '9000000001', password: 'devpass123' })}
           >
-            Demo Owner
+            Owner
           </Button>
           <Button
             type="button"
@@ -155,7 +155,7 @@ export function LoginPage() {
             disabled={loginMutation.isPending}
             onClick={() => loginMutation.mutate({ phone: '9000000002', password: 'devpass123' })}
           >
-            Demo Caretaker
+            Caretaker
           </Button>
         </div>
       </div>
