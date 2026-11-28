@@ -29,10 +29,11 @@ export function getStoredOrgId(): string | null {
 }
 
 export function resolveSelectedOrgId(me: Me, preferredOrgId: string | null): string | null {
-  if (me.memberships.length === 1) {
-    return me.memberships[0].org_id
+  const memberships = Array.isArray(me?.memberships) ? me.memberships : []
+  if (memberships.length === 1) {
+    return memberships[0].org_id
   }
-  if (preferredOrgId && me.memberships.some((m) => m.org_id === preferredOrgId)) {
+  if (preferredOrgId && memberships.some((m) => m.org_id === preferredOrgId)) {
     return preferredOrgId
   }
   return null
